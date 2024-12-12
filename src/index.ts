@@ -14,12 +14,20 @@ import { AtpAgent } from '@atproto/api';
       password: password
     })
   }
+  const Post = async (post: string, useCurrentDate:boolean = true, date:string ="16-12-2024") => {
+    await agent.post({
+      text: post,
+      createdAt: useCurrentDate ? new Date().toISOString() : new Date(date).toISOString()
+    })
+  }
   
   class HamBskyAPI implements Scratch.Extension {
     runtime: VM.Runtime
+    useCurrentDate: boolean;
     constructor(runtime: VM.Runtime) {
       
       this.runtime = runtime
+      this.useCurrentDate = true
     }
     getInfo() {
       return {
@@ -30,7 +38,7 @@ import { AtpAgent } from '@atproto/api';
         blocks: [
           {
             blockType: Scratch.BlockType.COMMAND,
-            opcode: 'login',
+            opcode: 'bskyLogin',
             text: 'login to bluesky API with handle: [HANDLE] and password: [PASSWORD]',
             arguments:{
               HANDLE:{
@@ -42,12 +50,26 @@ import { AtpAgent } from '@atproto/api';
                 defaultValue: 'example'
               }
             }
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: 'bskyPost',
+            text: 'post [POST] to bluesky',
+            arguments:{
+              POST:{
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'hello!'
+              }
+            }
           }
         ]
       }
     }
-    login(args): void{
+    bskyLogin(args): void{
       Login(args.HANDLE, args.PASSWORD)
+    }
+    bskyPost(args): void{
+      Post(args.POST, this.useCurrentDate)
     }
   }
   // The following snippet ensures compatibility with Turbowarp / Gandi IDE. If you want to write Turbowarp-only or Gandi-IDE code, please remove corresponding code
