@@ -17,21 +17,23 @@ import { AtpAgent } from '@atproto/api';
   })
 
   // Utility Functions
-  const Login = async (handle:string, password:string) => {
-    await agent.login({ // Logs in the user with their BlueSky account credentrials
+  async function Login (handle:string, password:string)  {
+    await agent.login({ // Logs the user in with their BlueSky account credentrials
       identifier: handle,
       password: password
     })
   } // This will also create a session
-  const Post = async (post: string, useCurrentDate:boolean = true, date:string ="16-12-2024") => {
+
+  // Posting, Repling
+  async function Post (post: string, useCurrentDate:boolean = true, date:string ="16-12-2024") {
     await agent.post({
       text: post,
       createdAt: useCurrentDate ? new Date().toISOString() : new Date(date).toISOString()
     })
   }
-  const Reply = async (post: string, useCurrentDate:boolean = true, date:string ="16-12-2024",
+  async function Reply (post: string, useCurrentDate:boolean = true, date: string = "16-12-2024",
     threadRootPostArg,
-    postReplyingToArg) => {
+    postReplyingToArg){
 
     const threadRootPost = threadRootPostArg
     const postReplyingTo = postReplyingToArg
@@ -54,10 +56,12 @@ import { AtpAgent } from '@atproto/api';
   class HamBskyAPI implements Scratch.Extension {
     runtime: VM.Runtime
     useCurrentDate: boolean;
+    date: string;
     constructor(runtime: VM.Runtime) {
       
       this.runtime = runtime
       this.useCurrentDate = true
+      this.date = new Date().toISOString()
     }
     getInfo() {
       return {
@@ -97,6 +101,33 @@ import { AtpAgent } from '@atproto/api';
                 defaultValue: 'hello!'
               }
             }
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: 'bskyReply',
+            text: 'reply [POST_ICON][REPLY] to post: [POST] with reply uri: [URI] and reply cid: [CID]',
+            arguments:{
+              POST_ICON:{
+                type: Scratch.ArgumentType.IMAGE,
+                dataURI: speechBubbleIcon
+              },
+              REPLY:{
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'hello!'
+              },
+              POST:{
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: '{cid: \'\', uri:\'\' }'
+              },
+              URI:{
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'at://did:plc:u5cwb2mwiv2bfq53cjufe6yn/app.bsky.feed.post/3k43tv4rft22g'
+              },
+              CID:{
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'bafyreig2fjxi3rptqdgylg7e5hmjl6mcke7rn2b6cugzlqq3i4zu6rq52q'
+              },
+            }
           }
         ]
       }
@@ -105,7 +136,10 @@ import { AtpAgent } from '@atproto/api';
       Login(args.HANDLE, args.PASSWORD)
     }
     bskyPost(args): void{
-      Post(args.POST, this.useCurrentDate)
+      Post(args.POST, this.useCurrentDate, this.date)
+    }
+    bskyReply(args): void{
+      Reply(args.REPLY, this.useCurrentDate, this.date, args.POST, {uri: args.URI, cid: args.CID})
     }
   }
   // The following snippet ensures compatibility with Turbowarp / Gandi IDE. If you want to write Turbowarp-only or Gandi-IDE code, please remove corresponding code
