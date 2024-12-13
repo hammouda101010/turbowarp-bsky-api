@@ -64,6 +64,7 @@ import { AtpAgent } from '@atproto/api';
       this.useCurrentDate = true
       this.date = new Date().toISOString()
     }
+    // @ts-ignore
     getInfo() {
       return {
         id: 'HamBskyAPI',
@@ -73,6 +74,11 @@ import { AtpAgent } from '@atproto/api';
         menuIconURI: bskyIcon,
         blockIconURI: bskyIcon,
         blocks: [
+          {
+            blockType: Scratch.BlockType.BUTTON,
+            opcode: 'bskyDisclaimer',
+            text: 'Disclaimer',
+          },
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: 'bskyLogin',
@@ -152,23 +158,28 @@ import { AtpAgent } from '@atproto/api';
         }
       }
     }
+    bskyDisclaimer(): void{
+      alert('DISCLAIMER: When using the "Login" block, NEVER use your REAL password. Use an app password instead.');
+    }
     bskyLogin(args): void{
-      Login(args.HANDLE, args.PASSWORD)
+      Login(args.HANDLE, args.PASSWORD);
     }
     bskyPost(args): void{
-      Post(args.POST, this.useCurrentDate, this.date)
+      Post(args.POST, this.useCurrentDate, this.date);
     }
     bskyReply(args): void{
-      Reply(args.REPLY, this.useCurrentDate, this.date, args.POST, {uri: args.URI, cid: args.CID})
+      Reply(args.REPLY, this.useCurrentDate, this.date, args.POST, {uri: args.URI, cid: args.CID});
     }
   }
   // The following snippet ensures compatibility with Turbowarp / Gandi IDE.
   if (Scratch.vm?.runtime) {
     // For Turbowarp
+    // @ts-ignore
     Scratch.extensions.register(new HamBskyAPI(Scratch.runtime))
   } else {
     // For Gandi
     window.tempExt = {
+      // @ts-ignore
       Extension: HamBskyAPI,
       info: {
         extensionId: 'HamBskyAPI',
