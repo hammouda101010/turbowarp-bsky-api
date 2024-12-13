@@ -142,7 +142,7 @@ import { AtpAgent } from '@atproto/api';
       Reply(args.REPLY, this.useCurrentDate, this.date, args.POST, {uri: args.URI, cid: args.CID})
     }
   }
-  // The following snippet ensures compatibility with Turbowarp / Gandi IDE. If you want to write Turbowarp-only or Gandi-IDE code, please remove corresponding code
+  // The following snippet ensures compatibility with Turbowarp / Gandi IDE.
   if (Scratch.vm?.runtime) {
     // For Turbowarp
     Scratch.extensions.register(new HamBskyAPI(Scratch.runtime))
