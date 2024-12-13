@@ -129,8 +129,27 @@ import { AtpAgent } from '@atproto/api';
                 defaultValue: 'bafyreig2fjxi3rptqdgylg7e5hmjl6mcke7rn2b6cugzlqq3i4zu6rq52q'
               },
             }
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: 'bskyOptions',
+            text: 'set [POST_OPTION] to [ONOFF]',
+            arguments:{
+              POST_OPTION:{
+                type: Scratch.ArgumentType.STRING,
+                menu: "bskyPOST_OPTIONS"
+              }
+            }
           }
-        ]
+        ],
+        menus: {
+          bskyPOST_OPTIONS:{
+            acceptReporters: true,
+            items:[
+              {text: "rich text", value:"richText"}
+            ]
+          }
+        }
       }
     }
     bskyLogin(args): void{
