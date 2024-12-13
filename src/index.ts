@@ -22,6 +22,7 @@ import { AtpAgent } from '@atproto/api';
       identifier: handle,
       password: password
     })
+    console.log(`Logged in as ${JSON.stringify({identifier: handle, password: password})}`)
   } // This will also create a session
 
   // Posting, Repling
