@@ -10,7 +10,7 @@ export default defineConfig({
     // Replace it with your extension's metadata
     js: `// Name: BlueSky API
 // ID: HamBskyAPI
-// Description: Interact with the BlueSky API!
+// Description: Interact with the BlueSky API! Unofficial.
 // By: Hammouda101010
 // Original: BlueSky
 // License: MIT
