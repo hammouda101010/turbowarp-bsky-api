@@ -245,7 +245,7 @@ import { RichText } from "@atproto/api"
     }
     
     bskyDisclaimer(){
-      alert("DISCLAIMER: When using the \"Login\" block, NEVER use your REAL password. Use an app password instead.")
+      alert(`DISCLAIMER: When using the \"Login\" block, NEVER use your REAL password. Use an app password instead.`)
     }
 
     bskyLogin(args): void {
