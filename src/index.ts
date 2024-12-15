@@ -219,6 +219,10 @@ import { RichText } from "@atproto/api"
               POST_OPTION: {
                 type: Scratch.ArgumentType.STRING,
                 menu: "bskyPOST_OPTIONS"
+              },
+              ONOFF: {
+                type: Scratch.ArgumentType.BOOLEAN,
+                menu: "bskyONOFF"
               }
             }
           },
@@ -237,7 +241,7 @@ import { RichText } from "@atproto/api"
               },
               ONNOFF: {
                 type: Scratch.ArgumentType.STRING,
-                menu: "bskyPOST_OPTIONS"
+                defaultvalue: "test"
               }
             }
           }
@@ -257,10 +261,8 @@ import { RichText } from "@atproto/api"
         }
       }
     }
-    bskyDisclaimer(): void {
-      alert(
-        "DISCLAIMER: When using the \"Login\" block, NEVER use your REAL password. Use an app password instead."
-      )
+    bskyDisclaimer(){
+      alert("DISCLAIMER: When using the \"Login\" block, NEVER use your REAL password. Use an app password instead.")
     }
     bskyLogin(args): void {
       Login(args.HANDLE, args.PASSWORD)
@@ -272,7 +274,7 @@ import { RichText } from "@atproto/api"
         await rt.detectFacets(agent)
 
         if (rt.facets && rt.facets.length > 0) {
-          throw new Error("Error: You Can't Use Rich Text If It's Disabled.")
+          throw new Error("Error: You Can't Use Rich Text If It's Disabled.");
         }
         Post(args.POST, this.useCurrentDate, this.date)
       } else {
@@ -287,7 +289,7 @@ import { RichText } from "@atproto/api"
         await rt.detectFacets(agent)
 
         if (rt.facets && rt.facets.length > 0) {
-          throw new Error("Error: You Can't Use Rich Text If It's Disabled.")
+          throw new Error("Error: You Can't Use Rich Text If It's Disabled.");
         }
         Reply(
           args.REPLY,
