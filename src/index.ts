@@ -126,7 +126,11 @@ import { RichText } from "@atproto/api"
         menuIconURI: bskyIcon,
         blockIconURI: bskyIcon,
         blocks: [
-          
+          {
+            blockType: Scratch.BlockType.BUTTON,
+            opcode: "bskyDisclaimer",
+            text: "Disclaimer (Please Read)"
+          },
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyLogin",
@@ -230,7 +234,7 @@ import { RichText } from "@atproto/api"
             items: [{ text: "rich text", value: "richText" }]
           },
           bskyONOFF: {
-            acceptReporters: true,
+            acceptReporters: false,
             items: [
               { text: "on", value: "true" },
               { text: "off", value: "false" }
@@ -240,6 +244,10 @@ import { RichText } from "@atproto/api"
       }
     }
     
+    bskyDisclaimer(){
+      alert("DISCLAIMER: When using the \"Login\" block, NEVER use your REAL password. Use an app password instead.")
+    }
+
     bskyLogin(args): void {
       Login(args.HANDLE, args.PASSWORD)
     }
