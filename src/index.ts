@@ -116,7 +116,7 @@ import { RichText } from "@atproto/api"
       this.date = new Date().toISOString()
       this.richText = true
     }
-    // @ts-ignore
+    
     getInfo() {
       return {
         id: "HamBskyAPI",
@@ -126,11 +126,7 @@ import { RichText } from "@atproto/api"
         menuIconURI: bskyIcon,
         blockIconURI: bskyIcon,
         blocks: [
-          {
-            blockType: Scratch.BlockType.BUTTON,
-            opcode: "bskyDisclaimer",
-            text: "Disclaimer (Please Read)"
-          },
+          
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyLogin",
@@ -145,10 +141,6 @@ import { RichText } from "@atproto/api"
                 defaultValue: "example"
               }
             }
-          },
-          {
-            blockType: Scratch.BlockType.LABEL,
-            text: "Posting"
           },
           {
             blockType: Scratch.BlockType.COMMAND,
@@ -221,7 +213,7 @@ import { RichText } from "@atproto/api"
                 menu: "bskyPOST_OPTIONS"
               },
               ONOFF: {
-                type: Scratch.ArgumentType.BOOLEAN,
+                type: Scratch.ArgumentType.STRING,
                 menu: "bskyONOFF"
               }
             }
@@ -230,21 +222,7 @@ import { RichText } from "@atproto/api"
             blockType: Scratch.BlockType.LABEL,
             text: "Fetching"
           },
-          {
-            blockType: Scratch.BlockType.COMMAND,
-            opcode: "bskyOptions",
-            text: "set [POST_OPTION] option to [ONOFF]",
-            arguments: {
-              POST_OPTION: {
-                type: Scratch.ArgumentType.STRING,
-                menu: "bskyPOST_OPTIONS"
-              },
-              ONNOFF: {
-                type: Scratch.ArgumentType.STRING,
-                defaultvalue: "test"
-              }
-            }
-          }
+          
         ],
         menus: {
           bskyPOST_OPTIONS: {
@@ -261,9 +239,7 @@ import { RichText } from "@atproto/api"
         }
       }
     }
-    bskyDisclaimer(){
-      alert("DISCLAIMER: When using the \"Login\" block, NEVER use your REAL password. Use an app password instead.")
-    }
+    
     bskyLogin(args): void {
       Login(args.HANDLE, args.PASSWORD)
     }
@@ -274,7 +250,7 @@ import { RichText } from "@atproto/api"
         await rt.detectFacets(agent)
 
         if (rt.facets && rt.facets.length > 0) {
-          throw new Error("Error: You Can't Use Rich Text If It's Disabled.");
+          throw new Error("Error: You Can't Use Rich Text If It's Disabled.")
         }
         Post(args.POST, this.useCurrentDate, this.date)
       } else {
@@ -289,7 +265,7 @@ import { RichText } from "@atproto/api"
         await rt.detectFacets(agent)
 
         if (rt.facets && rt.facets.length > 0) {
-          throw new Error("Error: You Can't Use Rich Text If It's Disabled.");
+          throw new Error("Error: You Can't Use Rich Text If It's Disabled.")
         }
         Reply(
           args.REPLY,
@@ -320,11 +296,11 @@ import { RichText } from "@atproto/api"
         }
       })
     }
-    bskyOptions(args){
+    bskyPostOptions(args){
       switch (args.POST_OPTION){
         case "richText":
-          this.richText = args.ONOFF
-          break; 
+          this.richText = Scratch.Cast.toBoolean(args.ONOFF) ?? false
+          break 
         default:
           throw new Error("Error: This option doesn't exist. at all")
       }
@@ -333,12 +309,12 @@ import { RichText } from "@atproto/api"
   // The following snippet ensures compatibility with Turbowarp / Gandi IDE.
   if (Scratch.vm?.runtime) {
     // For Turbowarp
-    // @ts-ignore
+    // @ts-expect-error
     Scratch.extensions.register(new HamBskyAPI(Scratch.runtime))
   } else {
     // For Gandi
     window.tempExt = {
-      // @ts-ignore
+      // @ts-expect-error
       Extension: HamBskyAPI,
       info: {
         extensionId: "HamBskyAPI",
@@ -362,3 +338,14 @@ import { RichText } from "@atproto/api"
     }
   }
 })(Scratch)
+
+/*
+          {
+            blockType: Scratch.BlockType.BUTTON,
+            opcode: "bskyDisclaimer",
+            text: "Disclaimer (Please Read)"
+          },
+*/
+/*bskyDisclaimer(){
+      alert("DISCLAIMER: When using the \"Login\" block, NEVER use your REAL password. Use an app password instead.")
+    }*/
