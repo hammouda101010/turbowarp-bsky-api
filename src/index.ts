@@ -149,7 +149,7 @@ import { RichText } from "@atproto/api"
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyPost",
-            text: "post [POST_ICON][POST] to bluesky",
+            text: "post [POST_ICON][POST] to bluesky with embed: [EMBED]",
             arguments: {
               POST_ICON: {
                 type: Scratch.ArgumentType.IMAGE,
@@ -158,7 +158,11 @@ import { RichText } from "@atproto/api"
               POST: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: "hello!"
-              }
+              },
+              EMBED: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "(optional) use \"upload embed\" reporter!"
+              },
             }
           },
           {
@@ -231,7 +235,10 @@ import { RichText } from "@atproto/api"
         menus: {
           bskyPOST_OPTIONS: {
             acceptReporters: true,
-            items: [{ text: "rich text", value: "richText" }]
+            items: [
+              { text: "rich text", value: "richText" },
+              { text: "use current date", value: "useCurrentDate" },
+            ]
           },
           bskyONOFF: {
             acceptReporters: false,
