@@ -232,8 +232,8 @@ import { RichText } from "@atproto/api"
           bskyONOFF: {
             acceptReporters: true,
             items: [
-              { text: "on", value: true },
-              { text: "off", value: false }
+              { text: "on", value: "true" },
+              { text: "off", value: "false" }
             ]
           }
         }
@@ -244,7 +244,7 @@ import { RichText } from "@atproto/api"
       Login(args.HANDLE, args.PASSWORD)
     }
     async bskyPost(args): Promise<void> {
-      if (this.richText) {
+      if (!this.richText) {
         const rt = new RichText({ text: args.POST })
 
         await rt.detectFacets(agent)
@@ -259,7 +259,7 @@ import { RichText } from "@atproto/api"
     }
     async bskyReply(args): Promise<void> {
       const replyData = JSON.parse(args.INFO)
-      if (this.richText) {
+      if (!this.richText) {
         const rt = new RichText({ text: args.REPLY })
 
         await rt.detectFacets(agent)
@@ -297,24 +297,28 @@ import { RichText } from "@atproto/api"
       })
     }
     bskyPostOptions(args){
+      try{
       switch (args.POST_OPTION){
         case "richText":
-          this.richText = Scratch.Cast.toBoolean(args.ONOFF) ?? false
+          this.richText = Scratch.Cast.toBoolean(args.ONOFF)
           break 
         default:
           throw new Error("Error: This option doesn't exist. at all")
       }
+    }catch(error){
+      console.log(error)
     }
+  }
   }
   // The following snippet ensures compatibility with Turbowarp / Gandi IDE.
   if (Scratch.vm?.runtime) {
     // For Turbowarp
-    // @ts-expect-error
+    
     Scratch.extensions.register(new HamBskyAPI(Scratch.runtime))
   } else {
     // For Gandi
     window.tempExt = {
-      // @ts-expect-error
+      
       Extension: HamBskyAPI,
       info: {
         extensionId: "HamBskyAPI",
