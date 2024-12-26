@@ -29,7 +29,16 @@ import { RichText } from "@atproto/api"
         uint8Array[i] = byteString.charCodeAt(i);
     }
     return uint8Array;
-}
+ }
+  async function getFileSize(url) {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    if (blob.size > 1000000){
+      throw new Error("Error: File size is too big. It must be less than 1GB.")
+    }
+    console.log(`File size: ${blob.size} bytes`);
+  }
+
 
   // Utility Functions
   async function Login(handle: string, password: string) {
@@ -103,7 +112,8 @@ import { RichText } from "@atproto/api"
     }
   }
 
-  async function Upload(datauri, encoding="base64"){
+  async function Upload(datauri, encoding="base64"){ // Uploads an image or video blob to the BlueSky servers
+    getFileSize(datauri)
     return await agent.uploadBlob(convertDataURIToUint8Array(datauri), {
       encoding,
     })
@@ -235,7 +245,24 @@ import { RichText } from "@atproto/api"
           },
           {
             blockType: Scratch.BlockType.REPORTER,
-            opcode: "bskyUploadImgBlob",
+            opcode: "bskyUploadBlob",
+            text: "upload image/video blob [DATAURI] with encoding [ENCODING]",
+            arguments: {
+              DATAURI: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue:
+                  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAABrElEQVRIS+2VvUoDQRSGv+VQKQmKQj"
+              },
+              ENCODING: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "base64",
+                menu: "bskyENCODING"
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: "bskyImgEmbed",
             text: "upload image/video embed [DATAURI] with encoding [ENCODING]",
             arguments: {
               DATAURI: {
@@ -345,6 +372,9 @@ import { RichText } from "@atproto/api"
           replyData.postReplyingto
         )
       }
+    }
+    async bskyUploadBlob(args){
+      return Upload(args.DATAURI, args.ENCODING)
     }
     bskyReplyReporter(args): string { // Use this reporter for the other block above.
       return JSON.stringify({
