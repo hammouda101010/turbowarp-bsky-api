@@ -19,6 +19,18 @@ import { RichText } from "@atproto/api"
     service: "https://bsky.social"
   })
 
+  // Special Functions
+
+  function convertDataURIToUint8Array(dataURI) {
+    const byteString = atob(dataURI.split(',')[1]);
+    const arrayBuffer = new ArrayBuffer(byteString.length);
+    const uint8Array = new Uint8Array(arrayBuffer);
+    for (let i = 0; i < byteString.length; i++) {
+        uint8Array[i] = byteString.charCodeAt(i);
+    }
+    return uint8Array;
+}
+
   // Utility Functions
   async function Login(handle: string, password: string) {
     await agent.login({
@@ -91,6 +103,12 @@ import { RichText } from "@atproto/api"
     }
   }
 
+  async function Upload(datauri, encoding="base64"){
+    return await agent.uploadBlob(convertDataURIToUint8Array(datauri), {
+      encoding,
+    })
+  }
+
   function ConvertRichTextToMarkdown(rt: RichText) { // Converts rich text to Markdown
     let markdown = ""
     for (const segment of rt.segments()) {
@@ -149,7 +167,7 @@ import { RichText } from "@atproto/api"
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyPost",
-            text: "post [POST_ICON][POST] to bluesky with embed: [EMBED]",
+            text: "post [POST_ICON][POST] to bluesky with embed: [EMBED] embed type: [EMBED_TYPE]",
             arguments: {
               POST_ICON: {
                 type: Scratch.ArgumentType.IMAGE,
@@ -163,6 +181,10 @@ import { RichText } from "@atproto/api"
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: "(optional) use \"upload embed\" reporter!"
               },
+              EMBED_TYPE:{
+                type: Scratch.ArgumentType.STRING,
+                menu: "bskyEMBED_TYPES"
+              }
             }
           },
           {
@@ -212,6 +234,23 @@ import { RichText } from "@atproto/api"
             }
           },
           {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: "bskyUploadImgBlob",
+            text: "upload image/video embed [DATAURI] with encoding [ENCODING]",
+            arguments: {
+              DATAURI: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue:
+                  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAABrElEQVRIS+2VvUoDQRSGv+VQKQmKQj"
+              },
+              ENCODING: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "base64",
+                menu: "bskyENCODING"
+              }
+            }
+          },
+          {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyOptions",
             text: "set [POST_OPTION] to [ONOFF]",
@@ -245,6 +284,14 @@ import { RichText } from "@atproto/api"
             items: [
               { text: "on", value: "true" },
               { text: "off", value: "false" }
+            ]
+          },
+          bskyEMBED_TYPES: {
+            acceptReporters: true,
+            items:[
+              {text: "image", value: "app.bsky.embed.images"},
+              {text: "website card", value: "app.bsky.embed.external"},
+              {text: "video", value: "app.bsky.embed.video"}
             ]
           }
         }
