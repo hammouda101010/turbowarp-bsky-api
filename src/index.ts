@@ -112,7 +112,7 @@ import { RichText } from '@atproto/api'
     }
   }
 
-  async function Upload(datauri, encoding = 'base64') {
+  async function Upload(datauri: string, encoding: string = 'base64') {
     // Uploads an image or video blob to the BlueSky servers
     getFileSize(datauri)
     return await agent.uploadBlob(convertDataURIToUint8Array(datauri), {
@@ -357,6 +357,14 @@ import { RichText } from '@atproto/api'
               { text: 'image', value: 'app.bsky.embed.images' },
               { text: 'website card', value: 'app.bsky.embed.external' },
               { text: 'video', value: 'app.bsky.embed.video' }
+            ]
+          },
+          bskyENCODING: {
+            acceptReporters: true,
+            items: [
+              "base64",
+              "utf8",
+              "hex"
             ]
           }
         }
