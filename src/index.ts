@@ -54,15 +54,31 @@ import { RichText } from '@atproto/api'
   async function Post(
     post: string,
     useCurrentDate: boolean = true,
-    date: string = '16-12-2024'
+    date: string = '16-12-2024',
+    embed: object = {}
   ) {
     try {
-      const response = await agent.post({
-        text: post, // The Text
-        createdAt: useCurrentDate
-          ? new Date().toISOString() // If the user is using the current date, then this will use the current date.
-          : new Date(date).toISOString() // Otherwise, use the date the user assigned to it.
-      })
+      let responseObj
+
+      if (Object.keys(embed).length > 0) {
+        responseObj = {
+          text: post, // The Text
+          embed: embed, // The Image Embed
+          createdAt: useCurrentDate
+            ? new Date().toISOString() // If the user is using the current date, then this will use the current date.
+            : new Date(date).toISOString() // Otherwise, use the date the user assigned to it.
+        }
+      } else {
+        responseObj = {
+          text: post, // The Text
+          createdAt: useCurrentDate
+            ? new Date().toISOString() // If the user is using the current date, then this will use the current date.
+            : new Date(date).toISOString() // Otherwise, use the date the user assigned to it.
+        }
+      }
+
+      const response = await agent.post(responseObj)
+
       console.log(`Posted:${response}`) // Logs the post info
       if (this.richText) {
         console.log(
@@ -78,29 +94,56 @@ import { RichText } from '@atproto/api'
     useCurrentDate: boolean = true,
     date: string = '16-12-2024',
     threadRootPostArg,
-    postReplyingToArg
+    postReplyingToArg,
+    embed: object = {}
   ) {
     try {
       const threadRootPost = threadRootPostArg
       const postReplyingTo = postReplyingToArg
-      const response = await agent.post({
-        text: post, // The text (again)
-        reply: {
-          root: {
-            // the reply thread data
-            uri: threadRootPost.uri,
-            cid: threadRootPost.cid
+      let responseObj
+
+      if (Object.keys(embed).length > 0) {
+        responseObj = {
+          text: post, // The Text
+          embed: embed,
+          reply: {
+            root: {
+              // the reply thread data
+              uri: threadRootPost.uri,
+              cid: threadRootPost.cid
+            },
+            parent: {
+              // the parent post data
+              uri: postReplyingTo.uri,
+              cid: postReplyingTo.cid
+            }
+          }, // The Image Embed
+          createdAt: useCurrentDate
+            ? new Date().toISOString() // If the user is using the current date, then this will use the current date.
+            : new Date(date).toISOString() // Otherwise, use the date the user assigned to it.
+        }
+      } else {
+        responseObj = {
+          text: post, // The text (again)
+          reply: {
+            root: {
+              // the reply thread data
+              uri: threadRootPost.uri,
+              cid: threadRootPost.cid
+            },
+            parent: {
+              // the parent post data
+              uri: postReplyingTo.uri,
+              cid: postReplyingTo.cid
+            }
           },
-          parent: {
-            // the parent post data
-            uri: postReplyingTo.uri,
-            cid: postReplyingTo.cid
-          }
-        },
-        createdAt: useCurrentDate
-          ? new Date().toISOString()
-          : new Date(date).toISOString()
-      })
+          createdAt: useCurrentDate
+            ? new Date().toISOString()
+            : new Date(date).toISOString()
+        }
+      }
+
+      const response = await agent.post(responseObj)
       console.log(`Posted Reply: ${response}`)
       if (this.richText) {
         console.log(
@@ -116,7 +159,7 @@ import { RichText } from '@atproto/api'
     // Uploads an image or video blob to the BlueSky servers
     getFileSize(datauri)
     return await agent.uploadBlob(convertDataURIToUint8Array(datauri), {
-      encoding
+      encoding: encoding
     })
   }
 
@@ -147,6 +190,7 @@ import { RichText } from '@atproto/api'
       this.richText = true
     }
 
+    // @ts-ignore
     getInfo() {
       return {
         id: 'HamBskyAPI',
@@ -191,7 +235,7 @@ import { RichText } from '@atproto/api'
               },
               EMBED: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: '(optional) use "upload embed" reporter!'
+                defaultValue: ''
               },
               EMBED_TYPE: {
                 type: Scratch.ArgumentType.STRING,
@@ -202,7 +246,7 @@ import { RichText } from '@atproto/api'
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: 'bskyReply',
-            text: 'reply [POST_ICON][REPLY] to post with info:[INFO]',
+            text: 'reply [POST_ICON][REPLY] to post with info:[INFO] embed: [EMBED] embed type: [EMBED_TYPE]',
             arguments: {
               POST_ICON: {
                 type: Scratch.ArgumentType.IMAGE,
@@ -215,6 +259,14 @@ import { RichText } from '@atproto/api'
               INFO: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: 'use block below'
+              },
+              EMBED: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: ''
+              },
+              EMBED_TYPE: {
+                type: Scratch.ArgumentType.STRING,
+                menu: 'bskyEMBED_TYPES'
               }
             }
           },
@@ -245,10 +297,11 @@ import { RichText } from '@atproto/api'
               }
             }
           },
+          '---',
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyUploadBlob',
-            text: 'upload image/video blob [DATAURI] with encoding [ENCODING]',
+            text: 'upload image/video blob [DATAURI] with content-type [ENCODING]',
             arguments: {
               DATAURI: {
                 type: Scratch.ArgumentType.STRING,
@@ -265,12 +318,11 @@ import { RichText } from '@atproto/api'
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyWebCardEmbed',
-            text: 'new  website card embed with image [IMAGE] title [TITLE] and description [DESCRIPTION]',
+            text: 'new  website card embed with image [IMAGE] title [TITLE] description [DESCRIPTION] and link [LINK]',
             arguments: {
               IMAGE: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue:
-                  'image'
+                defaultValue: 'image blob'
               },
               TITLE: {
                 type: Scratch.ArgumentType.STRING,
@@ -279,6 +331,10 @@ import { RichText } from '@atproto/api'
               DESCRIPTION: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: 'this is the description of an embed'
+              },
+              LINK: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'https://example.com'
               }
             }
           },
@@ -291,9 +347,7 @@ import { RichText } from '@atproto/api'
                 type: Scratch.ArgumentType.STRING,
                 defaultValue:
                   '["array", "use image embed reporter and/or an JSON extension"]'
-              },
-              
-              
+              }
             }
           },
           {
@@ -303,8 +357,7 @@ import { RichText } from '@atproto/api'
             arguments: {
               IMAGES: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue:
-                  '["array", "use image embed reporter and (optional) an JSON extension"]'
+                defaultValue: 'use upload blob reporter'
               },
               TITLE: {
                 type: Scratch.ArgumentType.STRING,
@@ -313,9 +366,18 @@ import { RichText } from '@atproto/api'
               DESCRIPTION: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: 'this is the description of an embed'
+              },
+              WIDTH: {
+                type: Scratch.ArgumentType.NUMBER,
+                defaultValue: 1000
+              },
+              HEIGHT: {
+                type: Scratch.ArgumentType.NUMBER,
+                defaultValue: 500
               }
             }
           },
+          '---',
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: 'bskyOptions',
@@ -362,9 +424,13 @@ import { RichText } from '@atproto/api'
           bskyENCODING: {
             acceptReporters: true,
             items: [
-              "base64",
-              "utf8",
-              "hex"
+              { text: 'png', value: 'image/png' },
+              { text: 'jpg', value: 'image/jpeg' },
+              { text: 'gif', value: 'image/gif' },
+              { text: 'webp', value: 'image/webp' },
+              { text: 'svg', value: 'image/svg+xml' },
+              { text: 'tiff', value: 'image/tiff' },
+              { text: 'bmp', value: 'image/bmp' }
             ]
           }
         }
@@ -389,9 +455,19 @@ import { RichText } from '@atproto/api'
         if (rt.facets && rt.facets.length > 0) {
           throw new Error("Error: You Can't Use Rich Text If It's Disabled.")
         }
-        Post(args.POST, this.useCurrentDate, this.date)
+        if (args.EMBED) {
+          const embed = JSON.parse(args.EMBED)
+          Post(args.POST, this.useCurrentDate, this.date, embed)
+        } else {
+          Post(args.POST, this.useCurrentDate, this.date)
+        }
       } else {
-        Post(args.POST, this.useCurrentDate, this.date)
+        if (args.EMBED) {
+          const embed = JSON.parse(args.EMBED)
+          Post(args.POST, this.useCurrentDate, this.date, embed)
+        } else {
+          Post(args.POST, this.useCurrentDate, this.date)
+        }
       }
     }
     async bskyReply(args): Promise<void> {
@@ -404,49 +480,73 @@ import { RichText } from '@atproto/api'
         if (rt.facets && rt.facets.length > 0) {
           throw new Error("Error: You Can't Use Rich Text If It's Disabled.")
         }
-        Reply(
-          args.REPLY,
-          this.useCurrentDate,
-          this.date,
-          replyData.threadRootPost,
-          replyData.postReplyingto
-        )
+        if (args.EMBED) {
+          const embed = JSON.parse(args.EMBED)
+          Reply(
+            args.REPLY,
+            this.useCurrentDate,
+            this.date,
+            replyData.threadRootPost,
+            replyData.postReplyingto,
+            embed
+          )
+        } else {
+          Reply(
+            args.REPLY,
+            this.useCurrentDate,
+            this.date,
+            replyData.threadRootPost,
+            replyData.postReplyingto
+          )
+        }
       } else {
-        Reply(
-          args.REPLY,
-          this.useCurrentDate,
-          this.date,
-          replyData.threadRootPost,
-          replyData.postReplyingto
-        )
+        if (args.EMBED) {
+          const embed = JSON.parse(args.EMBED)
+          Reply(
+            args.REPLY,
+            this.useCurrentDate,
+            this.date,
+            replyData.threadRootPost,
+            replyData.postReplyingto,
+            embed
+          )
+        } else {
+          Reply(
+            args.REPLY,
+            this.useCurrentDate,
+            this.date,
+            replyData.threadRootPost,
+            replyData.postReplyingto
+          )
+        }
       }
     }
     async bskyUploadBlob(args) {
-      return Upload(args.DATAURI, args.ENCODING)
+      return JSON.stringify(Upload(args.DATAURI, args.ENCODING))
     }
     bskyWebCardEmbed(args) {
       const { data } = args.IMAGE
-      return {
+      return JSON.stringify({
         $type: 'app.bsky.embed.external',
         external: {
-          uri: args.URL,
+          uri: args.LINK,
           title: args.TITLE,
           description: args.DESCRIPTION,
           thumb: data.blob
         }
-      }
+      })
     }
     bskyImgEmbed(args) {
       return {
         $type: 'app.bsky.embed.images',
-        images: args.IMAGES
+        images: args.IMAGES ? Array.isArray(args.IMAGES) : [args.IMAGES]
       }
     }
 
     bskyImgEmbedReporter(args) {
       // Use this reporter for the embed block above.
       const { data } = args.IMAGE
-      return {
+      return JSON.stringify({
         alt: args.TEXT, // the alt text
         image: data.blob,
         aspectRatio: {
@@ -454,7 +554,7 @@ import { RichText } from '@atproto/api'
           width: args.WIDTH,
           height: args.HEIGHT
         }
-      }
+      })
     }
     bskyReplyReporter(args): string {
       // Use this reporter for the reply block.
@@ -474,6 +574,9 @@ import { RichText } from '@atproto/api'
         switch (args.POST_OPTION) {
           case 'richText':
             this.richText = Scratch.Cast.toBoolean(args.ONOFF)
+            break
+          case 'useCurrentDate':
+            this.useCurrentDate = Scratch.Cast.toBoolean(args.ONOFF)
             break
           default:
             throw new Error("Error: This option doesn't exist. at all")
