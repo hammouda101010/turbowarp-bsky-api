@@ -33,15 +33,19 @@ import { RichText } from '@atproto/api'
     const response = await fetch(url)
     const blob = await response.blob()
     if (blob.size > 1000000) {
-      throw new Error('Error: File size is too big. It must be less than 1GB.')
+      throw new Error('Error: File size is too big. It must be less than 1MB.')
     }
     console.log(`File size: ${blob.size} bytes`)
   }
 
   // Utility Functions
+
+  /**  
+   * Logs the user in the API with their BlueSky account credentrials
+  */
   async function Login(handle: string, password: string) {
     await agent.login({
-      // Logs the user in with their BlueSky account credentrials
+      
       identifier: handle,
       password: password
     })
@@ -55,7 +59,7 @@ import { RichText } from '@atproto/api'
     post: string,
     useCurrentDate: boolean = true,
     date: string = '16-12-2024',
-    embed: object = {}
+    embed = {}
   ) {
     try {
       let responseObj
@@ -155,14 +159,22 @@ import { RichText } from '@atproto/api'
     }
   }
 
-  async function Upload(datauri: string, encoding: string = 'base64') {
-    // Uploads an image or video blob to the BlueSky servers
+    /**
+     * Uploads an image or video blob to the BlueSky servers using UploadBlob
+     *  
+    */ 
+  async function Upload(datauri: string, encoding: string = 'image/png') {
+    
     getFileSize(datauri)
     return await agent.uploadBlob(convertDataURIToUint8Array(datauri), {
       encoding: encoding
     })
   }
 
+  /**
+     * Convetrs BlueSky's Rich Text to Markdown
+     *  
+    */ 
   function ConvertRichTextToMarkdown(rt: RichText) {
     // Converts rich text to Markdown
     let markdown = ''
@@ -190,7 +202,7 @@ import { RichText } from '@atproto/api'
       this.richText = true
     }
 
-    // @ts-ignore
+    
     getInfo() {
       return {
         id: 'HamBskyAPI',
@@ -203,7 +215,7 @@ import { RichText } from '@atproto/api'
           {
             blockType: Scratch.BlockType.BUTTON,
             opcode: 'bskyDisclaimer',
-            text: 'Disclaimer (Please Read)'
+            text: 'Disclaimer (Please Read)',
           },
           {
             blockType: Scratch.BlockType.COMMAND,
@@ -310,7 +322,7 @@ import { RichText } from '@atproto/api'
               },
               ENCODING: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: 'base64',
+                defaultValue: {text: 'png', value: 'image/png'},
                 menu: 'bskyENCODING'
               }
             }
@@ -377,7 +389,7 @@ import { RichText } from '@atproto/api'
               }
             }
           },
-          '---',
+          "---" ,
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: 'bskyOptions',
@@ -525,7 +537,7 @@ import { RichText } from '@atproto/api'
       return JSON.stringify(Upload(args.DATAURI, args.ENCODING))
     }
     bskyWebCardEmbed(args) {
-      const { data } = args.IMAGE
+      const  data  = args.IMAGE
       return JSON.stringify({
         $type: 'app.bsky.embed.external',
         external: {
@@ -545,7 +557,7 @@ import { RichText } from '@atproto/api'
 
     bskyImgEmbedReporter(args) {
       // Use this reporter for the embed block above.
-      const { data } = args.IMAGE
+      const  data  = args.IMAGE
       return JSON.stringify({
         alt: args.TEXT, // the alt text
         image: data.blob,
