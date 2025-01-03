@@ -365,9 +365,9 @@ import { RichText } from '@atproto/api'
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyImgEmbedReporter',
-            text: 'image embed with image [IMAGES] alt text [DESCRIPTION] width [WIDTH] and height [HEIGHT]',
+            text: 'image embed with image [IMAGE] alt text [DESCRIPTION] width [WIDTH] and height [HEIGHT]',
             arguments: {
-              IMAGES: {
+              IMAGE: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: 'use upload blob reporter'
               },
