@@ -83,7 +83,7 @@ import { RichText } from '@atproto/api'
 
       const response = await agent.post(responseObj)
 
-      console.log(`Posted:${response}`) // Logs the post info
+      console.log(`Posted:${JSON.stringify(response)}`) // Logs the post info
       if (this.richText) {
         console.log(
           `Markdown Version of This Reply: ${ConvertRichTextToMarkdown(new RichText({ text: post }))}` // Logs the Markdown version of the post's text if rich text is enabled.
@@ -549,10 +549,10 @@ import { RichText } from '@atproto/api'
       })
     }
     bskyImgEmbed(args) {
-      return {
+      return JSON.stringify({
         $type: 'app.bsky.embed.images',
-        images: args.IMAGES ? Array.isArray(args.IMAGES) : [args.IMAGES]
-      }
+        images: Array.isArray(args.IMAGES)  ? args.IMAGES : [args.IMAGES]
+      })
     }
 
     bskyImgEmbedReporter(args) {
