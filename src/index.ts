@@ -40,12 +40,11 @@ import { RichText } from '@atproto/api'
 
   // Utility Functions
 
-  /**  
+  /**
    * Logs the user in the API with their BlueSky account credentrials
-  */
+   */
   async function Login(handle: string, password: string) {
     await agent.login({
-      
       identifier: handle,
       password: password
     })
@@ -55,6 +54,8 @@ import { RichText } from '@atproto/api'
   } // This will also create a session
 
   // Posting, Repling
+
+  /** For posting on BlueSky */
   async function Post(
     post: string,
     useCurrentDate: boolean = true,
@@ -159,12 +160,11 @@ import { RichText } from '@atproto/api'
     }
   }
 
-    /**
-     * Uploads an image or video blob to the BlueSky servers using UploadBlob
-     *  
-    */ 
+  /**
+   * Uploads an image or video blob to the BlueSky servers using UploadBlob
+   *
+   */
   async function Upload(datauri: string, encoding: string = 'image/png') {
-    
     getFileSize(datauri)
     return await agent.uploadBlob(convertDataURIToUint8Array(datauri), {
       encoding: encoding
@@ -172,9 +172,9 @@ import { RichText } from '@atproto/api'
   }
 
   /**
-     * Convetrs BlueSky's rich text to Markdown
-     *  
-    */ 
+   * Convetrs BlueSky's rich text to Markdown
+   *
+   */
   function ConvertRichTextToMarkdown(rt: RichText) {
     // Converts rich text to Markdown
     let markdown = ''
@@ -202,7 +202,6 @@ import { RichText } from '@atproto/api'
       this.richText = true
     }
 
-    
     getInfo() {
       return {
         id: 'HamBskyAPI',
@@ -215,7 +214,7 @@ import { RichText } from '@atproto/api'
           {
             blockType: Scratch.BlockType.BUTTON,
             func: 'bskyDisclaimer',
-            text: 'Disclaimer (Please Read)',
+            text: 'Disclaimer (Please Read)'
           },
           {
             blockType: Scratch.BlockType.COMMAND,
@@ -235,7 +234,7 @@ import { RichText } from '@atproto/api'
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: 'bskyPost',
-            text: 'post [POST_ICON][POST] to bluesky with embed: [EMBED] embed type: [EMBED_TYPE]',
+            text: 'post [POST_ICON][POST] to bluesky with embed: [EMBED]',
             arguments: {
               POST_ICON: {
                 type: Scratch.ArgumentType.IMAGE,
@@ -248,17 +247,13 @@ import { RichText } from '@atproto/api'
               EMBED: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: ''
-              },
-              EMBED_TYPE: {
-                type: Scratch.ArgumentType.STRING,
-                menu: 'bskyEMBED_TYPES'
               }
             }
           },
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: 'bskyReply',
-            text: 'reply [POST_ICON][REPLY] to post with info:[INFO] embed: [EMBED] embed type: [EMBED_TYPE]',
+            text: 'reply [POST_ICON][REPLY] to post with info:[INFO] embed: [EMBED]',
             arguments: {
               POST_ICON: {
                 type: Scratch.ArgumentType.IMAGE,
@@ -275,10 +270,6 @@ import { RichText } from '@atproto/api'
               EMBED: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: ''
-              },
-              EMBED_TYPE: {
-                type: Scratch.ArgumentType.STRING,
-                menu: 'bskyEMBED_TYPES'
               }
             }
           },
@@ -364,17 +355,13 @@ import { RichText } from '@atproto/api'
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyImgEmbedReporter',
-            text: 'image embed with image [IMAGE] alt text [DESCRIPTION] width [WIDTH] and height [HEIGHT]',
+            text: 'image embed with image [IMAGE] alt text [TEXT] width [WIDTH] and height [HEIGHT]',
             arguments: {
               IMAGE: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: 'use upload blob reporter'
               },
-              TITLE: {
-                type: Scratch.ArgumentType.STRING,
-                defaultValue: 'title'
-              },
-              DESCRIPTION: {
+              TEXT: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: 'this is the description of an embed'
               },
@@ -388,7 +375,7 @@ import { RichText } from '@atproto/api'
               }
             }
           },
-          "---" ,
+          '---',
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: 'bskyPostOptions',
@@ -424,14 +411,7 @@ import { RichText } from '@atproto/api'
               { text: 'off', value: 'false' }
             ]
           },
-          bskyEMBED_TYPES: {
-            acceptReporters: true,
-            items: [
-              { text: 'image', value: 'app.bsky.embed.images' },
-              { text: 'website card', value: 'app.bsky.embed.external' },
-              { text: 'video', value: 'app.bsky.embed.video' }
-            ]
-          },
+
           bskyENCODING: {
             acceptReporters: true,
             items: [
@@ -537,7 +517,7 @@ import { RichText } from '@atproto/api'
       return JSON.stringify(blob)
     }
     bskyWebCardEmbed(args) {
-      const  { data }  = JSON.parse(args.IMAGE)
+      const { data } = JSON.parse(args.IMAGE)
       return JSON.stringify({
         $type: 'app.bsky.embed.external',
         external: {
@@ -551,13 +531,15 @@ import { RichText } from '@atproto/api'
     bskyImgEmbed(args) {
       return JSON.stringify({
         $type: 'app.bsky.embed.images',
-        images: Array.isArray(args.IMAGES)  ? args.IMAGES : [args.IMAGES]
+        images: Array.isArray(args.IMAGES)
+          ? JSON.parse(args.IMAGES)
+          : [JSON.parse(args.IMAGES)]
       })
     }
 
     bskyImgEmbedReporter(args) {
       // Use this reporter for the embed block above.
-      const  { data }  = JSON.parse(args.IMAGE)
+      const { data } = JSON.parse(args.IMAGE)
       return JSON.stringify({
         alt: args.TEXT, // the alt text
         image: data.blob,
@@ -627,10 +609,9 @@ import { RichText } from '@atproto/api'
         },
         fr: {
           'newExtension.name': 'API BlueSky',
-          'newExtension.description': 'Interagis avec L\'API BlueSky!'
+          'newExtension.description': "Interagis avec L'API BlueSky!"
         }
       }
     }
   }
 })(Scratch)
-
