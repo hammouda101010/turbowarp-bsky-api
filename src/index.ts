@@ -172,7 +172,7 @@ import { RichText } from '@atproto/api'
   }
 
   /**
-     * Convetrs BlueSky's Rich Text to Markdown
+     * Convetrs BlueSky's rich text to Markdown
      *  
     */ 
   function ConvertRichTextToMarkdown(rt: RichText) {
@@ -214,7 +214,7 @@ import { RichText } from '@atproto/api'
         blocks: [
           {
             blockType: Scratch.BlockType.BUTTON,
-            opcode: 'bskyDisclaimer',
+            func: 'bskyDisclaimer',
             text: 'Disclaimer (Please Read)',
           },
           {
@@ -322,7 +322,6 @@ import { RichText } from '@atproto/api'
               },
               ENCODING: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: {text: 'png', value: 'image/png'},
                 menu: 'bskyENCODING'
               }
             }
@@ -392,7 +391,7 @@ import { RichText } from '@atproto/api'
           "---" ,
           {
             blockType: Scratch.BlockType.COMMAND,
-            opcode: 'bskyOptions',
+            opcode: 'bskyPostOptions',
             text: 'set [POST_OPTION] to [ONOFF]',
             arguments: {
               POST_OPTION: {
@@ -534,10 +533,11 @@ import { RichText } from '@atproto/api'
       }
     }
     async bskyUploadBlob(args) {
-      return JSON.stringify(Upload(args.DATAURI, args.ENCODING))
+      const blob = await Upload(args.DATAURI, args.ENCODING)
+      return JSON.stringify(blob)
     }
     bskyWebCardEmbed(args) {
-      const  data  = args.IMAGE
+      const  { data }  = JSON.parse(args.IMAGE)
       return JSON.stringify({
         $type: 'app.bsky.embed.external',
         external: {
@@ -557,7 +557,7 @@ import { RichText } from '@atproto/api'
 
     bskyImgEmbedReporter(args) {
       // Use this reporter for the embed block above.
-      const  data  = args.IMAGE
+      const  { data }  = JSON.parse(args.IMAGE)
       return JSON.stringify({
         alt: args.TEXT, // the alt text
         image: data.blob,
@@ -624,19 +624,13 @@ import { RichText } from '@atproto/api'
         en: {
           'newExtension.name': 'BlueSky API',
           'newExtension.description': 'Interact with the BlueSky API!'
+        },
+        fr: {
+          'newExtension.name': 'API BlueSky',
+          'newExtension.description': 'Interagis avec L\'API BlueSky!'
         }
       }
     }
   }
 })(Scratch)
 
-/*
-          {
-            blockType: Scratch.BlockType.BUTTON,
-            opcode: "bskyDisclaimer",
-            text: "Disclaimer (Please Read)"
-          },
-*/
-/*bskyDisclaimer(){
-      alert("DISCLAIMER: When using the \"Login\" block, NEVER use your REAL password. Use an app password instead.")
-    }*/
