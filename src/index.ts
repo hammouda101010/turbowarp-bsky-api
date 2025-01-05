@@ -445,6 +445,30 @@ import { RichText } from '@atproto/api'
               
             }
           },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskyGetAuthorFeed',
+            text: 'get the author [URI] feed with filter [FILTER] cursor [CURSOR] and limit [LIMIT]',
+            arguments: {
+              URI: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'did:plc:z72i7hdynmk6r22z27h6tvur'
+              },
+              FILTER: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'posts_with_replies'
+              },
+              CURSOR: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: ''
+              },
+              LIMIT: {
+                type: Scratch.ArgumentType.NUMBER,
+                defaultValue: 50
+              },
+              
+            }
+          },
         ],
         menus: {
           bskyPOST_OPTIONS: {
