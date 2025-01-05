@@ -217,6 +217,10 @@ import { RichText } from '@atproto/api'
             text: 'Disclaimer (Please Read)'
           },
           {
+            blockType: Scratch.BlockType.LABEL,
+            text: 'Creating Posts'
+          },
+          {
             blockType: Scratch.BlockType.COMMAND,
             opcode: 'bskyLogin',
             text: 'login to bluesky API with handle: [HANDLE] and password: [PASSWORD]',
@@ -393,8 +397,54 @@ import { RichText } from '@atproto/api'
           },
           {
             blockType: Scratch.BlockType.LABEL,
-            text: 'Fetching'
-          }
+            text: 'Viewing Feeds'
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskyGetTimeline',
+            text: 'get my timeline with cursor [CURSOR] and limit [LIMIT]',
+            arguments: {
+              CURSOR: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: ''
+              },
+              LIMIT: {
+                type: Scratch.ArgumentType.NUMBER,
+                defaultValue: 30                                                                                                                                                                                                            
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskyGetFeed',
+            text: 'get feed at [URI] with cursor [CURSOR] and limit [LIMIT]',
+            arguments: {
+              URI: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot'
+              },
+              CURSOR: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: ''
+              },
+              LIMIT: {
+                type: Scratch.ArgumentType.NUMBER,
+                defaultValue: 30                                                                                                                                                                                                            
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskyGetFeedGenerator',
+            text: 'get feed generator at [URI]',
+            arguments: {
+              URI: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot'
+              },
+              
+            }
+          },
         ],
         menus: {
           bskyPOST_OPTIONS: {
@@ -579,6 +629,34 @@ import { RichText } from '@atproto/api'
         console.log(error)
       }
     }
+
+    // Viewing Feeds
+    async bskyGetTimeline(args) {
+      const { data } = await agent.getTimeline({
+        cursor: args.CURSOR,
+        limit: args.LIMIT,
+      });
+
+      return JSON.stringify(data)
+   }
+   async bskyGetFeed(args) {
+    const { data } = await agent.app.bsky.feed.getFeed({
+      feed: args.URI,
+      cursor: args.CURSOR,
+      limit: args.LIMIT,
+    })
+
+    return JSON.stringify(data)
+ }
+ async bskyGetFeedGenerator(args) {
+  const { data } = await agent.app.bsky.feed.getFeedGenerator({
+    feed: args.URI,
+  })
+  
+
+  return JSON.stringify(data)
+}
+
   }
   // The following snippet ensures compatibility with Turbowarp / Gandi IDE.
   if (Scratch.vm?.runtime) {
