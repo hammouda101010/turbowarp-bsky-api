@@ -448,7 +448,7 @@ import { RichText } from '@atproto/api'
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyGetAuthorFeed',
-            text: 'get the author [URI] feed with filter [FILTER] cursor [CURSOR] and limit [LIMIT]',
+            text: 'get the author\'s [URI] feed with filter [FILTER] cursor [CURSOR] and limit [LIMIT]',
             arguments: {
               URI: {
                 type: Scratch.ArgumentType.STRING,
@@ -456,7 +456,7 @@ import { RichText } from '@atproto/api'
               },
               FILTER: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: 'posts_with_replies'
+                menu: "bskyAUTHOR_FEED_FILTERS"
               },
               CURSOR: {
                 type: Scratch.ArgumentType.STRING,
@@ -496,6 +496,15 @@ import { RichText } from '@atproto/api'
               { text: 'svg', value: 'image/svg+xml' },
               { text: 'tiff', value: 'image/tiff' },
               { text: 'bmp', value: 'image/bmp' }
+            ]
+          },
+          bskyAUTHOR_FEED_FILTERS:{
+            acceptReportets: true,
+            items: [
+              {text: "posts and replies", value: "posts_with_replies"},
+              {text: "posts only", value: "posts_no_replies"},
+              {text: "posts with media", value: "posts_with_media"},
+              {text: "posts and author threads", value: "posts_and_author_threads"},
             ]
           }
         }
@@ -669,7 +678,7 @@ import { RichText } from '@atproto/api'
       cursor: args.CURSOR,
       limit: args.LIMIT,
     })
-
+ 
     return JSON.stringify(data)
  }
  async bskyGetFeedGenerator(args) {
@@ -677,6 +686,16 @@ import { RichText } from '@atproto/api'
     feed: args.URI,
   })
   
+  return JSON.stringify(data)
+}
+
+async bskyGetAuthorFeed(args){
+  const { data } = await agent.getAuthorFeed({
+    actor: args.URI,
+    filter: args.FILTER,
+    cursor: args.CURSOR,
+    limit: args.LIMIT,
+  })
 
   return JSON.stringify(data)
 }
