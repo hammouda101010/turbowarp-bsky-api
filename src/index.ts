@@ -20,16 +20,40 @@ import { RichText } from '@atproto/api'
 
   // Special Functions
 
-  function convertDataURIToUint8Array(dataURI) {
-    const byteString = atob(dataURI.split(',')[1])
-    const arrayBuffer = new ArrayBuffer(byteString.length)
-    const uint8Array = new Uint8Array(arrayBuffer)
-    for (let i = 0; i < byteString.length; i++) {
-      uint8Array[i] = byteString.charCodeAt(i)
-    }
-    return uint8Array
+  /** Converts an image/video URL into a readable DataURI
+   * @param {string} URL - The URL of the image/video
+   */
+  async function URLAsDataURI(URL: string) {
+    const response = await fetch(URL);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
   }
-  async function getFileSize(url) {
+
+  /** Converts a DataURI into an Unit8Array
+   * @param {any} dataURI - The DataURI of the image/video
+   */
+  async function convertDataURIToUint8Array(dataURI: string ) {
+    if (dataURI.startsWith('http') || dataURI.startsWith('https')) {
+      dataURI = await URLAsDataURI(dataURI) as string;
+    }
+    const byteString = atob(dataURI.split(',')[1]);
+    const arrayBuffer = new ArrayBuffer(byteString.length);
+    const uint8Array = new Uint8Array(arrayBuffer);
+    for (let i = 0; i < byteString.length; i++) {
+      uint8Array[i] = byteString.charCodeAt(i);
+    }
+    return uint8Array;
+  }
+
+  /**
+   * Gets The File Size of An Image, to Respect the Upload Limit in BlueSky.
+   */
+  async function getFileSize(url: string) {
     const response = await fetch(url)
     const blob = await response.blob()
     if (blob.size > 1000000) {
@@ -149,7 +173,7 @@ import { RichText } from '@atproto/api'
       }
 
       const response = await agent.post(responseObj)
-      console.log(`Posted Reply: ${response}`)
+      console.log(`Posted Reply: ${JSON.stringify(response)}`)
       if (this.richText) {
         console.log(
           `Markdown Version of This Reply: ${ConvertRichTextToMarkdown(new RichText({ text: post }))}`
@@ -165,9 +189,18 @@ import { RichText } from '@atproto/api'
    *
    */
   async function Upload(datauri: string, encoding: string = 'image/png') {
-    getFileSize(datauri)
-    return await agent.uploadBlob(convertDataURIToUint8Array(datauri), {
+
+    getFileSize(datauri) // Check the File Size of the Image
+
+    const Unit8Array = await convertDataURIToUint8Array(datauri) // Get The Data of The URI
+
+    return await agent.uploadBlob(Unit8Array , {
       encoding: encoding
+    }).then((response) => {
+      console.log(`Uploaded Blob: ${JSON.stringify(response)}`)
+    })
+      .catch((error) => {
+        console.error(`Error Uploading Blob: ${error}`)
     })
   }
 
@@ -201,7 +234,8 @@ import { RichText } from '@atproto/api'
       this.date = new Date().toISOString()
       this.richText = true
     }
-
+    
+    //@ts-ignore
     getInfo() {
       return {
         id: 'HamBskyAPI',
@@ -517,8 +551,8 @@ import { RichText } from '@atproto/api'
       )
     }
 
-    bskyLogin(args): void {
-      Login(args.HANDLE, args.PASSWORD)
+    async bskyLogin(args): Promise<void> {
+      await Login(args.HANDLE, args.PASSWORD)
     }
     async bskyPost(args): Promise<void> {
       if (!this.richText) {
@@ -531,16 +565,16 @@ import { RichText } from '@atproto/api'
         }
         if (args.EMBED) {
           const embed = JSON.parse(args.EMBED)
-          Post(args.POST, this.useCurrentDate, this.date, embed)
+          await Post(args.POST, this.useCurrentDate, this.date, embed)
         } else {
-          Post(args.POST, this.useCurrentDate, this.date)
+          await Post(args.POST, this.useCurrentDate, this.date)
         }
       } else {
         if (args.EMBED) {
           const embed = JSON.parse(args.EMBED)
-          Post(args.POST, this.useCurrentDate, this.date, embed)
+          await Post(args.POST, this.useCurrentDate, this.date, embed)
         } else {
-          Post(args.POST, this.useCurrentDate, this.date)
+          await Post(args.POST, this.useCurrentDate, this.date)
         }
       }
     }
@@ -556,7 +590,7 @@ import { RichText } from '@atproto/api'
         }
         if (args.EMBED) {
           const embed = JSON.parse(args.EMBED)
-          Reply(
+          await Reply(
             args.REPLY,
             this.useCurrentDate,
             this.date,
@@ -565,7 +599,7 @@ import { RichText } from '@atproto/api'
             embed
           )
         } else {
-          Reply(
+          await Reply(
             args.REPLY,
             this.useCurrentDate,
             this.date,
@@ -576,7 +610,7 @@ import { RichText } from '@atproto/api'
       } else {
         if (args.EMBED) {
           const embed = JSON.parse(args.EMBED)
-          Reply(
+          await Reply(
             args.REPLY,
             this.useCurrentDate,
             this.date,
@@ -585,7 +619,7 @@ import { RichText } from '@atproto/api'
             embed
           )
         } else {
-          Reply(
+          await Reply(
             args.REPLY,
             this.useCurrentDate,
             this.date,
@@ -705,10 +739,12 @@ async bskyGetAuthorFeed(args){
   if (Scratch.vm?.runtime) {
     // For Turbowarp
 
+    //@ts-ignore
     Scratch.extensions.register(new HamBskyAPI(Scratch.runtime))
   } else {
     // For Gandi
     window.tempExt = {
+      //@ts-ignore
       Extension: HamBskyAPI,
       info: {
         extensionId: 'HamBskyAPI',
