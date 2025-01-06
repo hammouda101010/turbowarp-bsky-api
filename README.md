@@ -12,8 +12,8 @@ Hello! this is the unofficial extension for the BlueSky API!
 ## 💻🔨🦋🦋 Development 🦋🦋🔨💻
 Clone and install this repo on your machine to get started.
 ```
-git clone git@github.com/cloudlink-omega/extension.git
-cd extension
+git clone git@github.com:hammouda101010/turbowarp-bsky-api.git
+cd turbowarp-bsky-api
 npm install
 ```
 
@@ -36,4 +36,5 @@ Thanks for this scaffolding: [FurryR/scratch-ext](https://github.com/FurryR/scra
 Original API: [BlueSky TypeScript API](https://github.com/bluesky-social/atproto/tree/main/packages/api)
 
 ### Notes
-This Repository is licensed under the MIT license 👍📑
+This Repository is licensed under the MIT license 👍📑 \
+Copied Some Text [Here](https://github.com/cloudlink-omega/extension)
