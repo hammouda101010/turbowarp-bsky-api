@@ -31,9 +31,10 @@ Build for Turbowarp (format to match its prettier): `npm run build:turbowarp`
 
 Development server: `npm run start` (Extension: http://localhost:8080/index.global.js)
 
-## 📑🦋💙🦋🦋 Credits/Awknowlegments 🦋🦋💙🦋📑
+## 📑🦋💙🦋🦋 Credits/Aknowlegments 🦋🦋💙🦋📑
 Thanks for this scaffolding: [FurryR/scratch-ext](https://github.com/FurryR/scratch-ext/tree/main) \
-Original API: [BlueSky TypeScript API](https://github.com/bluesky-social/atproto/tree/main/packages/api)
+Original API: [BlueSky TypeScript API](https://github.com/bluesky-social/atproto/tree/main/packages/api) \
+Extension Images are From [SVG Repo](https://www.svgrepo.com/) \
 
 ### Notes
 This Repository is licensed under the MIT license 👍📑 \

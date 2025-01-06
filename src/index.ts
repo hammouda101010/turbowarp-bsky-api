@@ -14,6 +14,8 @@ import { RichText } from '@atproto/api'
     'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhLS0gVXBsb2FkZWQgdG86IFNWRyBSZXBvLCB3d3cuc3ZncmVwby5jb20sIEdlbmVyYXRvcjogU1ZHIFJlcG8gTWl4ZXIgVG9vbHMgLS0+Cgo8c3ZnCiAgIGZpbGw9IiMwMDAwMDAiCiAgIGhlaWdodD0iODAwcHgiCiAgIHdpZHRoPSI4MDBweCIKICAgdmVyc2lvbj0iMS4xIgogICBpZD0iQ2FwYV8xIgogICB2aWV3Qm94PSIwIDAgMzcxLjExNyAzNzEuMTE3IgogICB4bWw6c3BhY2U9InByZXNlcnZlIgogICBzb2RpcG9kaTpkb2NuYW1lPSJibGFjay1zcGVlY2gtYnViYmxlLXN2Z3JlcG8tY29tLnN2ZyIKICAgaW5rc2NhcGU6dmVyc2lvbj0iMS4zLjIgKDA5MWUyMGUsIDIwMjMtMTEtMjUsIGN1c3RvbSkiCiAgIHhtbG5zOmlua3NjYXBlPSJodHRwOi8vd3d3Lmlua3NjYXBlLm9yZy9uYW1lc3BhY2VzL2lua3NjYXBlIgogICB4bWxuczpzb2RpcG9kaT0iaHR0cDovL3NvZGlwb2RpLnNvdXJjZWZvcmdlLm5ldC9EVEQvc29kaXBvZGktMC5kdGQiCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgeG1sbnM6c3ZnPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnMKICAgaWQ9ImRlZnMxIiAvPjxzb2RpcG9kaTpuYW1lZHZpZXcKICAgaWQ9Im5hbWVkdmlldzEiCiAgIHBhZ2Vjb2xvcj0iI2ZmZmZmZiIKICAgYm9yZGVyY29sb3I9IiMwMDAwMDAiCiAgIGJvcmRlcm9wYWNpdHk9IjAuMjUiCiAgIGlua3NjYXBlOnNob3dwYWdlc2hhZG93PSIyIgogICBpbmtzY2FwZTpwYWdlb3BhY2l0eT0iMC4wIgogICBpbmtzY2FwZTpwYWdlY2hlY2tlcmJvYXJkPSIwIgogICBpbmtzY2FwZTpkZXNrY29sb3I9IiNkMWQxZDEiCiAgIGlua3NjYXBlOnpvb209IjEuMDE2MjUiCiAgIGlua3NjYXBlOmN4PSI0MDAiCiAgIGlua3NjYXBlOmN5PSI0MDAiCiAgIGlua3NjYXBlOndpbmRvdy13aWR0aD0iMTkyMCIKICAgaW5rc2NhcGU6d2luZG93LWhlaWdodD0iMTAwOSIKICAgaW5rc2NhcGU6d2luZG93LXg9Ii04IgogICBpbmtzY2FwZTp3aW5kb3cteT0iLTgiCiAgIGlua3NjYXBlOndpbmRvdy1tYXhpbWl6ZWQ9IjEiCiAgIGlua3NjYXBlOmN1cnJlbnQtbGF5ZXI9IkNhcGFfMSIgLz4KPHBhdGgKICAgZD0iTTMxNi4zMyw2NC41NTZjLTM0Ljk4Mi0yNy42MDctODEuNDI0LTQyLjgxMS0xMzAuNzcyLTQyLjgxMWMtNDkuMzQ4LDAtOTUuNzksMTUuMjA0LTEzMC43NzEsNDIuODExICBDMTkuNDU3LDkyLjQzOCwwLDEyOS42MTUsMCwxNjkuMjM4YzAsMjMuODM1LDcuMzA4LDQ3LjUwOCwyMS4xMzMsNjguNDZjMTIuNzU5LDE5LjMzNSwzMS4wNywzNi40Miw1My4wODgsNDkuNTY0ICBjLTEuMDE2LDcuMTE2LTYuNDg3LDI3Ljk0MS0zNS44ODgsNTIuNzU5Yy0xLjUxMywxLjI3OC0yLjEzLDMuMzI4LTEuNTcyLDUuMjI5YzAuNTU4LDEuOSwyLjE4NSwzLjI5Miw0LjE0OCwzLjU1ICBjMC4xNzgsMC4wMjMsNC40NTQsMC41NzIsMTIuMDUyLDAuNTcyYzIxLjY2NSwwLDY1LjkzOS00LjMwMiwxMjAuMDYzLTMyLjk3M2M0LjE3NywwLjIyMSw4LjM4NywwLjMzMywxMi41MzQsMC4zMzMgIGM0OS4zNDgsMCw5NS43ODktMTUuMjA0LDEzMC43NzItNDIuODExYzM1LjMzLTI3Ljg4Miw1NC43ODctNjUuMDU5LDU0Ljc4Ny0xMDQuNjgzQzM3MS4xMTcsMTI5LjYxNSwzNTEuNjYsOTIuNDM4LDMxNi4zMyw2NC41NTZ6IgogICBpZD0icGF0aDEiCiAgIHN0eWxlPSJmaWxsOiNmZmZmZmY7ZmlsbC1vcGFjaXR5OjEiIC8+Cjwvc3ZnPgo='
   const TwoSpeechBubbleIcon =
     'https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/two-speech-bubbles-svgrepo-com.svg'
+  const ImageIcon =
+    'https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/photo-image-svgrepo-com.svg'
   // Objects
   const agent = new AtpAgent({
     service: 'https://bsky.social'
@@ -345,6 +347,7 @@ import { RichText } from '@atproto/api'
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyUploadBlob',
             text: 'upload image/video blob [DATAURI] with content-type [ENCODING]',
+            blockIconURI: ImageIcon,
             arguments: {
               DATAURI: {
                 type: Scratch.ArgumentType.STRING,
@@ -357,33 +360,12 @@ import { RichText } from '@atproto/api'
               }
             }
           },
-          {
-            blockType: Scratch.BlockType.REPORTER,
-            opcode: 'bskyWebCardEmbed',
-            text: 'new  website card embed with image [IMAGE] title [TITLE] description [DESCRIPTION] and link [LINK]',
-            arguments: {
-              IMAGE: {
-                type: Scratch.ArgumentType.STRING,
-                defaultValue: 'image blob'
-              },
-              TITLE: {
-                type: Scratch.ArgumentType.STRING,
-                defaultValue: 'title'
-              },
-              DESCRIPTION: {
-                type: Scratch.ArgumentType.STRING,
-                defaultValue: 'this is the description of an embed'
-              },
-              LINK: {
-                type: Scratch.ArgumentType.STRING,
-                defaultValue: 'https://example.com'
-              }
-            }
-          },
+
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyImgEmbed',
             text: 'new  image embed with images [IMAGES]',
+            blockIconURI: ImageIcon,
             arguments: {
               IMAGES: {
                 type: Scratch.ArgumentType.STRING,
@@ -396,6 +378,7 @@ import { RichText } from '@atproto/api'
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyImgEmbedReporter',
             text: 'image embed with image [IMAGE] alt text [TEXT] width [WIDTH] and height [HEIGHT]',
+            blockIconURI: ImageIcon,
             arguments: {
               IMAGE: {
                 type: Scratch.ArgumentType.STRING,
@@ -412,6 +395,30 @@ import { RichText } from '@atproto/api'
               HEIGHT: {
                 type: Scratch.ArgumentType.NUMBER,
                 defaultValue: 500
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskyWebCardEmbed',
+            text: 'new  website card embed with image [IMAGE] title [TITLE] description [DESCRIPTION] and link [LINK]',
+            blockIconURI: ImageIcon,
+            arguments: {
+              IMAGE: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'image blob'
+              },
+              TITLE: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'title'
+              },
+              DESCRIPTION: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'this is the description of an embed'
+              },
+              LINK: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'https://example.com'
               }
             }
           },
