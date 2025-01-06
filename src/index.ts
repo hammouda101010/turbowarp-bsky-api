@@ -7,6 +7,9 @@ import { RichText } from '@atproto/api'
   }
   // The extension"s code
 
+  // Scratch's Stuff
+  const vm = Scratch.vm
+
   // Icons
   const bskyIcon =
     'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICAgd2lkdGg9IjY0IgogICBoZWlnaHQ9IjY0IgogICB2aWV3Qm94PSIwIDAgNjQgNjQiCiAgIGZpbGw9Im5vbmUiCiAgIHZlcnNpb249IjEuMSIKICAgaWQ9InN2ZzEiCiAgIHNvZGlwb2RpOmRvY25hbWU9ImJsdWVza3lfbWVkaWFfa2l0X2xvZ28uc3ZnIgogICBpbmtzY2FwZTp2ZXJzaW9uPSIxLjMuMiAoMDkxZTIwZSwgMjAyMy0xMS0yNSwgY3VzdG9tKSIKICAgeG1sbnM6aW5rc2NhcGU9Imh0dHA6Ly93d3cuaW5rc2NhcGUub3JnL25hbWVzcGFjZXMvaW5rc2NhcGUiCiAgIHhtbG5zOnNvZGlwb2RpPSJodHRwOi8vc29kaXBvZGkuc291cmNlZm9yZ2UubmV0L0RURC9zb2RpcG9kaS0wLmR0ZCIKICAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIgogICB4bWxuczpzdmc9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcwogICAgIGlkPSJkZWZzMSIgLz4KICA8c29kaXBvZGk6bmFtZWR2aWV3CiAgICAgaWQ9Im5hbWVkdmlldzEiCiAgICAgcGFnZWNvbG9yPSIjZmZmZmZmIgogICAgIGJvcmRlcmNvbG9yPSIjMDAwMDAwIgogICAgIGJvcmRlcm9wYWNpdHk9IjAuMjUiCiAgICAgaW5rc2NhcGU6c2hvd3BhZ2VzaGFkb3c9IjIiCiAgICAgaW5rc2NhcGU6cGFnZW9wYWNpdHk9IjAuMCIKICAgICBpbmtzY2FwZTpwYWdlY2hlY2tlcmJvYXJkPSIwIgogICAgIGlua3NjYXBlOmRlc2tjb2xvcj0iI2QxZDFkMSIKICAgICBpbmtzY2FwZTp6b29tPSIxLjYyMjc1NDUiCiAgICAgaW5rc2NhcGU6Y3g9IjI4My43NzY3NSIKICAgICBpbmtzY2FwZTpjeT0iMjAxLjgxNzM0IgogICAgIGlua3NjYXBlOndpbmRvdy13aWR0aD0iMTkyMCIKICAgICBpbmtzY2FwZTp3aW5kb3ctaGVpZ2h0PSIxMDA5IgogICAgIGlua3NjYXBlOndpbmRvdy14PSItOCIKICAgICBpbmtzY2FwZTp3aW5kb3cteT0iLTgiCiAgICAgaW5rc2NhcGU6d2luZG93LW1heGltaXplZD0iMSIKICAgICBpbmtzY2FwZTpjdXJyZW50LWxheWVyPSJzdmcxIiAvPgogIDxwYXRoCiAgICAgZD0iTSAxMy44NzI3ODksNC4zMDc5MzE3IEMgMjEuMjEwMjU0LDEwLjU2NDI0MyAyOS4xMDIwODUsMjMuMjQ5NyAzMiwzMC4wNTY2OCAzNC44OTc5MTUsMjMuMjQ5NyA0Mi43ODk3NDYsMTAuNTY0MjQzIDUwLjEyNzIxMiw0LjMwNzkzMTcgNTUuNDIxNTIxLC0wLjIwNjI3Njc5IDY0LC0zLjY5OTE2MiA2NCw3LjQxNTM4OCA2NCw5LjYzNTA1MjggNjIuODc5NDM3LDI2LjA2MjIyNSA2Mi4yMjIxOTgsMjguNzI5Mzc1IDU5LjkzNzY5LDM4LjAwMTE4MyA1MS42MTMxODQsNDAuMzY2MDY4IDQ0LjIwODExMywzOC45MzQ3MjQgNTcuMTUxNzc1LDQxLjQzNjY2NSA2MC40NDQzOTQsNDkuNzI0MDAxIDUzLjMzMzI5Niw1OC4wMTEzMzUgMzkuODI3OTQ0LDczLjc1MDYxNyAzMy45MjIzNjcsNTQuMDYyMzEgMzIuNDA5MTI3LDQ5LjAxNzQ3OCAzMi4xMzE3MTgsNDguMDkyNjM4IDMyLjAwMTkxNiw0Ny42NTk5NzIgMzIsNDguMDI3ODg2IDMxLjk5ODEsNDcuNjU5OTcyIDMxLjg2ODI4Miw0OC4wOTI2MzYgMzEuNTkwODczLDQ5LjAxNzQ3OCAzMC4wNzc2MzQsNTQuMDYyMzEgMjQuMTcyMDU2LDczLjc1MDYxNyAxMC42NjY2NzEsNTguMDExMzM1IDMuNTU1NTYwNiw0OS43MjQwMDEgNi44NDgyMDI5LDQxLjQzNjY2NSAxOS43OTE4ODcsMzguOTM0NzI0IDEyLjM4NjgxNyw0MC4zNjYwNjggNC4wNjIzNjYzLDM4LjAwMTE4MyAxLjc3Nzc4MDMsMjguNzI5Mzc1IDEuMTIwNTkxNiwyNi4wNjIyMjUgMCw5LjYzNTA1MjggMCw3LjQxNTM4OCAwLC0zLjY5OTE2MiA4LjU3ODUzNTMsLTAuMjA2Mjc2NzkgMTMuODcyNzg5LDQuMzA3OTMxNyBaIgogICAgIGZpbGw9ImJsYWNrIgogICAgIGlkPSJwYXRoMSIKICAgICBzdHlsZT0iZmlsbDojZmZmZmZmO2ZpbGwtb3BhY2l0eToxO3N0cm9rZS13aWR0aDowLjEyMDA4IiAvPgo8L3N2Zz4K'
@@ -232,11 +235,21 @@ import { RichText } from '@atproto/api'
     useCurrentDate: boolean
     date: string
     richText: boolean
+    cursor: string
+    limit: number
+    sepCursorLimit: boolean
+
+    showExtras: boolean
     constructor(runtime: VM.Runtime) {
       this.runtime = runtime
       this.useCurrentDate = true
       this.date = new Date().toISOString()
       this.richText = true
+      this.cursor = null
+      this.limit = null
+      this.sepCursorLimit = true
+
+      this.showExtras = false
     }
 
     //@ts-ignore
@@ -342,6 +355,18 @@ import { RichText } from '@atproto/api'
               }
             }
           },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: 'bskySetCurrentDate',
+            text: 'set date to [DATE]',
+            hideFromPalette: !this.useCurrentDate,
+            arguments: {
+              DATE: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: new Date().toISOString()
+              },
+            }
+          },
           '---',
           {
             blockType: Scratch.BlockType.REPORTER,
@@ -424,21 +449,6 @@ import { RichText } from '@atproto/api'
           },
           '---',
           {
-            blockType: Scratch.BlockType.COMMAND,
-            opcode: 'bskyPostOptions',
-            text: 'set [POST_OPTION] to [ONOFF]',
-            arguments: {
-              POST_OPTION: {
-                type: Scratch.ArgumentType.STRING,
-                menu: 'bskyPOST_OPTIONS'
-              },
-              ONOFF: {
-                type: Scratch.ArgumentType.STRING,
-                menu: 'bskyONOFF'
-              }
-            }
-          },
-          {
             blockType: Scratch.BlockType.LABEL,
             text: 'Viewing Feeds'
           },
@@ -446,6 +456,7 @@ import { RichText } from '@atproto/api'
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyGetTimeline',
             text: 'get my timeline [IMAGE] with cursor [CURSOR] and limit [LIMIT]',
+            hideFromPalette: this.sepCursorLimit,
             arguments: {
               IMAGE: {
                 type: Scratch.ArgumentType.IMAGE,
@@ -463,8 +474,22 @@ import { RichText } from '@atproto/api'
           },
           {
             blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskyGetTimelineSep',
+            text: 'get my timeline [IMAGE]',
+            hideFromPalette: !this.sepCursorLimit,
+            disableMonitor: true,
+            arguments: {
+              IMAGE: {
+                type: Scratch.ArgumentType.IMAGE,
+                dataURI: TwoSpeechBubbleIcon
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyGetFeed',
             text: 'get feed [IMAGE] at [URI] with cursor [CURSOR] and limit [LIMIT]',
+            hideFromPalette: this.sepCursorLimit,
             arguments: {
               IMAGE: {
                 type: Scratch.ArgumentType.IMAGE,
@@ -482,6 +507,23 @@ import { RichText } from '@atproto/api'
               LIMIT: {
                 type: Scratch.ArgumentType.NUMBER,
                 defaultValue: 30
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskyGetFeedSep',
+            text: 'get feed [IMAGE] at [URI]',
+            hideFromPalette: !this.sepCursorLimit,
+            arguments: {
+              IMAGE: {
+                type: Scratch.ArgumentType.IMAGE,
+                dataURI: TwoSpeechBubbleIcon
+              },
+              URI: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue:
+                  'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot'
               }
             }
           },
@@ -503,8 +545,25 @@ import { RichText } from '@atproto/api'
           },
           {
             blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskyGetAuthorFeedSep',
+            text: "get the author [URI]'s feed with filter [FILTER]",
+            hideFromPalette: !this.sepCursorLimit,
+            arguments: {
+              URI: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'did:plc:z72i7hdynmk6r22z27h6tvur'
+              },
+              FILTER: {
+                type: Scratch.ArgumentType.STRING,
+                menu: 'bskyAUTHOR_FEED_FILTERS'
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyGetAuthorFeed',
-            text: "get the author's [URI] feed with filter [FILTER] cursor [CURSOR] and limit [LIMIT]",
+            text: "get the author [URI]'s feed with filter [FILTER] cursor [CURSOR] and limit [LIMIT]",
+            hideFromPalette: this.sepCursorLimit,
             arguments: {
               URI: {
                 type: Scratch.ArgumentType.STRING,
@@ -523,14 +582,77 @@ import { RichText } from '@atproto/api'
                 defaultValue: 50
               }
             }
+          },
+          '---',
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: 'bskySetCursor',
+            text: 'set feed cursor to [CURSOR]',
+            hideFromPalette: !this.sepCursorLimit,
+            arguments: {
+              CURSOR: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: ''
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: 'bskySetLimit',
+            text: 'set feed searching limit to [LIMIT]',
+            hideFromPalette: !this.sepCursorLimit,
+            arguments: {
+              LIMIT: {
+                type: Scratch.ArgumentType.NUMBER,
+                defaultValue: 50
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: 'bskyResetCursorLimit',
+            text: 'reset cursor and limit',
+            hideFromPalette: !this.sepCursorLimit,
+          },
+          {
+            blockType: Scratch.BlockType.BUTTON,
+            func: 'bskyShowExtras',
+            text: 'Show Extras',
+            hideFromPalette: this.showExtras
+          },
+          {
+            blockType: Scratch.BlockType.BUTTON,
+            func: 'bskyHideExtras',
+            text: 'Hide Extras',
+            hideFromPalette: !this.showExtras
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: 'bskyOptions',
+            text: 'set [OPTION] to [ONOFF]',
+            hideFromPalette: !this.showExtras,
+            arguments: {
+              OPTION: {
+                type: Scratch.ArgumentType.STRING,
+                menu: 'bskyOPTIONS'
+              },
+              ONOFF: {
+                type: Scratch.ArgumentType.STRING,
+                menu: 'bskyONOFF'
+              }
+            }
           }
         ],
         menus: {
-          bskyPOST_OPTIONS: {
+          bskyOPTIONS: {
             acceptReporters: true,
             items: [
               { text: 'rich text', value: 'richText' },
-              { text: 'use current date', value: 'useCurrentDate' }
+              { text: 'use current date', value: 'useCurrentDate' },
+              {
+                text: 'cursor and limit as seperate blocks',
+                value: 'sepCursorLimit'
+              }
             ]
           },
           bskyONOFF: {
@@ -569,11 +691,21 @@ import { RichText } from '@atproto/api'
       }
     }
 
+    /* ---- BUTTONS----*/
     bskyDisclaimer() {
       alert(
         `DISCLAIMER: When using the "Login" block, NEVER use your REAL password. Use an app password instead.`
       )
     }
+    bskyShowExtras() {
+      this.showExtras = !this.showExtras
+      vm.extensionManager.refreshBlocks()
+    }
+    bskyHideExtras() {
+      this.showExtras = !this.showExtras
+      vm.extensionManager.refreshBlocks()
+    }
+    /* ---- BUTTONS----*/
 
     async bskyLogin(args): Promise<void> {
       await Login(args.HANDLE, args.PASSWORD)
@@ -653,6 +785,9 @@ import { RichText } from '@atproto/api'
         }
       }
     }
+     bskySetCurrentDate(args) {
+      this.date = args.DATE
+    }
     async bskyUploadBlob(args) {
       const blob = await Upload(args.DATAURI, args.ENCODING)
       return JSON.stringify(blob)
@@ -704,22 +839,6 @@ import { RichText } from '@atproto/api'
         }
       })
     }
-    bskyPostOptions(args) {
-      try {
-        switch (args.POST_OPTION) {
-          case 'richText':
-            this.richText = Scratch.Cast.toBoolean(args.ONOFF)
-            break
-          case 'useCurrentDate':
-            this.useCurrentDate = Scratch.Cast.toBoolean(args.ONOFF)
-            break
-          default:
-            throw new Error("Error: This option doesn't exist. at all")
-        }
-      } catch (error) {
-        console.log(error)
-      }
-    }
 
     // Viewing Feeds
     async bskyGetTimeline(args) {
@@ -730,6 +849,16 @@ import { RichText } from '@atproto/api'
 
       return JSON.stringify(data)
     }
+    async bskyGetTimelineSep() {
+      const { data } = await agent.getTimeline({
+        cursor: this.cursor,
+        limit: this.limit
+      })
+
+      return JSON.stringify(data)
+    }
+
+    // Getting a Feed
     async bskyGetFeed(args) {
       const { data } = await agent.app.bsky.feed.getFeed({
         feed: args.URI,
@@ -739,6 +868,17 @@ import { RichText } from '@atproto/api'
 
       return JSON.stringify(data)
     }
+    async bskyGetFeedSep(args) {
+      const { data } = await agent.app.bsky.feed.getFeed({
+        feed: args.URI,
+        cursor: this.cursor,
+        limit: this.limit
+      })
+
+      return JSON.stringify(data)
+    }
+
+    // Getting a Feed Generator
     async bskyGetFeedGenerator(args) {
       const { data } = await agent.app.bsky.feed.getFeedGenerator({
         feed: args.URI
@@ -747,6 +887,7 @@ import { RichText } from '@atproto/api'
       return JSON.stringify(data)
     }
 
+    // Getting an User's Posts
     async bskyGetAuthorFeed(args) {
       const { data } = await agent.getAuthorFeed({
         actor: args.URI,
@@ -756,6 +897,45 @@ import { RichText } from '@atproto/api'
       })
 
       return JSON.stringify(data)
+    }
+    async bskyGetAuthorFeedSep(args) {
+      const { data } = await agent.getAuthorFeed({
+        actor: args.URI,
+        filter: args.FILTER,
+        cursor: this.cursor,
+        limit: this.limit
+      })
+
+      return JSON.stringify(data)
+    }
+    bskySetCursor(args) {
+      this.cursor = args.CURSOR
+    }
+    bskySetLimit(args) {
+      this.limit = args.LIMIT
+    }
+
+    bskyResetCursorLimit(){
+      this.cursor = null
+      this.limit = null
+    }
+
+    bskyOptions(args) {
+      switch (args.OPTION) {
+        case 'richText':
+          this.richText = Scratch.Cast.toBoolean(args.ONOFF)
+          break
+        case 'useCurrentDate':
+          this.useCurrentDate = Scratch.Cast.toBoolean(args.ONOFF)
+          vm.extensionManager.refreshBlocks()
+          break
+        case 'sepCursorLimit':
+          this.sepCursorLimit = Scratch.Cast.toBoolean(args.ONOFF)
+          vm.extensionManager.refreshBlocks()
+          break
+        default:
+          throw new Error("Error: This option doesn't exist. at all")
+      }
     }
   }
   // The following snippet ensures compatibility with Turbowarp / Gandi IDE.

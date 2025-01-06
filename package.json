@@ -1,5 +1,5 @@
 {
-  "name": "blueskyapi",
+  "name": "twblueskyapi",
   "version": "1.0.0",
   "description": "Interact with the BlueSky API!",
   "main": "dist/index.js",
