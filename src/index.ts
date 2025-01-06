@@ -12,7 +12,7 @@ import { RichText } from '@atproto/api'
     'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICAgd2lkdGg9IjY0IgogICBoZWlnaHQ9IjY0IgogICB2aWV3Qm94PSIwIDAgNjQgNjQiCiAgIGZpbGw9Im5vbmUiCiAgIHZlcnNpb249IjEuMSIKICAgaWQ9InN2ZzEiCiAgIHNvZGlwb2RpOmRvY25hbWU9ImJsdWVza3lfbWVkaWFfa2l0X2xvZ28uc3ZnIgogICBpbmtzY2FwZTp2ZXJzaW9uPSIxLjMuMiAoMDkxZTIwZSwgMjAyMy0xMS0yNSwgY3VzdG9tKSIKICAgeG1sbnM6aW5rc2NhcGU9Imh0dHA6Ly93d3cuaW5rc2NhcGUub3JnL25hbWVzcGFjZXMvaW5rc2NhcGUiCiAgIHhtbG5zOnNvZGlwb2RpPSJodHRwOi8vc29kaXBvZGkuc291cmNlZm9yZ2UubmV0L0RURC9zb2RpcG9kaS0wLmR0ZCIKICAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIgogICB4bWxuczpzdmc9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcwogICAgIGlkPSJkZWZzMSIgLz4KICA8c29kaXBvZGk6bmFtZWR2aWV3CiAgICAgaWQ9Im5hbWVkdmlldzEiCiAgICAgcGFnZWNvbG9yPSIjZmZmZmZmIgogICAgIGJvcmRlcmNvbG9yPSIjMDAwMDAwIgogICAgIGJvcmRlcm9wYWNpdHk9IjAuMjUiCiAgICAgaW5rc2NhcGU6c2hvd3BhZ2VzaGFkb3c9IjIiCiAgICAgaW5rc2NhcGU6cGFnZW9wYWNpdHk9IjAuMCIKICAgICBpbmtzY2FwZTpwYWdlY2hlY2tlcmJvYXJkPSIwIgogICAgIGlua3NjYXBlOmRlc2tjb2xvcj0iI2QxZDFkMSIKICAgICBpbmtzY2FwZTp6b29tPSIxLjYyMjc1NDUiCiAgICAgaW5rc2NhcGU6Y3g9IjI4My43NzY3NSIKICAgICBpbmtzY2FwZTpjeT0iMjAxLjgxNzM0IgogICAgIGlua3NjYXBlOndpbmRvdy13aWR0aD0iMTkyMCIKICAgICBpbmtzY2FwZTp3aW5kb3ctaGVpZ2h0PSIxMDA5IgogICAgIGlua3NjYXBlOndpbmRvdy14PSItOCIKICAgICBpbmtzY2FwZTp3aW5kb3cteT0iLTgiCiAgICAgaW5rc2NhcGU6d2luZG93LW1heGltaXplZD0iMSIKICAgICBpbmtzY2FwZTpjdXJyZW50LWxheWVyPSJzdmcxIiAvPgogIDxwYXRoCiAgICAgZD0iTSAxMy44NzI3ODksNC4zMDc5MzE3IEMgMjEuMjEwMjU0LDEwLjU2NDI0MyAyOS4xMDIwODUsMjMuMjQ5NyAzMiwzMC4wNTY2OCAzNC44OTc5MTUsMjMuMjQ5NyA0Mi43ODk3NDYsMTAuNTY0MjQzIDUwLjEyNzIxMiw0LjMwNzkzMTcgNTUuNDIxNTIxLC0wLjIwNjI3Njc5IDY0LC0zLjY5OTE2MiA2NCw3LjQxNTM4OCA2NCw5LjYzNTA1MjggNjIuODc5NDM3LDI2LjA2MjIyNSA2Mi4yMjIxOTgsMjguNzI5Mzc1IDU5LjkzNzY5LDM4LjAwMTE4MyA1MS42MTMxODQsNDAuMzY2MDY4IDQ0LjIwODExMywzOC45MzQ3MjQgNTcuMTUxNzc1LDQxLjQzNjY2NSA2MC40NDQzOTQsNDkuNzI0MDAxIDUzLjMzMzI5Niw1OC4wMTEzMzUgMzkuODI3OTQ0LDczLjc1MDYxNyAzMy45MjIzNjcsNTQuMDYyMzEgMzIuNDA5MTI3LDQ5LjAxNzQ3OCAzMi4xMzE3MTgsNDguMDkyNjM4IDMyLjAwMTkxNiw0Ny42NTk5NzIgMzIsNDguMDI3ODg2IDMxLjk5ODEsNDcuNjU5OTcyIDMxLjg2ODI4Miw0OC4wOTI2MzYgMzEuNTkwODczLDQ5LjAxNzQ3OCAzMC4wNzc2MzQsNTQuMDYyMzEgMjQuMTcyMDU2LDczLjc1MDYxNyAxMC42NjY2NzEsNTguMDExMzM1IDMuNTU1NTYwNiw0OS43MjQwMDEgNi44NDgyMDI5LDQxLjQzNjY2NSAxOS43OTE4ODcsMzguOTM0NzI0IDEyLjM4NjgxNyw0MC4zNjYwNjggNC4wNjIzNjYzLDM4LjAwMTE4MyAxLjc3Nzc4MDMsMjguNzI5Mzc1IDEuMTIwNTkxNiwyNi4wNjIyMjUgMCw5LjYzNTA1MjggMCw3LjQxNTM4OCAwLC0zLjY5OTE2MiA4LjU3ODUzNTMsLTAuMjA2Mjc2NzkgMTMuODcyNzg5LDQuMzA3OTMxNyBaIgogICAgIGZpbGw9ImJsYWNrIgogICAgIGlkPSJwYXRoMSIKICAgICBzdHlsZT0iZmlsbDojZmZmZmZmO2ZpbGwtb3BhY2l0eToxO3N0cm9rZS13aWR0aDowLjEyMDA4IiAvPgo8L3N2Zz4K'
   const speechBubbleIcon =
     'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhLS0gVXBsb2FkZWQgdG86IFNWRyBSZXBvLCB3d3cuc3ZncmVwby5jb20sIEdlbmVyYXRvcjogU1ZHIFJlcG8gTWl4ZXIgVG9vbHMgLS0+Cgo8c3ZnCiAgIGZpbGw9IiMwMDAwMDAiCiAgIGhlaWdodD0iODAwcHgiCiAgIHdpZHRoPSI4MDBweCIKICAgdmVyc2lvbj0iMS4xIgogICBpZD0iQ2FwYV8xIgogICB2aWV3Qm94PSIwIDAgMzcxLjExNyAzNzEuMTE3IgogICB4bWw6c3BhY2U9InByZXNlcnZlIgogICBzb2RpcG9kaTpkb2NuYW1lPSJibGFjay1zcGVlY2gtYnViYmxlLXN2Z3JlcG8tY29tLnN2ZyIKICAgaW5rc2NhcGU6dmVyc2lvbj0iMS4zLjIgKDA5MWUyMGUsIDIwMjMtMTEtMjUsIGN1c3RvbSkiCiAgIHhtbG5zOmlua3NjYXBlPSJodHRwOi8vd3d3Lmlua3NjYXBlLm9yZy9uYW1lc3BhY2VzL2lua3NjYXBlIgogICB4bWxuczpzb2RpcG9kaT0iaHR0cDovL3NvZGlwb2RpLnNvdXJjZWZvcmdlLm5ldC9EVEQvc29kaXBvZGktMC5kdGQiCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgeG1sbnM6c3ZnPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnMKICAgaWQ9ImRlZnMxIiAvPjxzb2RpcG9kaTpuYW1lZHZpZXcKICAgaWQ9Im5hbWVkdmlldzEiCiAgIHBhZ2Vjb2xvcj0iI2ZmZmZmZiIKICAgYm9yZGVyY29sb3I9IiMwMDAwMDAiCiAgIGJvcmRlcm9wYWNpdHk9IjAuMjUiCiAgIGlua3NjYXBlOnNob3dwYWdlc2hhZG93PSIyIgogICBpbmtzY2FwZTpwYWdlb3BhY2l0eT0iMC4wIgogICBpbmtzY2FwZTpwYWdlY2hlY2tlcmJvYXJkPSIwIgogICBpbmtzY2FwZTpkZXNrY29sb3I9IiNkMWQxZDEiCiAgIGlua3NjYXBlOnpvb209IjEuMDE2MjUiCiAgIGlua3NjYXBlOmN4PSI0MDAiCiAgIGlua3NjYXBlOmN5PSI0MDAiCiAgIGlua3NjYXBlOndpbmRvdy13aWR0aD0iMTkyMCIKICAgaW5rc2NhcGU6d2luZG93LWhlaWdodD0iMTAwOSIKICAgaW5rc2NhcGU6d2luZG93LXg9Ii04IgogICBpbmtzY2FwZTp3aW5kb3cteT0iLTgiCiAgIGlua3NjYXBlOndpbmRvdy1tYXhpbWl6ZWQ9IjEiCiAgIGlua3NjYXBlOmN1cnJlbnQtbGF5ZXI9IkNhcGFfMSIgLz4KPHBhdGgKICAgZD0iTTMxNi4zMyw2NC41NTZjLTM0Ljk4Mi0yNy42MDctODEuNDI0LTQyLjgxMS0xMzAuNzcyLTQyLjgxMWMtNDkuMzQ4LDAtOTUuNzksMTUuMjA0LTEzMC43NzEsNDIuODExICBDMTkuNDU3LDkyLjQzOCwwLDEyOS42MTUsMCwxNjkuMjM4YzAsMjMuODM1LDcuMzA4LDQ3LjUwOCwyMS4xMzMsNjguNDZjMTIuNzU5LDE5LjMzNSwzMS4wNywzNi40Miw1My4wODgsNDkuNTY0ICBjLTEuMDE2LDcuMTE2LTYuNDg3LDI3Ljk0MS0zNS44ODgsNTIuNzU5Yy0xLjUxMywxLjI3OC0yLjEzLDMuMzI4LTEuNTcyLDUuMjI5YzAuNTU4LDEuOSwyLjE4NSwzLjI5Miw0LjE0OCwzLjU1ICBjMC4xNzgsMC4wMjMsNC40NTQsMC41NzIsMTIuMDUyLDAuNTcyYzIxLjY2NSwwLDY1LjkzOS00LjMwMiwxMjAuMDYzLTMyLjk3M2M0LjE3NywwLjIyMSw4LjM4NywwLjMzMywxMi41MzQsMC4zMzMgIGM0OS4zNDgsMCw5NS43ODktMTUuMjA0LDEzMC43NzItNDIuODExYzM1LjMzLTI3Ljg4Miw1NC43ODctNjUuMDU5LDU0Ljc4Ny0xMDQuNjgzQzM3MS4xMTcsMTI5LjYxNSwzNTEuNjYsOTIuNDM4LDMxNi4zMyw2NC41NTZ6IgogICBpZD0icGF0aDEiCiAgIHN0eWxlPSJmaWxsOiNmZmZmZmY7ZmlsbC1vcGFjaXR5OjEiIC8+Cjwvc3ZnPgo='
-
+  const TwoSpeechBubbleIcon ="https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/two-speech-bubbles-svgrepo-com.svg"
   // Objects
   const agent = new AtpAgent({
     service: 'https://bsky.social'
@@ -436,8 +436,12 @@ import { RichText } from '@atproto/api'
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyGetTimeline',
-            text: 'get my timeline with cursor [CURSOR] and limit [LIMIT]',
+            text: 'get my timeline [IMAGE] with cursor [CURSOR] and limit [LIMIT]',
             arguments: {
+              IMAGE:{
+                type: Scratch.ArgumentType.IMAGE,
+                dataURI: TwoSpeechBubbleIcon
+              },
               CURSOR: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: ''
@@ -451,8 +455,12 @@ import { RichText } from '@atproto/api'
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyGetFeed',
-            text: 'get feed at [URI] with cursor [CURSOR] and limit [LIMIT]',
+            text: 'get feed [IMAGE] at [URI] with cursor [CURSOR] and limit [LIMIT]',
             arguments: {
+              IMAGE:{
+                type: Scratch.ArgumentType.IMAGE,
+                dataURI: TwoSpeechBubbleIcon
+              },
               URI: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: 'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot'
@@ -470,8 +478,12 @@ import { RichText } from '@atproto/api'
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyGetFeedGenerator',
-            text: 'get feed generator at [URI]',
+            text: 'get feed generator [IMAGE] at [URI]',
             arguments: {
+              IMAGE:{
+                type: Scratch.ArgumentType.IMAGE,
+                dataURI: TwoSpeechBubbleIcon
+              },
               URI: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: 'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot'
