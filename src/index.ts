@@ -9,7 +9,7 @@ import { RichText } from '@atproto/api'
 
   // Scratch's Stuff
   const vm = Scratch.vm
-  const runtime = Scratch.vm.runtime
+  const runtime = Scratch.runtime
   const Cast = Scratch.Cast
 
   // Icons
@@ -32,7 +32,7 @@ import { RichText } from '@atproto/api'
    * @param {string} URL - The URL of the image/video
    */
   async function URLAsDataURI(URL: string) {
-    const response = await fetch(URL)
+    const response = await Scratch.fetch(URL)
     const blob = await response.blob()
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
@@ -46,10 +46,11 @@ import { RichText } from '@atproto/api'
    * @param {any} dataURI - The DataURI of the image/video
    */
   async function convertDataURIToUint8Array(dataURI: string) {
+    let URI = dataURI
     if (dataURI.startsWith('http') || dataURI.startsWith('https')) {
-      dataURI = (await URLAsDataURI(dataURI)) as string
+      URI = Cast.toString(await URLAsDataURI(dataURI))
     }
-    const byteString = atob(dataURI.split(',')[1])
+    const byteString = atob(URI.split(',')[1])
     const arrayBuffer = new ArrayBuffer(byteString.length)
     const uint8Array = new Uint8Array(arrayBuffer)
     for (let i = 0; i < byteString.length; i++) {
@@ -76,13 +77,12 @@ import { RichText } from '@atproto/api'
    * Logs the user in the API with their BlueSky account credentrials
    */
   async function Login(handle: string, password: string) {
-    await agent.login({
+    const response = await agent.login({
       identifier: handle,
       password: password
     })
-    console.log(
-      `Logged in as ${JSON.stringify({ identifier: handle, password: password })}`
-    )
+    console.info(`Logged In: ${handle}`)
+    console.info(response)
   } // This will also create a session
 
   // Posting, Repling
@@ -116,9 +116,9 @@ import { RichText } from '@atproto/api'
 
       const response = await agent.post(responseObj)
 
-      console.log(`Posted:${JSON.stringify(response)}`) // Logs the post info
+      console.info(`Posted:${JSON.stringify(response)}`) // Logs the post info
       if (this.richText) {
-        console.log(
+        console.info(
           `Markdown Version of This Reply: ${ConvertRichTextToMarkdown(new RichText({ text: post }))}` // Logs the Markdown version of the post's text if rich text is enabled.
         )
       }
@@ -181,9 +181,9 @@ import { RichText } from '@atproto/api'
       }
 
       const response = await agent.post(responseObj)
-      console.log(`Posted Reply: ${JSON.stringify(response)}`)
+      console.info(`Posted Reply: ${JSON.stringify(response)}`)
       if (this.richText) {
-        console.log(
+        console.info(
           `Markdown Version of This Reply: ${ConvertRichTextToMarkdown(new RichText({ text: post }))}`
         )
       }
@@ -201,16 +201,12 @@ import { RichText } from '@atproto/api'
 
     const Unit8Array = await convertDataURIToUint8Array(datauri) // Get The Data of The URI
 
-    return await agent
-      .uploadBlob(Unit8Array, {
-        encoding: encoding
-      })
-      .then(response => {
-        console.log(`Uploaded Blob: ${JSON.stringify(response)}`)
-      })
-      .catch(error => {
-        console.error(`Error Uploading Blob: ${error}`)
-      })
+    const blob = await agent.uploadBlob(Unit8Array, {
+      encoding: encoding
+    })
+    console.info(`Uploaded Blob: ${JSON.stringify(blob)}`)
+    return blob
+    
   }
 
   /**
@@ -224,7 +220,7 @@ import { RichText } from '@atproto/api'
       if (segment.isLink()) {
         markdown += `[${segment.text}](${segment.link?.uri})`
       } else if (segment.isMention()) {
-        markdown += `[${segment.text}](https://my-bsky-app.com/user/${segment.mention?.did})`
+        markdown += `[${segment.text}](https://bsky.app/profile/${segment.mention?.did})`
       } else {
         markdown += segment.text
       }
@@ -812,8 +808,14 @@ import { RichText } from '@atproto/api'
       this.date = args.DATE
     }
     async bskyUploadBlob(args) {
-      const blob = await Upload(args.DATAURI, args.ENCODING)
-      return JSON.stringify(blob)
+      try {
+        const blob = await Upload(args.DATAURI, args.ENCODING)
+        console.log(blob)
+        
+        return JSON.stringify(blob)
+      } catch (error) {
+        throw new Error(`Error Uploading Blob: ${error}`)
+      }
     }
     bskyWebCardEmbed(args) {
       const { data } = JSON.parse(args.IMAGE)
@@ -972,7 +974,7 @@ import { RichText } from '@atproto/api'
     }
   }
   // The following snippet ensures compatibility with Turbowarp / Gandi IDE.
-  if (Scratch.vm?.runtime) {
+  if (vm?.runtime) {
     // For Turbowarp
 
     //@ts-ignore
