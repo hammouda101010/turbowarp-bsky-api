@@ -9,6 +9,8 @@ import { RichText } from '@atproto/api'
 
   // Scratch's Stuff
   const vm = Scratch.vm
+  const runtime = Scratch.vm.runtime
+  const Cast = Scratch.Cast
 
   // Icons
   const bskyIcon =
@@ -261,6 +263,7 @@ import { RichText } from '@atproto/api'
         color2: '#0970D1',
         menuIconURI: bskyIcon,
         blockIconURI: bskyIcon,
+        docsURI:"https://docs.bsky.app/", // I Don't Want to Make a Long Documentation about The Extension, So Have The Official BlueSky Docs for Now.
         blocks: [
           {
             blockType: Scratch.BlockType.BUTTON,
@@ -614,6 +617,26 @@ import { RichText } from '@atproto/api'
             text: 'reset cursor and limit',
             hideFromPalette: !this.sepCursorLimit,
           },
+          '---',
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskygetPostThread',
+            text: 'get post thread at [URI] with depth [DEPTH] and parent height [HEIGHT]',
+            arguments:{
+              URI: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'at://...'
+              },
+              DEPTH: {
+                type: Scratch.ArgumentType.NUMBER,
+                defaultValue: 6
+              },
+              HEIGHT: {
+                type: Scratch.ArgumentType.NUMBER,
+                defaultValue: 80
+              }
+            }
+          },
           {
             blockType: Scratch.BlockType.BUTTON,
             func: 'bskyShowExtras',
@@ -691,7 +714,7 @@ import { RichText } from '@atproto/api'
       }
     }
 
-    /* ---- BUTTONS----*/
+  /* ---- BUTTONS----*/
     bskyDisclaimer() {
       alert(
         `DISCLAIMER: When using the "Login" block, NEVER use your REAL password. Use an app password instead.`
@@ -705,7 +728,7 @@ import { RichText } from '@atproto/api'
       this.showExtras = !this.showExtras
       vm.extensionManager.refreshBlocks()
     }
-    /* ---- BUTTONS----*/
+  /* ---- BUTTONS----*/
 
     async bskyLogin(args): Promise<void> {
       await Login(args.HANDLE, args.PASSWORD)
@@ -920,17 +943,23 @@ import { RichText } from '@atproto/api'
       this.limit = null
     }
 
+    async bskygetPostThread(args){
+      const res = await agent.getPostThread({uri: args.URI, depth: args.DEPTH, parentHeight: args.HEIGHT})
+
+      return JSON.stringify(res)
+    }
+
     bskyOptions(args) {
       switch (args.OPTION) {
         case 'richText':
-          this.richText = Scratch.Cast.toBoolean(args.ONOFF)
+          this.richText = Cast.toBoolean(args.ONOFF)
           break
         case 'useCurrentDate':
-          this.useCurrentDate = Scratch.Cast.toBoolean(args.ONOFF)
+          this.useCurrentDate = Cast.toBoolean(args.ONOFF)
           vm.extensionManager.refreshBlocks()
           break
         case 'sepCursorLimit':
-          this.sepCursorLimit = Scratch.Cast.toBoolean(args.ONOFF)
+          this.sepCursorLimit = Cast.toBoolean(args.ONOFF)
           vm.extensionManager.refreshBlocks()
           break
         default:
