@@ -263,7 +263,7 @@ import { RichText } from '@atproto/api'
         color2: '#0970D1',
         menuIconURI: bskyIcon,
         blockIconURI: bskyIcon,
-        docsURI:"https://docs.bsky.app/", // I Don't Want to Make a Long Documentation about The Extension, So Have The Official BlueSky Docs for Now.
+        docsURI: 'https://docs.bsky.app/', // I Don't Want to Make a Long Documentation about The Extension, So Have The Official BlueSky Docs for Now.
         blocks: [
           {
             blockType: Scratch.BlockType.BUTTON,
@@ -367,7 +367,7 @@ import { RichText } from '@atproto/api'
               DATE: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: new Date().toISOString()
-              },
+              }
             }
           },
           '---',
@@ -615,14 +615,14 @@ import { RichText } from '@atproto/api'
             blockType: Scratch.BlockType.COMMAND,
             opcode: 'bskyResetCursorLimit',
             text: 'reset cursor and limit',
-            hideFromPalette: !this.sepCursorLimit,
+            hideFromPalette: !this.sepCursorLimit
           },
           '---',
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskygetPostThread',
             text: 'get post thread at [URI] with depth [DEPTH] and parent height [HEIGHT]',
-            arguments:{
+            arguments: {
               URI: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: 'at://...'
@@ -714,7 +714,7 @@ import { RichText } from '@atproto/api'
       }
     }
 
-  /* ---- BUTTONS----*/
+    /* ---- BUTTONS----*/
     bskyDisclaimer() {
       alert(
         `DISCLAIMER: When using the "Login" block, NEVER use your REAL password. Use an app password instead.`
@@ -728,7 +728,7 @@ import { RichText } from '@atproto/api'
       this.showExtras = !this.showExtras
       vm.extensionManager.refreshBlocks()
     }
-  /* ---- BUTTONS----*/
+    /* ---- BUTTONS----*/
 
     async bskyLogin(args): Promise<void> {
       await Login(args.HANDLE, args.PASSWORD)
@@ -808,7 +808,7 @@ import { RichText } from '@atproto/api'
         }
       }
     }
-     bskySetCurrentDate(args) {
+    bskySetCurrentDate(args) {
       this.date = args.DATE
     }
     async bskyUploadBlob(args) {
@@ -938,13 +938,17 @@ import { RichText } from '@atproto/api'
       this.limit = args.LIMIT
     }
 
-    bskyResetCursorLimit(){
+    bskyResetCursorLimit() {
       this.cursor = null
       this.limit = null
     }
 
-    async bskygetPostThread(args){
-      const res = await agent.getPostThread({uri: args.URI, depth: args.DEPTH, parentHeight: args.HEIGHT})
+    async bskygetPostThread(args) {
+      const res = await agent.getPostThread({
+        uri: args.URI,
+        depth: args.DEPTH,
+        parentHeight: args.HEIGHT
+      })
 
       return JSON.stringify(res)
     }
