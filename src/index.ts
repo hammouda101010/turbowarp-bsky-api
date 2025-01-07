@@ -359,7 +359,7 @@ import { RichText } from '@atproto/api'
             blockType: Scratch.BlockType.COMMAND,
             opcode: 'bskySetCurrentDate',
             text: 'set date to [DATE]',
-            hideFromPalette: !this.useCurrentDate,
+            hideFromPalette: this.useCurrentDate,
             arguments: {
               DATE: {
                 type: Scratch.ArgumentType.STRING,
@@ -851,8 +851,8 @@ import { RichText } from '@atproto/api'
     }
     async bskyGetTimelineSep() {
       const { data } = await agent.getTimeline({
-        cursor: this.cursor,
-        limit: this.limit
+        cursor: this.cursor ?? '',
+        limit: this.limit ?? 50
       })
 
       return JSON.stringify(data)
@@ -871,8 +871,8 @@ import { RichText } from '@atproto/api'
     async bskyGetFeedSep(args) {
       const { data } = await agent.app.bsky.feed.getFeed({
         feed: args.URI,
-        cursor: this.cursor,
-        limit: this.limit
+        cursor: this.cursor ?? '',
+        limit: this.limit ?? 50
       })
 
       return JSON.stringify(data)
@@ -893,7 +893,7 @@ import { RichText } from '@atproto/api'
         actor: args.URI,
         filter: args.FILTER,
         cursor: args.CURSOR,
-        limit: args.LIMIT
+        limit: args.LIMIT ?? 50
       })
 
       return JSON.stringify(data)
@@ -902,8 +902,8 @@ import { RichText } from '@atproto/api'
       const { data } = await agent.getAuthorFeed({
         actor: args.URI,
         filter: args.FILTER,
-        cursor: this.cursor,
-        limit: this.limit
+        cursor: this.cursor ?? '',
+        limit: this.limit ?? 50
       })
 
       return JSON.stringify(data)
