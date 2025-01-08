@@ -18,9 +18,14 @@ import { RichText } from '@atproto/api'
   const speechBubbleIcon =
     'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhLS0gVXBsb2FkZWQgdG86IFNWRyBSZXBvLCB3d3cuc3ZncmVwby5jb20sIEdlbmVyYXRvcjogU1ZHIFJlcG8gTWl4ZXIgVG9vbHMgLS0+Cgo8c3ZnCiAgIGZpbGw9IiMwMDAwMDAiCiAgIGhlaWdodD0iODAwcHgiCiAgIHdpZHRoPSI4MDBweCIKICAgdmVyc2lvbj0iMS4xIgogICBpZD0iQ2FwYV8xIgogICB2aWV3Qm94PSIwIDAgMzcxLjExNyAzNzEuMTE3IgogICB4bWw6c3BhY2U9InByZXNlcnZlIgogICBzb2RpcG9kaTpkb2NuYW1lPSJibGFjay1zcGVlY2gtYnViYmxlLXN2Z3JlcG8tY29tLnN2ZyIKICAgaW5rc2NhcGU6dmVyc2lvbj0iMS4zLjIgKDA5MWUyMGUsIDIwMjMtMTEtMjUsIGN1c3RvbSkiCiAgIHhtbG5zOmlua3NjYXBlPSJodHRwOi8vd3d3Lmlua3NjYXBlLm9yZy9uYW1lc3BhY2VzL2lua3NjYXBlIgogICB4bWxuczpzb2RpcG9kaT0iaHR0cDovL3NvZGlwb2RpLnNvdXJjZWZvcmdlLm5ldC9EVEQvc29kaXBvZGktMC5kdGQiCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgeG1sbnM6c3ZnPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnMKICAgaWQ9ImRlZnMxIiAvPjxzb2RpcG9kaTpuYW1lZHZpZXcKICAgaWQ9Im5hbWVkdmlldzEiCiAgIHBhZ2Vjb2xvcj0iI2ZmZmZmZiIKICAgYm9yZGVyY29sb3I9IiMwMDAwMDAiCiAgIGJvcmRlcm9wYWNpdHk9IjAuMjUiCiAgIGlua3NjYXBlOnNob3dwYWdlc2hhZG93PSIyIgogICBpbmtzY2FwZTpwYWdlb3BhY2l0eT0iMC4wIgogICBpbmtzY2FwZTpwYWdlY2hlY2tlcmJvYXJkPSIwIgogICBpbmtzY2FwZTpkZXNrY29sb3I9IiNkMWQxZDEiCiAgIGlua3NjYXBlOnpvb209IjEuMDE2MjUiCiAgIGlua3NjYXBlOmN4PSI0MDAiCiAgIGlua3NjYXBlOmN5PSI0MDAiCiAgIGlua3NjYXBlOndpbmRvdy13aWR0aD0iMTkyMCIKICAgaW5rc2NhcGU6d2luZG93LWhlaWdodD0iMTAwOSIKICAgaW5rc2NhcGU6d2luZG93LXg9Ii04IgogICBpbmtzY2FwZTp3aW5kb3cteT0iLTgiCiAgIGlua3NjYXBlOndpbmRvdy1tYXhpbWl6ZWQ9IjEiCiAgIGlua3NjYXBlOmN1cnJlbnQtbGF5ZXI9IkNhcGFfMSIgLz4KPHBhdGgKICAgZD0iTTMxNi4zMyw2NC41NTZjLTM0Ljk4Mi0yNy42MDctODEuNDI0LTQyLjgxMS0xMzAuNzcyLTQyLjgxMWMtNDkuMzQ4LDAtOTUuNzksMTUuMjA0LTEzMC43NzEsNDIuODExICBDMTkuNDU3LDkyLjQzOCwwLDEyOS42MTUsMCwxNjkuMjM4YzAsMjMuODM1LDcuMzA4LDQ3LjUwOCwyMS4xMzMsNjguNDZjMTIuNzU5LDE5LjMzNSwzMS4wNywzNi40Miw1My4wODgsNDkuNTY0ICBjLTEuMDE2LDcuMTE2LTYuNDg3LDI3Ljk0MS0zNS44ODgsNTIuNzU5Yy0xLjUxMywxLjI3OC0yLjEzLDMuMzI4LTEuNTcyLDUuMjI5YzAuNTU4LDEuOSwyLjE4NSwzLjI5Miw0LjE0OCwzLjU1ICBjMC4xNzgsMC4wMjMsNC40NTQsMC41NzIsMTIuMDUyLDAuNTcyYzIxLjY2NSwwLDY1LjkzOS00LjMwMiwxMjAuMDYzLTMyLjk3M2M0LjE3NywwLjIyMSw4LjM4NywwLjMzMywxMi41MzQsMC4zMzMgIGM0OS4zNDgsMCw5NS43ODktMTUuMjA0LDEzMC43NzItNDIuODExYzM1LjMzLTI3Ljg4Miw1NC43ODctNjUuMDU5LDU0Ljc4Ny0xMDQuNjgzQzM3MS4xMTcsMTI5LjYxNSwzNTEuNjYsOTIuNDM4LDMxNi4zMyw2NC41NTZ6IgogICBpZD0icGF0aDEiCiAgIHN0eWxlPSJmaWxsOiNmZmZmZmY7ZmlsbC1vcGFjaXR5OjEiIC8+Cjwvc3ZnPgo='
   const TwoSpeechBubbleIcon =
-    'https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/two-speech-bubbles-svgrepo-com.svg'
+    'https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/two-speech-bubbles.svg'
   const ImageIcon =
-    'https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/photo-image-svgrepo-com.svg'
+    'https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/photo-image.svg'
+  const HeartPlusIcon =
+    'https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/heartplus.svg'
+  const HeartBrokenIcon =
+    'https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/heartbroken.svg'
+
   // Objects
   const agent = new AtpAgent({
     service: 'https://bsky.social'
@@ -616,7 +621,7 @@ import { RichText } from '@atproto/api'
           '---',
           {
             blockType: Scratch.BlockType.REPORTER,
-            opcode: 'bskygetPostThread',
+            opcode: 'bskyGetPostThread',
             text: 'get post thread at [URI] with depth [DEPTH] and parent height [HEIGHT]',
             arguments: {
               URI: {
@@ -631,6 +636,47 @@ import { RichText } from '@atproto/api'
                 type: Scratch.ArgumentType.NUMBER,
                 defaultValue: 80
               }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskyGetPost',
+            text: 'get post at [URI]',
+            arguments: {
+              URI: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'at://...'
+              },
+            }
+          },
+          {
+            blockType: Scratch.BlockType.LABEL,
+            text: 'Liking and Reposting'
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: 'bskyLike',
+            text: 'like post at [URI] and cid [CID]',
+            arguments: {
+              URI:{
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'at://...'
+              },
+              CID:{
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'cid'
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: 'bskyLike',
+            text: 'remove like from post at [URI]',
+            arguments: {
+              URI:{
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'at://...'
+              },
             }
           },
           {
@@ -945,11 +991,20 @@ import { RichText } from '@atproto/api'
       this.limit = null
     }
 
-    async bskygetPostThread(args) {
+    async bskyGetPostThread(args) {
       const res = await agent.getPostThread({
         uri: args.URI,
         depth: args.DEPTH,
         parentHeight: args.HEIGHT
+      })
+
+      return JSON.stringify(res)
+    }
+    async bskyGetPost(args) {
+      const res = await agent.getPostThread({
+        uri: args.URI,
+        depth: args.DEPTH,
+        parentHeight: 1
       })
 
       return JSON.stringify(res)
