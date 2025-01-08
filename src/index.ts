@@ -1096,7 +1096,9 @@ import { RichText } from '@atproto/api'
         parentHeight: args.HEIGHT
       })
 
-      return JSON.stringify(res)
+      const { thread }= res.data
+
+      return JSON.stringify(thread)
     }
     async bskyGetPost(args) {
       const res = await agent.getPostThread({
@@ -1104,12 +1106,14 @@ import { RichText } from '@atproto/api'
         depth: args.DEPTH,
         parentHeight: 1
       })
+      const { thread }= res.data
 
-      return JSON.stringify(res)
+      return JSON.stringify(thread)
     }
 
     async bskyLike(args) {
       const res = await agent.like(args.URI, args.CID)
+      
 
       console.info(`Liked Post: ${JSON.stringify(res)}`)
     }
@@ -1132,12 +1136,12 @@ import { RichText } from '@atproto/api'
     }
 
     async bskyViewProfile(args) {
-      const { data } = await agent.getProfile(args.URI)
+      const { data } = await agent.getProfile({actor: args.URI})
 
       return JSON.stringify(data)
     }
     async bskyViewProfiles(args) {
-      const { data } = await agent.getProfiles(JSON.parse(args.URI))
+      const { data } = await agent.getProfiles({actors: JSON.parse(args.URI)})
 
       return JSON.stringify(data)
     }
