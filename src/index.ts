@@ -9,7 +9,7 @@ import { RichText } from '@atproto/api'
 
   // Scratch's Stuff
   const vm = Scratch.vm
-  const runtime = Scratch.runtime
+  // const runtime = Scratch.runtime
   const Cast = Scratch.Cast
 
   // Icons
@@ -25,6 +25,9 @@ import { RichText } from '@atproto/api'
     'https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/heartplus.svg'
   const HeartBrokenIcon =
     'https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/heartbroken.svg'
+  // const arrowURI =
+  // "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNS44OTMiIGhlaWdodD0iMTUuODkzIiB2aWV3Qm94PSIwIDAgMTUuODkzIDE1Ljg5MyI+PHBhdGggZD0iTTkuMDIxIDEyLjI5NHYtMi4xMDdsLTYuODM5LS45MDVDMS4zOTggOS4xODQuODQ2IDguNDg2Ljk2MiA3LjcyN2MuMDktLjYxMi42MDMtMS4wOSAxLjIyLTEuMTY0bDYuODM5LS45MDVWMy42YzAtLjU4Ni43MzItLjg2OSAxLjE1Ni0uNDY0bDQuNTc2IDQuMzQ1YS42NDMuNjQzIDAgMCAxIDAgLjkxOGwtNC41NzYgNC4zNmMtLjQyNC40MDQtMS4xNTYuMTEtMS4xNTYtLjQ2NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9Ii4xNSIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjEuNzUiLz48cGF0aCBkPSJNOS4wMjEgMTIuMjk0di0yLjEwN2wtNi44MzktLjkwNUMxLjM5OCA5LjE4NC44NDYgOC40ODYuOTYyIDcuNzI3Yy4wOS0uNjEyLjYwMy0xLjA5IDEuMjItMS4xNjRsNi44MzktLjkwNVYzLjZjMC0uNTg2LjczMi0uODY5IDEuMTU2LS40NjRsNC41NzYgNC4zNDVhLjY0My42NDMgMCAwIDEgMCAuOTE4bC00LjU3NiA0LjM2Yy0uNDI0LjQwNC0xLjE1Ni4xMS0xLjE1Ni0uNDY1IiBmaWxsPSIjZmZmIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz48cGF0aCBkPSJNMCAxNS44OTJWMGgxNS44OTJ2MTUuODkyeiIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==";
+    
 
   // Objects
   const agent = new AtpAgent({
@@ -32,7 +35,6 @@ import { RichText } from '@atproto/api'
   })
 
   // Special Functions
-
   /** Converts an image/video URL into a readable DataURI
    * @param {string} URL - The URL of the image/video
    */
@@ -86,7 +88,8 @@ import { RichText } from '@atproto/api'
       identifier: handle,
       password: password
     })
-    console.info(`Logged In: ${handle}`)
+    this.sessionToken = response.data.did
+    console.info(`Logged In as: ${handle}`)
     console.info(response)
   } // This will also create a session
 
@@ -241,6 +244,7 @@ import { RichText } from '@atproto/api'
     cursor: string
     limit: number
     sepCursorLimit: boolean
+    sessionToken: string | null
 
     showExtras: boolean
     constructor(runtime: VM.Runtime) {
@@ -252,6 +256,8 @@ import { RichText } from '@atproto/api'
       this.limit = null
       this.sepCursorLimit = true
 
+
+      this.sessionToken = null
       this.showExtras = false
     }
 
@@ -359,6 +365,37 @@ import { RichText } from '@atproto/api'
               }
             }
           },
+          "---",
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: "bskyRepost",
+            text: "repost post with uri [URI] and cid [CID]",
+            arguments: {
+              URI: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue:
+                  "at://did:plc:u5cwb2mwiv2bfq53cjufe6yn/app.bsky.feed.post/3k43tv4rft22g",
+              },
+              CID: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue:
+                  "bafyreig2fjxi3rptqdgylg7e5hmjl6mcke7rn2b6cugzlqq3i4zu6rq52q",
+              },
+            },
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: "bskyUnRepost",
+            text: "remove post repost with uri [URI]",
+            arguments: {
+              URI: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue:
+                  "at://did:plc:u5cwb2mwiv2bfq53cjufe6yn/app.bsky.feed.post/3k43tv4rft22g",
+              },
+            },
+          },
+          '---',
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: 'bskySetCurrentDate',
@@ -448,6 +485,23 @@ import { RichText } from '@atproto/api'
               LINK: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: 'https://example.com'
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskyQuotePost',
+            text: 'new quote post embed with uri [URI] and cid [CID] record',
+            arguments: {
+              URI: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue:
+                  'at://did:plc:u5cwb2mwiv2bfq53cjufe6yn/app.bsky.feed.post/3k43tv4rft22g'
+              },
+              CID: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue:
+                  'bafyreig2fjxi3rptqdgylg7e5hmjl6mcke7rn2b6cugzlqq3i4zu6rq52q'
               }
             }
           },
@@ -651,31 +705,65 @@ import { RichText } from '@atproto/api'
           },
           {
             blockType: Scratch.BlockType.LABEL,
-            text: 'Liking and Reposting'
+            text: 'Liking and Following'
           },
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: 'bskyLike',
-            text: 'like post at [URI] and cid [CID]',
+            text: '[ICON] like post at [URI] and cid [CID]',
             arguments: {
+              ICON:{
+                type: Scratch.ArgumentType.IMAGE,
+                dataURI: HeartPlusIcon
+              },
               URI:{
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: 'at://...'
               },
               CID:{
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: 'cid'
+                defaultValue: 'bafyreig2fjxi3rptqdgylg7e5hmjl6mcke7rn2b6cugzlqq3i4zu6rq52q'
               }
             }
           },
           {
             blockType: Scratch.BlockType.COMMAND,
-            opcode: 'bskyLike',
-            text: 'remove like from post at [URI]',
+            opcode: 'bskyUnLike',
+            text: '[ICON] remove like from post at [URI]',
+            arguments: {
+              ICON:{
+                type: Scratch.ArgumentType.IMAGE,
+                dataURI: HeartBrokenIcon
+              },
+              URI:{
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'at://...'
+              },
+            }
+          },
+          {
+            blockType: Scratch.BlockType.LABEL,
+            text: 'Viewing Profiles'
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskyViewProfile',
+            text: 'get profile at [URI]',
             arguments: {
               URI:{
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: 'at://...'
+              },
+            }
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskyViewProfiles',
+            text: 'get profiles at [URIS]',
+            arguments: {
+              URIS:{
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: '[\'did:plc:...\', \'...\']'
               },
             }
           },
@@ -897,6 +985,16 @@ import { RichText } from '@atproto/api'
         }
       })
     }
+    bskyQuotePost(args) {
+
+      return JSON.stringify({
+        $type: "app.bsky.embed.record",
+        record: {
+          uri: args.URI,
+          cid: args.CID
+        }
+      })
+    }
     bskyReplyReporter(args): string {
       // Use this reporter for the reply block.
       return JSON.stringify({
@@ -1009,6 +1107,41 @@ import { RichText } from '@atproto/api'
 
       return JSON.stringify(res)
     }
+
+    async bskyLike(args) {
+      const res = await agent.like(args.URI, args.CID)
+
+      console.info(`Liked Post: ${JSON.stringify(res)}`)
+    }
+    async bskyRepost(args){
+      const uri = await agent.repost(args.URI, args.CID)
+
+      console.info(`Reposted Post: ${JSON.stringify(uri)}`)
+    }
+
+    async bskyUnLike(args) {
+      const res = await agent.deleteLike(args.URI)
+
+      console.info(`UnLiked Post: ${JSON.stringify(res)}`)
+    }
+
+    async bskyUnRepost(args){
+      const uri = await agent.deleteRepost(args.URI)
+
+      console.info(`Unreposted Post: ${JSON.stringify(uri)}`)
+    }
+
+    async bskyViewProfile(args) {
+      const { data } = await agent.getProfile(args.URI)
+
+      return JSON.stringify(data)
+    }
+    async bskyViewProfiles(args) {
+      const { data } = await agent.getProfiles(JSON.parse(args.URI))
+
+      return JSON.stringify(data)
+    }
+
 
     bskyOptions(args) {
       switch (args.OPTION) {
