@@ -18,6 +18,11 @@ import { AtUri } from '@atproto/api'
   const BskyLoginEvent = new CustomEvent('bskyLogin')
   const BskyLogoutEvent = new CustomEvent('bskyLogout')
 
+  // Regexes
+  const atUriPattern = /^at:\/\/(did:plc:[a-z0-9]+)\/(.+)?$/
+  const atProfileUriPattern = /^at:\/\/(did:plc:[a-z0-9]+)\/?$/
+  const atPostUriPattern = /^at:\/\/(did:plc:[a-z0-9]+)\/app\.bsky\.feed\.post\/([a-z0-9]+)$/;
+
   // Icons
   const bskyIcon =
     'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICAgd2lkdGg9IjY0IgogICBoZWlnaHQ9IjY0IgogICB2aWV3Qm94PSIwIDAgNjQgNjQiCiAgIGZpbGw9Im5vbmUiCiAgIHZlcnNpb249IjEuMSIKICAgaWQ9InN2ZzEiCiAgIHNvZGlwb2RpOmRvY25hbWU9ImJsdWVza3lfbWVkaWFfa2l0X2xvZ28uc3ZnIgogICBpbmtzY2FwZTp2ZXJzaW9uPSIxLjMuMiAoMDkxZTIwZSwgMjAyMy0xMS0yNSwgY3VzdG9tKSIKICAgeG1sbnM6aW5rc2NhcGU9Imh0dHA6Ly93d3cuaW5rc2NhcGUub3JnL25hbWVzcGFjZXMvaW5rc2NhcGUiCiAgIHhtbG5zOnNvZGlwb2RpPSJodHRwOi8vc29kaXBvZGkuc291cmNlZm9yZ2UubmV0L0RURC9zb2RpcG9kaS0wLmR0ZCIKICAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIgogICB4bWxuczpzdmc9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcwogICAgIGlkPSJkZWZzMSIgLz4KICA8c29kaXBvZGk6bmFtZWR2aWV3CiAgICAgaWQ9Im5hbWVkdmlldzEiCiAgICAgcGFnZWNvbG9yPSIjZmZmZmZmIgogICAgIGJvcmRlcmNvbG9yPSIjMDAwMDAwIgogICAgIGJvcmRlcm9wYWNpdHk9IjAuMjUiCiAgICAgaW5rc2NhcGU6c2hvd3BhZ2VzaGFkb3c9IjIiCiAgICAgaW5rc2NhcGU6cGFnZW9wYWNpdHk9IjAuMCIKICAgICBpbmtzY2FwZTpwYWdlY2hlY2tlcmJvYXJkPSIwIgogICAgIGlua3NjYXBlOmRlc2tjb2xvcj0iI2QxZDFkMSIKICAgICBpbmtzY2FwZTp6b29tPSIxLjYyMjc1NDUiCiAgICAgaW5rc2NhcGU6Y3g9IjI4My43NzY3NSIKICAgICBpbmtzY2FwZTpjeT0iMjAxLjgxNzM0IgogICAgIGlua3NjYXBlOndpbmRvdy13aWR0aD0iMTkyMCIKICAgICBpbmtzY2FwZTp3aW5kb3ctaGVpZ2h0PSIxMDA5IgogICAgIGlua3NjYXBlOndpbmRvdy14PSItOCIKICAgICBpbmtzY2FwZTp3aW5kb3cteT0iLTgiCiAgICAgaW5rc2NhcGU6d2luZG93LW1heGltaXplZD0iMSIKICAgICBpbmtzY2FwZTpjdXJyZW50LWxheWVyPSJzdmcxIiAvPgogIDxwYXRoCiAgICAgZD0iTSAxMy44NzI3ODksNC4zMDc5MzE3IEMgMjEuMjEwMjU0LDEwLjU2NDI0MyAyOS4xMDIwODUsMjMuMjQ5NyAzMiwzMC4wNTY2OCAzNC44OTc5MTUsMjMuMjQ5NyA0Mi43ODk3NDYsMTAuNTY0MjQzIDUwLjEyNzIxMiw0LjMwNzkzMTcgNTUuNDIxNTIxLC0wLjIwNjI3Njc5IDY0LC0zLjY5OTE2MiA2NCw3LjQxNTM4OCA2NCw5LjYzNTA1MjggNjIuODc5NDM3LDI2LjA2MjIyNSA2Mi4yMjIxOTgsMjguNzI5Mzc1IDU5LjkzNzY5LDM4LjAwMTE4MyA1MS42MTMxODQsNDAuMzY2MDY4IDQ0LjIwODExMywzOC45MzQ3MjQgNTcuMTUxNzc1LDQxLjQzNjY2NSA2MC40NDQzOTQsNDkuNzI0MDAxIDUzLjMzMzI5Niw1OC4wMTEzMzUgMzkuODI3OTQ0LDczLjc1MDYxNyAzMy45MjIzNjcsNTQuMDYyMzEgMzIuNDA5MTI3LDQ5LjAxNzQ3OCAzMi4xMzE3MTgsNDguMDkyNjM4IDMyLjAwMTkxNiw0Ny42NTk5NzIgMzIsNDguMDI3ODg2IDMxLjk5ODEsNDcuNjU5OTcyIDMxLjg2ODI4Miw0OC4wOTI2MzYgMzEuNTkwODczLDQ5LjAxNzQ3OCAzMC4wNzc2MzQsNTQuMDYyMzEgMjQuMTcyMDU2LDczLjc1MDYxNyAxMC42NjY2NzEsNTguMDExMzM1IDMuNTU1NTYwNiw0OS43MjQwMDEgNi44NDgyMDI5LDQxLjQzNjY2NSAxOS43OTE4ODcsMzguOTM0NzI0IDEyLjM4NjgxNyw0MC4zNjYwNjggNC4wNjIzNjYzLDM4LjAwMTE4MyAxLjc3Nzc4MDMsMjguNzI5Mzc1IDEuMTIwNTkxNiwyNi4wNjIyMjUgMCw5LjYzNTA1MjggMCw3LjQxNTM4OCAwLC0zLjY5OTE2MiA4LjU3ODUzNTMsLTAuMjA2Mjc2NzkgMTMuODcyNzg5LDQuMzA3OTMxNyBaIgogICAgIGZpbGw9ImJsYWNrIgogICAgIGlkPSJwYXRoMSIKICAgICBzdHlsZT0iZmlsbDojZmZmZmZmO2ZpbGwtb3BhY2l0eToxO3N0cm9rZS13aWR0aDowLjEyMDA4IiAvPgo8L3N2Zz4K'
@@ -111,7 +116,7 @@ import { AtUri } from '@atproto/api'
       return atUri
     },
     handleToAtUri: async (handleUrl: string) => {
-      let handle: string = handleUrl
+      let handle: string = Cast.toString(handleUrl)
       if (!handle.startsWith("@")){
 
         const url = new URL(handleUrl)
@@ -123,12 +128,42 @@ import { AtUri } from '@atproto/api'
       }
 
       // Resolve the handle to get the DID
-      const { data } = await agent.resolveHandle({ handle: handleUrl })
+      const { data } = await agent.resolveHandle({ handle: handle })
       const did = data.did
     
       // Construct the AT URI
       return `at://${did}/`
     },
+    isValidAtUri: (atUri: string) =>{
+      return Cast.toBoolean(atUriPattern.test(atUri))
+    },
+    atUritoPostLink: async (postAtUri: string) =>{
+
+      const match = postAtUri.match(atPostUriPattern)
+    
+      const did = match[1] // Extract the DID
+      const postId = match[2]
+
+      const { data } = await agent.resolveHandle({ handle: did })
+
+      const handle = data.handle
+
+      return `https://bsky.app/profile/${handle}/post/${postId}`
+
+    },
+    atUritoProfileLink: async (postAtUri: string) =>{
+
+      const match = postAtUri.match(atProfileUriPattern)
+    
+      const did = match[1] // Extract the DID
+
+      const { data } = await agent.resolveHandle({ handle: did })
+
+      const handle = data.handle
+
+      return `https://bsky.app/profile/${handle}/`
+
+    }
   }
 
   // Utility Functions
@@ -1010,7 +1045,7 @@ import { AtUri } from '@atproto/api'
             opcode: 'bskySearchResult',
             text: 'search result',
             hideFromPalette: !this.showExtras,
-            disableMonitor: true
+            disableMonitor: false
           },
           '---',
           {
@@ -1028,7 +1063,7 @@ import { AtUri } from '@atproto/api'
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyProfileLinkToAtUri',
-            text: 'convert profile link [URL] to at:// uri',
+            text: 'convert profile link/handle [URL] to at:// uri',
             arguments: {
               URL:{
                 type: Scratch.ArgumentType.STRING,
@@ -1037,6 +1072,55 @@ import { AtUri } from '@atproto/api'
             },
             hideFromPalette: !this.showExtras,
           },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskyPostLinkToAtUri',
+            text: 'convert post link [URL] to at:// uri',
+            arguments: {
+              URL:{
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "https://bsky.app/profile/example.bsky.social/post/3lez77bnyhs2w"
+              }
+            },
+            hideFromPalette: !this.showExtras,
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskyAtUriToPostLink',
+            text: 'convert at:// uri [URL] to post link',
+            arguments: {
+              URL:{
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "at://did:plc:6loexbxe5rv4knai6j57obtn/app.bsky.feed.post/3lez77bnyhs2w"
+              }
+            },
+            hideFromPalette: !this.showExtras,
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskyAtUriToProfileLink',
+            text: 'convert at:// uri [URL] to profile link',
+            arguments: {
+              URL:{
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "at://did:plc:6loexbxe5rv4knai6j57obtn"
+              }
+            },
+            hideFromPalette: !this.showExtras,
+          },
+          {
+            blockType: Scratch.BlockType.BOOLEAN,
+            opcode: 'bskyIsAtUri',
+            text: 'is [URL] a valid at:// uri? ',
+            arguments: {
+              URL:{
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "at://did:plc:6loexbxe5rv4knai6j57obtn"
+              }
+            },
+            hideFromPalette: !this.showExtras,
+          },
+          
           '---',
           {
             blockType: Scratch.BlockType.COMMAND,
@@ -1117,7 +1201,9 @@ import { AtUri } from '@atproto/api'
           1. Follow BlueSky's Terms of Service: https://bsky.social/about/support/tos
           2. Avoid Copyright Infringements: https://bsky.social/about/support/copyright
           3. Respect Community Guidelines: https://bsky.social/about/support/community-guidelines
-          4. Do Not Use This Extension for Malicious Purposes, such as Spam Bots, Scams, or Hacking other Accounts.`
+          4. Do Not Use This Extension for Malicious Purposes, such as Spam Bots, Scams, or Hacking other Accounts.
+          
+          Note: This Extension Doesn't Work on Turbowarp Desktop and Electron Projects.`
       )
     }
     bskyShowExtras() {
@@ -1443,10 +1529,11 @@ import { AtUri } from '@atproto/api'
     }
 
     async bskySearchPosts(args){
-      this.searchResult = await SearchPosts(args.TERM) ?? "found nothing"
+      const response = await SearchPosts(args.TERM)
+      this.searchResult = (response.data.posts.length === 0) ? {posts: response.data.posts, headers: response.headers} : "found nothing"
     }
     bskySearchResult(){
-      return this.searchResult
+      return JSON.stringify(this.searchResult)
     }
 
     async bskyPostLinkToAtUri(args): Promise<string>{
@@ -1455,6 +1542,16 @@ import { AtUri } from '@atproto/api'
     async bskyProfileLinkToAtUri(args): Promise<string>{
       return await atUriConversions.handleToAtUri(args.URL)
     }
+    async bskyAtUriToPostLink(args): Promise<string>{
+      return await atUriConversions.atUritoPostLink(args.URL)
+    }
+    async bskyAtUriToProfileLink(args): Promise<string>{
+      return await atUriConversions.atUritoProfileLink(args.URL)
+    }
+    bskyIsAtUri(args): boolean{
+      return Cast.toBoolean(atUriConversions.isValidAtUri(args.URL))
+    }
+
 
     bskyOptions(args) {
       switch (args.OPTION) {
