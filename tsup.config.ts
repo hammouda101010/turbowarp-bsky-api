@@ -11,8 +11,8 @@ export default defineConfig({
     js: `// Name: TurboButterFly
 // ID: HamBskyAPI
 // Description: Interact with the BlueSky API! Unofficial.
-// By: Hammouda101010
-// Original: BlueSky
+// By: Hammouda101010 <https://github.com/hammouda101010>
+// Original: BlueSky <https://bsky.app>
 // License: MIT
 `
   },
