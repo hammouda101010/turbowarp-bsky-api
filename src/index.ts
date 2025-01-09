@@ -38,6 +38,7 @@ import { AtUri } from '@atproto/api'
   const agent = new AtpAgent({
     service: 'https://bsky.social'
   })
+  type SearchResult = "no search result yet" | "found nothing" | object
 
   // Special Functions
   /** Converts an image/video URL into a readable DataURI
@@ -81,6 +82,53 @@ import { AtUri } from '@atproto/api'
       throw new Error('Error: File size is too big. It must be less than 1MB.')
     }
     console.log(`File size: ${blob.size} bytes`)
+  }
+
+  const atUriConversions ={
+    postLinkToAtUri: async (postUrl: string) => {
+
+      const url = new URL(postUrl)
+      const pathSegments = url.pathname.split('/')
+      // Validate URL structure
+      if (pathSegments.length < 5 || pathSegments[1] !== 'profile' || pathSegments[3] !== 'post') {
+        throw new Error('Invalid Bluesky post URL format.')
+      }
+  
+    
+    
+      // Extract handle and post ID
+      const handle = pathSegments[2]
+      const postId = pathSegments[4]
+    
+      // Initialize the Bluesky agent
+    
+      // Resolve the handle to get the DID
+      const handleResolution = await agent.resolveHandle({ handle: handle })
+      const did = handleResolution.data.did
+    
+      // Construct the AT URI
+      const atUri = `at://${did}/app.bsky.feed.post/${postId}`
+      return atUri
+    },
+    handleToAtUri: async (handleUrl: string) => {
+      let handle: string = handleUrl
+      if (!handle.startsWith("@")){
+
+        const url = new URL(handleUrl)
+        const pathSegments = url.pathname.split('/')
+        handle = pathSegments[2]
+
+      } else {
+        handle = handle.slice(1)
+      }
+
+      // Resolve the handle to get the DID
+      const { data } = await agent.resolveHandle({ handle: handleUrl })
+      const did = data.did
+    
+      // Construct the AT URI
+      return `at://${did}/`
+    },
   }
 
   // Utility Functions
@@ -256,7 +304,7 @@ import { AtUri } from '@atproto/api'
       }
     )
 
-    console.info(`Blocked User With AT URI${data.uri}`)
+    console.info(`Blocked User With at:// URI: ${data.uri}`)
     console.info(data)
   }
 
@@ -264,12 +312,11 @@ import { AtUri } from '@atproto/api'
   async function UnblockUser(blockedUserAtUri: string) {
     const { rkey } = new AtUri(blockedUserAtUri)
 
-    const data = await agent.app.bsky.graph.block.delete({
+    await agent.app.bsky.graph.block.delete({
       repo: agent.session.did,
       rkey
     })
-    console.info(`Blocked User With AT URI${blockedUserAtUri}`)
-    console.info(data)
+    console.info(`Unblocked User With at:// URI: ${blockedUserAtUri}`)
   }
 
   /**
@@ -293,17 +340,21 @@ import { AtUri } from '@atproto/api'
 
   class HamBskyAPI implements Scratch.Extension {
     runtime: VM.Runtime
+
     useCurrentDate: boolean
     date: string
     richText: boolean
     cursor: string
     limit: number
     sepCursorLimit: boolean
+
     sessionDID: string | null
+    searchResult: SearchResult
 
     showExtras: boolean
     constructor(runtime: VM.Runtime) {
       this.runtime = runtime
+
       this.useCurrentDate = true
       this.date = new Date().toISOString()
       this.richText = true
@@ -311,7 +362,9 @@ import { AtUri } from '@atproto/api'
       this.limit = null
       this.sepCursorLimit = true
 
+      this.searchResult = "no search result yet"
       this.sessionDID = null
+
       this.showExtras = false
     }
     //@ts-ignore
@@ -902,6 +955,28 @@ import { AtUri } from '@atproto/api'
             text: 'Blocking and Muting'
           },
           {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: 'bskyBlockUser',
+            text: 'block user with did [DID]',
+            arguments: {
+              DID: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'ihateu.bsky.social'
+              },
+            }
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: 'bskyUnblockUser',
+            text: 'unblock user with block uri record [URI]',
+            arguments: {
+              URI: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: ''
+              },
+            }
+          },
+          {
             blockType: Scratch.BlockType.LABEL,
             text: 'Extras'
           },
@@ -918,6 +993,51 @@ import { AtUri } from '@atproto/api'
             text: 'Hide Extras',
             hideFromPalette: !this.showExtras
           },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: 'bskySearchPosts',
+            text: 'search posts/profiles with search term [TERM]',
+            hideFromPalette: !this.showExtras,
+            arguments: {
+              TERM: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'i love pizza'
+              },
+            }
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskySearchResult',
+            text: 'search result',
+            hideFromPalette: !this.showExtras,
+            disableMonitor: true
+          },
+          '---',
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskyPostLinkToAtUri',
+            text: 'convert post link [URL] to at:// uri',
+            arguments: {
+              URL:{
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "https://bsky.app/profile/example.bsky.social/post/3lez77bnyhs2w"
+              }
+            },
+            hideFromPalette: !this.showExtras,
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskyProfileLinkToAtUri',
+            text: 'convert profile link [URL] to at:// uri',
+            arguments: {
+              URL:{
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "https://bsky.app/profile/example.bsky.social/"
+              }
+            },
+            hideFromPalette: !this.showExtras,
+          },
+          '---',
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: 'bskyOptions',
@@ -1308,6 +1428,27 @@ import { AtUri } from '@atproto/api'
       return JSON.stringify(data)
     }
 
+    async bskyBlockUser(args) {
+      await BlockUser(args.DID, this.useCurrentDate, this.date)
+    }
+    async bskyUnblockUser(args) {
+      await UnblockUser(args.URI)
+    }
+
+    async bskySearchPosts(args){
+      this.searchResult = await SearchPosts(args.TERM) ?? "found nothing"
+    }
+    bskySearchResult(){
+      return this.searchResult
+    }
+
+    async bskyPostLinkToAtUri(args): Promise<string>{
+      return await atUriConversions.postLinkToAtUri(args.URL)
+    }
+    async bskyProfileLinkToAtUri(args): Promise<string>{
+      return await atUriConversions.handleToAtUri(args.URL)
+    }
+
     bskyOptions(args) {
       switch (args.OPTION) {
         case 'richText':
@@ -1332,6 +1473,8 @@ import { AtUri } from '@atproto/api'
   document.addEventListener('bskyLogout', () => {
     runtime.startHats('HamBskyAPI_bskyWhenLoggedOut')
   })
+
+
 
   // The following snippet ensures compatibility with Turbowarp / Gandi IDE.
   if (vm?.runtime) {
