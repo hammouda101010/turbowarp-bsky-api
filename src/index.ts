@@ -1117,7 +1117,7 @@ import { AtUri } from '@atproto/api'
           1. Follow BlueSky's Terms of Service: https://bsky.social/about/support/tos
           2. Avoid Copyright Infringements: https://bsky.social/about/support/copyright
           3. Respect Community Guidelines: https://bsky.social/about/support/community-guidelines
-          4. Do Not Use This Extension for Malicious Purposes, such as spam bots, scams, or hacking other accounts.`
+          4. Do Not Use This Extension for Malicious Purposes, such as Spam Bots, Scams, or Hacking other Accounts.`
       )
     }
     bskyShowExtras() {
