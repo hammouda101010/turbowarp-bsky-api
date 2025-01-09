@@ -1110,7 +1110,12 @@ import { AtUri } from '@atproto/api'
     /* ---- BUTTONS----*/
     bskyDisclaimer() {
       alert(
-        `DISCLAIMER: When using the "Login" block, NEVER use your REAL password. Use an app password instead.`
+        `DISCLAIMER: When using the "Login" block, NEVER use your REAL password. Use an app password instead.\n
+         Here Are Some Rules You May Want to Follow:
+         1. Follow BlueSky's TOS: https://bsky.social/about/support/tos
+         2. Don't Do Copyright Infringments https://bsky.social/about/support/copyright
+         3. Respect the Community Guidelines https://bsky.social/about/support/community-guidelines
+         4. Don't Use This Extension for Malicious Purposes (Spam Bots, Scams, Hacking Other Accounts, etc.) `
       )
     }
     bskyShowExtras() {
