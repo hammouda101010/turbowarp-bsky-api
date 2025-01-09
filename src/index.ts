@@ -2,7 +2,6 @@
 import { AtpAgent } from '@atproto/api'
 import { RichText } from '@atproto/api'
 import { AtUri } from '@atproto/api'
-
 ;(function (Scratch) {
   if (Scratch.extensions.unsandboxed === false) {
     throw new Error('Sandboxed mode is not supported')
@@ -21,7 +20,8 @@ import { AtUri } from '@atproto/api'
   // Regexes
   const atUriPattern = /^at:\/\/(did:plc:[a-z0-9]+)\/(.+)?$/
   const atProfileUriPattern = /^at:\/\/(did:plc:[a-z0-9]+)\/?$/
-  const atPostUriPattern = /^at:\/\/(did:plc:[a-z0-9]+)\/app\.bsky\.feed\.post\/([a-z0-9]+)$/;
+  const atPostUriPattern =
+    /^at:\/\/(did:plc:[a-z0-9]+)\/app\.bsky\.feed\.post\/([a-z0-9]+)$/
 
   // Icons
   const bskyIcon =
@@ -43,7 +43,7 @@ import { AtUri } from '@atproto/api'
   const agent = new AtpAgent({
     service: 'https://bsky.social'
   })
-  type SearchResult = "no search result yet" | "found nothing" | object
+  type SearchResult = 'no search result yet' | 'found nothing' | object
 
   // Special Functions
   /** Converts an image/video URL into a readable DataURI
@@ -89,40 +89,39 @@ import { AtUri } from '@atproto/api'
     console.log(`File size: ${blob.size} bytes`)
   }
 
-  const atUriConversions ={
+  const atUriConversions = {
     postLinkToAtUri: async (postUrl: string) => {
-
       const url = new URL(postUrl)
       const pathSegments = url.pathname.split('/')
       // Validate URL structure
-      if (pathSegments.length < 5 || pathSegments[1] !== 'profile' || pathSegments[3] !== 'post') {
+      if (
+        pathSegments.length < 5 ||
+        pathSegments[1] !== 'profile' ||
+        pathSegments[3] !== 'post'
+      ) {
         throw new Error('Invalid Bluesky post URL format.')
       }
-  
-    
-    
+
       // Extract handle and post ID
       const handle = pathSegments[2]
       const postId = pathSegments[4]
-    
+
       // Initialize the Bluesky agent
-    
+
       // Resolve the handle to get the DID
       const handleResolution = await agent.resolveHandle({ handle: handle })
       const did = handleResolution.data.did
-    
+
       // Construct the AT URI
       const atUri = `at://${did}/app.bsky.feed.post/${postId}`
       return atUri
     },
     handleToAtUri: async (handleUrl: string) => {
       let handle: string = Cast.toString(handleUrl)
-      if (!handle.startsWith("@")){
-
+      if (!handle.startsWith('@')) {
         const url = new URL(handleUrl)
         const pathSegments = url.pathname.split('/')
         handle = pathSegments[2]
-
       } else {
         handle = handle.slice(1)
       }
@@ -130,17 +129,16 @@ import { AtUri } from '@atproto/api'
       // Resolve the handle to get the DID
       const { data } = await agent.resolveHandle({ handle: handle })
       const did = data.did
-    
+
       // Construct the AT URI
       return `at://${did}/`
     },
-    isValidAtUri: (atUri: string) =>{
+    isValidAtUri: (atUri: string) => {
       return Cast.toBoolean(atUriPattern.test(atUri))
     },
-    atUritoPostLink: async (postAtUri: string) =>{
-
+    atUritoPostLink: async (postAtUri: string) => {
       const match = postAtUri.match(atPostUriPattern)
-    
+
       const did = match[1] // Extract the DID
       const postId = match[2]
 
@@ -149,12 +147,10 @@ import { AtUri } from '@atproto/api'
       const handle = data.handle
 
       return `https://bsky.app/profile/${handle}/post/${postId}`
-
     },
-    atUritoProfileLink: async (postAtUri: string) =>{
-
+    atUritoProfileLink: async (postAtUri: string) => {
       const match = postAtUri.match(atProfileUriPattern)
-    
+
       const did = match[1] // Extract the DID
 
       const { data } = await agent.resolveHandle({ handle: did })
@@ -162,7 +158,6 @@ import { AtUri } from '@atproto/api'
       const handle = data.handle
 
       return `https://bsky.app/profile/${handle}/`
-
     }
   }
 
@@ -397,7 +392,7 @@ import { AtUri } from '@atproto/api'
       this.limit = null
       this.sepCursorLimit = true
 
-      this.searchResult = "no search result yet"
+      this.searchResult = 'no search result yet'
       this.sessionDID = null
 
       this.showExtras = false
@@ -997,7 +992,7 @@ import { AtUri } from '@atproto/api'
               DID: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: 'ihateu.bsky.social'
-              },
+              }
             }
           },
           {
@@ -1008,14 +1003,14 @@ import { AtUri } from '@atproto/api'
               URI: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: ''
-              },
+              }
             }
           },
           {
             blockType: Scratch.BlockType.LABEL,
             text: 'Extras'
           },
-          
+
           {
             blockType: Scratch.BlockType.BUTTON,
             func: 'bskyShowExtras',
@@ -1037,7 +1032,7 @@ import { AtUri } from '@atproto/api'
               TERM: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: 'i love pizza'
-              },
+              }
             }
           },
           {
@@ -1053,74 +1048,77 @@ import { AtUri } from '@atproto/api'
             opcode: 'bskyPostLinkToAtUri',
             text: 'convert post link [URL] to at:// uri',
             arguments: {
-              URL:{
+              URL: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: "https://bsky.app/profile/example.bsky.social/post/3lez77bnyhs2w"
+                defaultValue:
+                  'https://bsky.app/profile/example.bsky.social/post/3lez77bnyhs2w'
               }
             },
-            hideFromPalette: !this.showExtras,
+            hideFromPalette: !this.showExtras
           },
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyProfileLinkToAtUri',
             text: 'convert profile link/handle [URL] to at:// uri',
             arguments: {
-              URL:{
+              URL: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: "https://bsky.app/profile/example.bsky.social/"
+                defaultValue: 'https://bsky.app/profile/example.bsky.social/'
               }
             },
-            hideFromPalette: !this.showExtras,
+            hideFromPalette: !this.showExtras
           },
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyPostLinkToAtUri',
             text: 'convert post link [URL] to at:// uri',
             arguments: {
-              URL:{
+              URL: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: "https://bsky.app/profile/example.bsky.social/post/3lez77bnyhs2w"
+                defaultValue:
+                  'https://bsky.app/profile/example.bsky.social/post/3lez77bnyhs2w'
               }
             },
-            hideFromPalette: !this.showExtras,
+            hideFromPalette: !this.showExtras
           },
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyAtUriToPostLink',
             text: 'convert at:// uri [URL] to post link',
             arguments: {
-              URL:{
+              URL: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: "at://did:plc:6loexbxe5rv4knai6j57obtn/app.bsky.feed.post/3lez77bnyhs2w"
+                defaultValue:
+                  'at://did:plc:6loexbxe5rv4knai6j57obtn/app.bsky.feed.post/3lez77bnyhs2w'
               }
             },
-            hideFromPalette: !this.showExtras,
+            hideFromPalette: !this.showExtras
           },
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyAtUriToProfileLink',
             text: 'convert at:// uri [URL] to profile link',
             arguments: {
-              URL:{
+              URL: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: "at://did:plc:6loexbxe5rv4knai6j57obtn"
+                defaultValue: 'at://did:plc:6loexbxe5rv4knai6j57obtn'
               }
             },
-            hideFromPalette: !this.showExtras,
+            hideFromPalette: !this.showExtras
           },
           {
             blockType: Scratch.BlockType.BOOLEAN,
             opcode: 'bskyIsAtUri',
             text: 'is [URL] a valid at:// uri? ',
             arguments: {
-              URL:{
+              URL: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: "at://did:plc:6loexbxe5rv4knai6j57obtn"
+                defaultValue: 'at://did:plc:6loexbxe5rv4knai6j57obtn'
               }
             },
-            hideFromPalette: !this.showExtras,
+            hideFromPalette: !this.showExtras
           },
-          
+
           '---',
           {
             blockType: Scratch.BlockType.COMMAND,
@@ -1528,30 +1526,32 @@ import { AtUri } from '@atproto/api'
       await UnblockUser(args.URI)
     }
 
-    async bskySearchPosts(args){
+    async bskySearchPosts(args) {
       const response = await SearchPosts(args.TERM)
-      this.searchResult = (response.data.posts.length === 0) ? {posts: response.data.posts, headers: response.headers} : "found nothing"
+      this.searchResult =
+        response.data.posts.length === 0
+          ? { posts: response.data.posts, headers: response.headers }
+          : 'found nothing'
     }
-    bskySearchResult(){
+    bskySearchResult() {
       return JSON.stringify(this.searchResult)
     }
 
-    async bskyPostLinkToAtUri(args): Promise<string>{
+    async bskyPostLinkToAtUri(args): Promise<string> {
       return await atUriConversions.postLinkToAtUri(args.URL)
     }
-    async bskyProfileLinkToAtUri(args): Promise<string>{
+    async bskyProfileLinkToAtUri(args): Promise<string> {
       return await atUriConversions.handleToAtUri(args.URL)
     }
-    async bskyAtUriToPostLink(args): Promise<string>{
+    async bskyAtUriToPostLink(args): Promise<string> {
       return await atUriConversions.atUritoPostLink(args.URL)
     }
-    async bskyAtUriToProfileLink(args): Promise<string>{
+    async bskyAtUriToProfileLink(args): Promise<string> {
       return await atUriConversions.atUritoProfileLink(args.URL)
     }
-    bskyIsAtUri(args): boolean{
+    bskyIsAtUri(args): boolean {
       return Cast.toBoolean(atUriConversions.isValidAtUri(args.URL))
     }
-
 
     bskyOptions(args) {
       switch (args.OPTION) {
@@ -1577,8 +1577,6 @@ import { AtUri } from '@atproto/api'
   document.addEventListener('bskyLogout', () => {
     runtime.startHats('HamBskyAPI_bskyWhenLoggedOut')
   })
-
-
 
   // The following snippet ensures compatibility with Turbowarp / Gandi IDE.
   if (vm?.runtime) {
