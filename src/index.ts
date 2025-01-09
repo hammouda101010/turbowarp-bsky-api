@@ -1,6 +1,8 @@
 // Required Modules
 import { AtpAgent } from '@atproto/api'
 import { RichText } from '@atproto/api'
+import { AtUri } from '@atproto/api'
+
 ;(function (Scratch) {
   if (Scratch.extensions.unsandboxed === false) {
     throw new Error('Sandboxed mode is not supported')
@@ -13,7 +15,7 @@ import { RichText } from '@atproto/api'
   const Cast = Scratch.Cast
 
   // Events
-  const BskyLoginEvent = new CustomEvent('bskyLogin', )
+  const BskyLoginEvent = new CustomEvent('bskyLogin')
   const BskyLogoutEvent = new CustomEvent('bskyLogout')
 
   // Icons
@@ -95,19 +97,16 @@ import { RichText } from '@atproto/api'
     console.info(`Logged In as: ${handle}`)
     console.info(response)
 
-    // Dispatch a custom event after login
-
     document.dispatchEvent(BskyLoginEvent)
-
-    return response
   } // This will also create a session
 
+  /**
+   * Logs the user out from the API when their done with it.
+   */
   async function Logout() {
     await agent.logout()
 
     console.info(`Logged Out from API.`)
-
-    // Dispatch a custom event after logout
 
     document.dispatchEvent(BskyLogoutEvent)
   }
@@ -234,9 +233,43 @@ import { RichText } from '@atproto/api'
     console.info(`Uploaded Blob: ${JSON.stringify(blob)}`)
     return blob
   }
+
+  /** Search Posts on BlueSky Using a Search Term */
   async function SearchPosts(searchTerm: string) {
     const response = await agent.app.bsky.feed.searchPosts({ q: searchTerm })
     return response
+  }
+
+  /**Blocks an User on BlueSky using it's DID */
+  async function BlockUser(
+    blockingUserDid: string,
+    useCurrentDate: boolean,
+    date: string
+  ) {
+    const data = await agent.app.bsky.graph.block.create(
+      { repo: agent.session.did },
+      {
+        subject: blockingUserDid,
+        createdAt: useCurrentDate
+          ? new Date().toISOString()
+          : new Date(date).toISOString()
+      }
+    )
+
+    console.info(`Blocked User With AT URI${data.uri}`)
+    console.info(data)
+  }
+
+  /**Blocks an User on BlueSky using it's DID */
+  async function UnblockUser(blockedUserAtUri: string) {
+    const { rkey } = new AtUri(blockedUserAtUri)
+
+    const data = await agent.app.bsky.graph.block.delete({
+      repo: agent.session.did,
+      rkey
+    })
+    console.info(`Blocked User With AT URI${blockedUserAtUri}`)
+    console.info(data)
   }
 
   /**
@@ -266,7 +299,7 @@ import { RichText } from '@atproto/api'
     cursor: string
     limit: number
     sepCursorLimit: boolean
-    sessionToken: string | null
+    sessionDID: string | null
 
     showExtras: boolean
     constructor(runtime: VM.Runtime) {
@@ -278,7 +311,7 @@ import { RichText } from '@atproto/api'
       this.limit = null
       this.sepCursorLimit = true
 
-      this.sessionToken = null
+      this.sessionDID = null
       this.showExtras = false
     }
     //@ts-ignore
@@ -334,7 +367,7 @@ import { RichText } from '@atproto/api'
           {
             blockType: Scratch.BlockType.EVENT,
             opcode: 'bskyWhenLoggedOut',
-            text: 'when logged out to bluesky',
+            text: 'when logged out from bluesky',
             isEdgeActivated: false,
             shouldRestartExistingThreads: true
           },
@@ -839,9 +872,40 @@ import { RichText } from '@atproto/api'
           },
           {
             blockType: Scratch.BlockType.LABEL,
+            text: 'Editing Your Profile'
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: 'bskyEditProfile',
+            text: 'edit profile with new display name [DISPLAY_NAME] description [DESCRIPTION] and (optional) new [PROFILE_IMAGE_TYPE] image [IMAGE]',
+            arguments: {
+              DISPLAY_NAME: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'new display name'
+              },
+              DESCRIPTION: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'my description'
+              },
+              PROFILE_IMAGE_TYPE: {
+                type: Scratch.ArgumentType.STRING,
+                menu: 'bskyPROFILE_IMAGE_TYPE'
+              },
+              IMAGE: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'use upload blob reporter'
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.LABEL,
+            text: 'Blocking and Muting'
+          },
+          {
+            blockType: Scratch.BlockType.LABEL,
             text: 'Extras'
           },
-
+          
           {
             blockType: Scratch.BlockType.BUTTON,
             func: 'bskyShowExtras',
@@ -904,7 +968,7 @@ import { RichText } from '@atproto/api'
             ]
           },
           bskyAUTHOR_FEED_FILTERS: {
-            acceptReportets: true,
+            acceptReporters: true,
             items: [
               { text: 'posts and replies', value: 'posts_with_replies' },
               { text: 'posts only', value: 'posts_no_replies' },
@@ -914,6 +978,10 @@ import { RichText } from '@atproto/api'
                 value: 'posts_and_author_threads'
               }
             ]
+          },
+          bskyPROFILE_IMAGE_TYPE: {
+            acceptReporters: true,
+            items: ['avatar', 'banner']
           }
         }
       }
@@ -936,17 +1004,17 @@ import { RichText } from '@atproto/api'
     /* ---- BUTTONS----*/
 
     async bskyLogin(args): Promise<void> {
-      const response = await Login(args.HANDLE, args.PASSWORD)
+      await Login(args.HANDLE, args.PASSWORD)
 
-      this.sessionToken = Cast.toString(response.data.did) ?? args.HANDLE
+      this.sessionDID = Cast.toString(agent.session.did)
     }
     async bskyLogout(): Promise<void> {
       await Logout()
 
-      this.sessionToken = null
+      this.sessionDID = null
     }
     bskyLoggedIn() {
-      return this.sessionToken !== null
+      return this.sessionDID !== null
     }
     async bskyPost(args): Promise<void> {
       if (!this.richText) {
@@ -1259,7 +1327,7 @@ import { RichText } from '@atproto/api'
     }
   }
   document.addEventListener('bskyLogin', () => {
-      runtime.startHats('HamBskyAPI_bskyWhenLoggedIn')
+    runtime.startHats('HamBskyAPI_bskyWhenLoggedIn')
   })
   document.addEventListener('bskyLogout', () => {
     runtime.startHats('HamBskyAPI_bskyWhenLoggedOut')
