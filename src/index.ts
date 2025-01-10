@@ -2,7 +2,8 @@
 import { AtpAgent } from '@atproto/api'
 import { RichText } from '@atproto/api'
 import { AtUri } from '@atproto/api'
-;(function (Scratch) {
+;import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs';
+(function (Scratch) {
   if (Scratch.extensions.unsandboxed === false) {
     throw new Error('Sandboxed mode is not supported')
   }
@@ -18,7 +19,7 @@ import { AtUri } from '@atproto/api'
   const BskyLogoutEvent = new CustomEvent('bskyLogout')
 
   // Regexes
-  const atUriPattern = /^at:\/\/(did:plc:[a-z0-9]+)\/(.+)?$/
+  const atUriPattern = /^at:\/\/(did:plc:[a-z0-9]+)\/?(.+)?$/
   const atProfileUriPattern = /^at:\/\/(did:plc:[a-z0-9]+)\/?$/
   const atPostUriPattern =
     /^at:\/\/(did:plc:[a-z0-9]+)\/app\.bsky\.feed\.post\/([a-z0-9]+)$/
@@ -1528,13 +1529,14 @@ import { AtUri } from '@atproto/api'
 
     async bskySearchPosts(args) {
       const response = await SearchPosts(args.TERM)
+      const posts: PostView[] = response.data.posts
       this.searchResult =
-        response.data.posts.length === 0
+        posts.length === 0
           ? { posts: response.data.posts, headers: response.headers }
           : 'found nothing'
     }
     bskySearchResult() {
-      return JSON.stringify(this.searchResult)
+      return (typeof this.searchResult === 'object' && !Array.isArray(this.searchResult)) ? JSON.stringify(this.searchResult) :this.searchResult
     }
 
     async bskyPostLinkToAtUri(args): Promise<string> {

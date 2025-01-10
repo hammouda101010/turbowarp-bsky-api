@@ -50922,7 +50922,7 @@ if (cid) {
     const Cast = Scratch2.Cast;
     const BskyLoginEvent = new CustomEvent("bskyLogin");
     const BskyLogoutEvent = new CustomEvent("bskyLogout");
-    const atUriPattern = /^at:\/\/(did:plc:[a-z0-9]+)\/(.+)?$/;
+    const atUriPattern = /^at:\/\/(did:plc:[a-z0-9]+)\/?(.+)?$/;
     const atProfileUriPattern = /^at:\/\/(did:plc:[a-z0-9]+)\/?$/;
     const atPostUriPattern =
       /^at:\/\/(did:plc:[a-z0-9]+)\/app\.bsky\.feed\.post\/([a-z0-9]+)$/;
@@ -52303,13 +52303,17 @@ if (cid) {
       }
       async bskySearchPosts(args) {
         const response = await SearchPosts(args.TERM);
+        const posts = response.data.posts;
         this.searchResult =
-          response.data.posts.length === 0
+          posts.length === 0
             ? { posts: response.data.posts, headers: response.headers }
             : "found nothing";
       }
       bskySearchResult() {
-        return JSON.stringify(this.searchResult);
+        return typeof this.searchResult === "object" &&
+          !Array.isArray(this.searchResult)
+          ? JSON.stringify(this.searchResult)
+          : this.searchResult;
       }
       async bskyPostLinkToAtUri(args) {
         return await atUriConversions.postLinkToAtUri(args.URL);
