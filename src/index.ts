@@ -326,6 +326,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
     useCurrentDate: boolean,
     date: string
   ) {
+    console.log(agent.session.did)
     const data = await agent.app.bsky.graph.block.create(
       { repo: agent.session.did },
       {
