@@ -15,6 +15,17 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
   const runtime = vm.runtime
   const Cast = Scratch.Cast
 
+  // Patch
+  
+  //@ts-expect-error
+  const ogConverter = runtime._convertBlockForScratchBlocks.bind(runtime)
+  //@ts-expect-error
+  runtime._convertBlockForScratchBlocks = function (blockInfo, categoryInfo) {
+    const res = ogConverter(blockInfo, categoryInfo)
+    if (blockInfo.outputShape) res.json.outputShape = blockInfo.outputShape
+    return res
+  }
+
   // Events
   const BskyLoginEvent = new CustomEvent('bskyLogin')
   const BskyLogoutEvent = new CustomEvent('bskyLogout')
@@ -326,7 +337,6 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
     useCurrentDate: boolean,
     date: string
   ) {
-    console.log(agent.session.did)
     const data = await agent.app.bsky.graph.block.create(
       { repo: agent.session.did },
       {
@@ -1220,7 +1230,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
     async bskyLogin(args): Promise<void> {
       await Login(args.HANDLE, args.PASSWORD)
 
-      this.sessionDID = Cast.toString(agent.session.did)
+      this.sessionDID = agent.session.did
     }
     async bskyLogout(): Promise<void> {
       await Logout()
