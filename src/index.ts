@@ -132,9 +132,11 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
     handleToAtUri: async (handleUrl: string) => {
       let handle: string = Cast.toString(handleUrl)
       if (!handle.startsWith('@')) {
-        const url = new URL(handleUrl)
-        const pathSegments = url.pathname.split('/')
-        handle = pathSegments[2]
+        if (handle.startsWith("http")){
+          const url = new URL(handleUrl)
+          const pathSegments = url.pathname.split('/')
+          handle = pathSegments[2] 
+        }
       } else {
         handle = handle.slice(1)
       }
@@ -171,8 +173,17 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
       const handle = data.handle
 
       return `https://bsky.app/profile/${handle}/`
+    },
+    ExtractDID: (atUri: string) => {
+      const match = atUri.match(/(?!at:\/\/)(did:[^\/]+)/); 
+      if (!match){
+        throw new Error("Error: Invalid at:// URI.")
+      }
+      return match ? match[0] : null
     }
   }
+
+
 
   // Utility Functions
 
@@ -349,6 +360,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
 
     console.info(`Blocked User With at:// URI: ${data.uri}`)
     console.info(data)
+    return data
   }
 
   /**Blocks an User on BlueSky using it's DID */
@@ -393,8 +405,10 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
 
     sessionDID: string | null
     searchResult: SearchResult
+    lastBlockedUserURI: string | null
 
     showExtras: boolean
+
     constructor(runtime: VM.Runtime) {
       this.runtime = runtime
 
@@ -407,6 +421,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
 
       this.searchResult = 'no search result yet'
       this.sessionDID = null
+      this.lastBlockedUserURI = null
 
       this.showExtras = false
     }
@@ -590,6 +605,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             opcode: 'bskyUploadBlob',
             text: 'upload image/video blob [DATAURI] with content-type [ENCODING]',
             blockIconURI: ImageIcon,
+            outputShape: 3,
             arguments: {
               DATAURI: {
                 type: Scratch.ArgumentType.STRING,
@@ -691,6 +707,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             opcode: 'bskyGetTimeline',
             text: 'get my timeline [IMAGE] with cursor [CURSOR] and limit [LIMIT]',
             hideFromPalette: this.sepCursorLimit,
+            outputShape: 3,
             arguments: {
               IMAGE: {
                 type: Scratch.ArgumentType.IMAGE,
@@ -710,6 +727,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyGetTimelineSep',
             text: 'get my timeline [IMAGE]',
+            outputShape: 3,
             hideFromPalette: !this.sepCursorLimit,
             disableMonitor: true,
             arguments: {
@@ -724,6 +742,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             opcode: 'bskyGetFeed',
             text: 'get feed [IMAGE] at [URI] with cursor [CURSOR] and limit [LIMIT]',
             hideFromPalette: this.sepCursorLimit,
+            outputShape: 3,
             arguments: {
               IMAGE: {
                 type: Scratch.ArgumentType.IMAGE,
@@ -749,6 +768,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             opcode: 'bskyGetFeedSep',
             text: 'get feed [IMAGE] at [URI]',
             hideFromPalette: !this.sepCursorLimit,
+            outputShape: 3,
             arguments: {
               IMAGE: {
                 type: Scratch.ArgumentType.IMAGE,
@@ -765,6 +785,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyGetFeedGenerator',
             text: 'get feed generator [IMAGE] at [URI]',
+            outputShape: 3,
             arguments: {
               IMAGE: {
                 type: Scratch.ArgumentType.IMAGE,
@@ -782,6 +803,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             opcode: 'bskyGetAuthorFeedSep',
             text: "get the author [URI]'s feed with filter [FILTER]",
             hideFromPalette: !this.sepCursorLimit,
+            outputShape: 3,
             arguments: {
               URI: {
                 type: Scratch.ArgumentType.STRING,
@@ -798,6 +820,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             opcode: 'bskyGetAuthorFeed',
             text: "get the author [URI]'s feed with filter [FILTER] cursor [CURSOR] and limit [LIMIT]",
             hideFromPalette: this.sepCursorLimit,
+            outputShape: 3,
             arguments: {
               URI: {
                 type: Scratch.ArgumentType.STRING,
@@ -853,6 +876,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyGetPostThread',
             text: 'get post thread at [URI] with depth [DEPTH] and parent height [HEIGHT]',
+            outputShape: 3,
             arguments: {
               URI: {
                 type: Scratch.ArgumentType.STRING,
@@ -872,6 +896,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyGetPost',
             text: 'get post at [URI]',
+            outputShape: 3,
             arguments: {
               URI: {
                 type: Scratch.ArgumentType.STRING,
@@ -921,7 +946,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: 'bskyFollow',
-            text: 'follow user with did/handle: [DID]',
+            text: 'follow user with DID/handle: [DID]',
             arguments: {
               DID: {
                 type: Scratch.ArgumentType.STRING,
@@ -932,7 +957,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: 'bskyUnFollow',
-            text: 'unfollow user with follow uri record: [URI]',
+            text: 'unfollow user with follow at:// uri record: [URI]',
             arguments: {
               URI: {
                 type: Scratch.ArgumentType.STRING,
@@ -948,6 +973,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyViewProfile',
             text: 'get profile at [URI]',
+            outputShape: 3,
             arguments: {
               URI: {
                 type: Scratch.ArgumentType.STRING,
@@ -959,6 +985,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyViewProfiles',
             text: 'get profiles at [URIS]',
+            outputShape: 3,
             arguments: {
               URIS: {
                 type: Scratch.ArgumentType.STRING,
@@ -1000,7 +1027,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: 'bskyBlockUser',
-            text: 'block user with did [DID]',
+            text: 'block user with DID [DID]',
             arguments: {
               DID: {
                 type: Scratch.ArgumentType.STRING,
@@ -1008,10 +1035,18 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
               }
             }
           },
+          "---",
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskyLastBlockedUser',
+            text: 'last blocked user DID',
+            outputShape: 3
+          },
+          "---",
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: 'bskyUnblockUser',
-            text: 'unblock user with block uri record [URI]',
+            text: 'unblock user with block at:// uri record [URI]',
             arguments: {
               URI: {
                 type: Scratch.ArgumentType.STRING,
@@ -1058,21 +1093,9 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
           '---',
           {
             blockType: Scratch.BlockType.REPORTER,
-            opcode: 'bskyPostLinkToAtUri',
-            text: 'convert post link [URL] to at:// uri',
-            arguments: {
-              URL: {
-                type: Scratch.ArgumentType.STRING,
-                defaultValue:
-                  'https://bsky.app/profile/example.bsky.social/post/3lez77bnyhs2w'
-              }
-            },
-            hideFromPalette: !this.showExtras
-          },
-          {
-            blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyProfileLinkToAtUri',
             text: 'convert profile link/handle [URL] to at:// uri',
+            outputShape: 3,
             arguments: {
               URL: {
                 type: Scratch.ArgumentType.STRING,
@@ -1085,6 +1108,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyPostLinkToAtUri',
             text: 'convert post link [URL] to at:// uri',
+            outputShape: 3,
             arguments: {
               URL: {
                 type: Scratch.ArgumentType.STRING,
@@ -1094,6 +1118,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             },
             hideFromPalette: !this.showExtras
           },
+          "---",
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyAtUriToPostLink',
@@ -1102,7 +1127,8 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
               URL: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue:
-                  'at://did:plc:6loexbxe5rv4knai6j57obtn/app.bsky.feed.post/3lez77bnyhs2w'
+                  'at://did:plc:6loexbxe5rv4knai6j57obtn/app.bsky.feed.post/3lez77bnyhs2w',
+
               }
             },
             hideFromPalette: !this.showExtras
@@ -1114,11 +1140,26 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             arguments: {
               URL: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: 'at://did:plc:6loexbxe5rv4knai6j57obtn'
+                defaultValue: 'at://did:plc:6loexbxe5rv4knai6j57obtn',
+
               }
             },
             hideFromPalette: !this.showExtras
           },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskyExtractDID',
+            text: 'extract DID from at:// uri [URL]',
+            arguments: {
+              URL: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'at://did:plc:6loexbxe5rv4knai6j57obtn',
+
+              }
+            },
+            hideFromPalette: !this.showExtras
+          },
+          "---",
           {
             blockType: Scratch.BlockType.BOOLEAN,
             opcode: 'bskyIsAtUri',
@@ -1126,7 +1167,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             arguments: {
               URL: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: 'at://did:plc:6loexbxe5rv4knai6j57obtn'
+                defaultValue: 'at://did:plc:6loexbxe5rv4knai6j57obtn',
               }
             },
             hideFromPalette: !this.showExtras
@@ -1533,7 +1574,11 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
     }
 
     async bskyBlockUser(args) {
-      await BlockUser(args.DID, this.useCurrentDate, this.date)
+      const { uri } = await BlockUser(args.DID, this.useCurrentDate, this.date)
+      this.lastBlockedUserURI = Cast.toString(uri)
+    }
+    bskyLastBlockedUser(){
+      return this.lastBlockedUserURI ?? "no data found"
     }
     async bskyUnblockUser(args) {
       await UnblockUser(args.URI)
@@ -1565,6 +1610,9 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
     }
     bskyIsAtUri(args): boolean {
       return Cast.toBoolean(atUriConversions.isValidAtUri(args.URL))
+    }
+    bskyExtractDID(args): string{
+      return Cast.toString(atUriConversions.ExtractDID(args.URL))
     }
 
     bskyOptions(args) {
