@@ -2,8 +2,9 @@
 import { AtpAgent } from '@atproto/api'
 import { RichText } from '@atproto/api'
 import { AtUri } from '@atproto/api'
-;import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs';
-(function (Scratch) {
+import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
+
+;(function (Scratch) {
   if (Scratch.extensions.unsandboxed === false) {
     throw new Error('Sandboxed mode is not supported')
   }
