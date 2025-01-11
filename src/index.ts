@@ -58,6 +58,8 @@ import { AtUri } from "@atproto/api"
   const agent = new AtpAgent({
     service: "https://bsky.social"
   })
+
+  /**Search Result Data */
   interface SearchResultData {
     posts: object[]
     actors: object[]
@@ -1383,7 +1385,7 @@ import { AtUri } from "@atproto/api"
           3. Respect Community Guidelines: https://bsky.social/about/support/community-guidelines
           4. Do Not Use This Extension for Malicious Purposes, such as Spam Bots, Scams, or Hacking other Accounts.
           
-          Note: This Extension Doesn't Work on Turbowarp Desktop and Electron Projects.`
+          Note: This Extension Might Not Work Well on Turbowarp Desktop and Electron Projects.`
       )
     }
     bskyShowExtras() {
