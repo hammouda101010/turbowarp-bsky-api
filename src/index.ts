@@ -512,7 +512,7 @@ import { AtUri } from "@atproto/api"
     getInfo() {
       return {
         id: "HamBskyAPI",
-        name: "TurboButterfly",
+        name: "Bluesky API",
         color1: "#0484fc",
         color2: "#0970D1",
         menuIconURI: bskyMenuIcon,
