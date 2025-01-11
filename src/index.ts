@@ -2,8 +2,6 @@
 import { AtpAgent } from '@atproto/api'
 import { RichText } from '@atproto/api'
 import { AtUri } from '@atproto/api'
-import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
-
 ;(function (Scratch) {
   if (Scratch.extensions.unsandboxed === false) {
     throw new Error('Sandboxed mode is not supported')
@@ -16,10 +14,10 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
   const Cast = Scratch.Cast
 
   // Patch
-  
-  //@ts-expect-error
+
+  //@ts-expect-error included in runtime
   const ogConverter = runtime._convertBlockForScratchBlocks.bind(runtime)
-  //@ts-expect-error
+  //@ts-expect-error included in runtime
   runtime._convertBlockForScratchBlocks = function (blockInfo, categoryInfo) {
     const res = ogConverter(blockInfo, categoryInfo)
     if (blockInfo.outputShape) res.json.outputShape = blockInfo.outputShape
@@ -32,7 +30,6 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
 
   // Regexes
   const atUriPattern = /^at:\/\/(did:plc:[a-z0-9]+)\/?(.+)?$/
-  const atProfileUriPattern = /^at:\/\/(did:plc:[a-z0-9]+)\/?$/
   const atPostUriPattern =
     /^at:\/\/(did:plc:[a-z0-9]+)\/app\.bsky\.feed\.post\/([a-z0-9]+)$/
 
@@ -96,13 +93,14 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
   async function getFileSize(url: string) {
     const response = await fetch(url)
     const blob = await response.blob()
-    if (blob.size > 1000000) {
+    if (blob.size > 100000000) {
       throw new Error('Error: File size is too big. It must be less than 1MB.')
     }
     console.log(`File size: ${blob.size} bytes`)
   }
 
   const atUriConversions = {
+    /** Converts a readable post url to an at:// uri. */
     postLinkToAtUri: async (postUrl: string) => {
       const url = new URL(postUrl)
       const pathSegments = url.pathname.split('/')
@@ -129,13 +127,14 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
       const atUri = `at://${did}/app.bsky.feed.post/${postId}`
       return atUri
     },
+    /** Converts a readable handle/profile url to an at:// uri. */
     handleToAtUri: async (handleUrl: string) => {
       let handle: string = Cast.toString(handleUrl)
       if (!handle.startsWith('@')) {
-        if (handle.startsWith("http")){
+        if (handle.startsWith('http')) {
           const url = new URL(handleUrl)
           const pathSegments = url.pathname.split('/')
-          handle = pathSegments[2] 
+          handle = pathSegments[2]
         }
       } else {
         handle = handle.slice(1)
@@ -151,39 +150,43 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
     isValidAtUri: (atUri: string) => {
       return Cast.toBoolean(atUriPattern.test(atUri))
     },
+    /** Converts an at:// uri to a readable post url. */
     atUritoPostLink: async (postAtUri: string) => {
       const match = postAtUri.match(atPostUriPattern)
 
-      const did = match[1] // Extract the DID
+      const uri = atUriConversions.isValidAtUri(postAtUri) ? match[1] : null
       const postId = match[2]
 
-      const { data } = await agent.resolveHandle({ handle: did })
+      const { data } = await agent.getProfile({ actor: uri })
 
       const handle = data.handle
 
+      // Construct the Link
       return `https://bsky.app/profile/${handle}/post/${postId}`
     },
-    atUritoProfileLink: async (postAtUri: string) => {
-      const match = postAtUri.match(atProfileUriPattern)
+    /** Converts an at:// uri to a readable profile url. */
+    atUritoProfileLink: async (profileAtUri: string) => {
+      const uri = atUriConversions.isValidAtUri(profileAtUri)
+        ? profileAtUri
+        : null
 
-      const did = match[1] // Extract the DID
-
-      const { data } = await agent.resolveHandle({ handle: did })
+      // Get the actor's data
+      const { data } = await agent.getProfile({ actor: uri })
 
       const handle = data.handle
 
+      // Construct the Link
       return `https://bsky.app/profile/${handle}/`
     },
+    /** Extracts the DID of an at:// uri. */
     ExtractDID: (atUri: string) => {
-      const match = atUri.match(/(?!at:\/\/)(did:[^\/]+)/); 
-      if (!match){
-        throw new Error("Error: Invalid at:// URI.")
+      const match = atUri.match(/(?!at:\/\/)(did:[^/]+)/)
+      if (!match) {
+        throw new Error('Error: Invalid at:// URI.')
       }
       return match ? match[0] : null
     }
   }
-
-
 
   // Utility Functions
 
@@ -337,9 +340,41 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
   }
 
   /** Search Posts on BlueSky Using a Search Term */
-  async function SearchPosts(searchTerm: string) {
-    const response = await agent.app.bsky.feed.searchPosts({ q: searchTerm })
-    return response
+
+  const BskySearchFuncs = {
+    SearchPosts: async (searchTerm: string, cursor: string, limit: number) => {
+      const response = await agent.app.bsky.feed.searchPosts({
+        q: searchTerm,
+        cursor: cursor,
+        limit: limit
+      })
+      return response
+    },
+    SearchActors: async (searchTerm: string, cursor: string, limit: number) => {
+      const response = agent.app.bsky.actor.searchActors({
+        q: searchTerm,
+        cursor: cursor,
+        limit: limit
+      })
+      return response
+    },
+    Search: async (searchTerm: string, cursor: string, limit: number) => {
+      const posts = await BskySearchFuncs.SearchPosts(searchTerm, cursor, limit)
+      const actors = await BskySearchFuncs.SearchActors(
+        searchTerm,
+        cursor,
+        limit
+      )
+
+      const result = {
+        posts: posts.data.posts,
+        actors: actors.data.actors,
+        cursor: posts.data.cursor ?? actors.data.cursor,
+        headers: posts.headers ?? actors.headers
+      }
+
+      return result
+    }
   }
 
   /**Blocks an User on BlueSky using it's DID */
@@ -363,7 +398,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
     return data
   }
 
-  /**Blocks an User on BlueSky using it's DID */
+  /**Unblocks an User on BlueSky using a block record DID */
   async function UnblockUser(blockedUserAtUri: string) {
     const { rkey } = new AtUri(blockedUserAtUri)
 
@@ -1035,14 +1070,14 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
               }
             }
           },
-          "---",
+          '---',
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyLastBlockedUser',
             text: 'last blocked user DID',
             outputShape: 3
           },
-          "---",
+          '---',
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: 'bskyUnblockUser',
@@ -1053,6 +1088,48 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
                 defaultValue: ''
               }
             }
+          },
+          {
+            blockType: Scratch.BlockType.LABEL,
+            text: 'Searching Posts and Profiles'
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: 'bskySearch',
+            text: 'search posts/profiles with search term [TERM] cursor [CURSOR] and limit [LIMIT]',
+            hideFromPalette: this.sepCursorLimit,
+            arguments: {
+              TERM: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'i love pizza'
+              },
+              CURSOR: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: ''
+              },
+              LIMIT: {
+                type: Scratch.ArgumentType.NUMBER,
+                defaultValue: 69
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: 'bskySearchSep',
+            text: 'search posts/profiles with search term [TERM]',
+            hideFromPalette: !this.sepCursorLimit,
+            arguments: {
+              TERM: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: 'i love pizza'
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: 'bskySearchResult',
+            text: 'search result',
+            disableMonitor: false
           },
           {
             blockType: Scratch.BlockType.LABEL,
@@ -1070,25 +1147,6 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             func: 'bskyHideExtras',
             text: 'Hide Extras',
             hideFromPalette: !this.showExtras
-          },
-          {
-            blockType: Scratch.BlockType.COMMAND,
-            opcode: 'bskySearchPosts',
-            text: 'search posts/profiles with search term [TERM]',
-            hideFromPalette: !this.showExtras,
-            arguments: {
-              TERM: {
-                type: Scratch.ArgumentType.STRING,
-                defaultValue: 'i love pizza'
-              }
-            }
-          },
-          {
-            blockType: Scratch.BlockType.REPORTER,
-            opcode: 'bskySearchResult',
-            text: 'search result',
-            hideFromPalette: !this.showExtras,
-            disableMonitor: false
           },
           '---',
           {
@@ -1118,7 +1176,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             },
             hideFromPalette: !this.showExtras
           },
-          "---",
+          '---',
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: 'bskyAtUriToPostLink',
@@ -1127,8 +1185,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
               URL: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue:
-                  'at://did:plc:6loexbxe5rv4knai6j57obtn/app.bsky.feed.post/3lez77bnyhs2w',
-
+                  'at://did:plc:6loexbxe5rv4knai6j57obtn/app.bsky.feed.post/3lez77bnyhs2w'
               }
             },
             hideFromPalette: !this.showExtras
@@ -1140,8 +1197,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             arguments: {
               URL: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: 'at://did:plc:6loexbxe5rv4knai6j57obtn',
-
+                defaultValue: 'at://did:plc:6loexbxe5rv4knai6j57obtn'
               }
             },
             hideFromPalette: !this.showExtras
@@ -1153,13 +1209,12 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             arguments: {
               URL: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: 'at://did:plc:6loexbxe5rv4knai6j57obtn',
-
+                defaultValue: 'at://did:plc:6loexbxe5rv4knai6j57obtn'
               }
             },
             hideFromPalette: !this.showExtras
           },
-          "---",
+          '---',
           {
             blockType: Scratch.BlockType.BOOLEAN,
             opcode: 'bskyIsAtUri',
@@ -1167,7 +1222,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
             arguments: {
               URL: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: 'at://did:plc:6loexbxe5rv4knai6j57obtn',
+                defaultValue: 'at://did:plc:6loexbxe5rv4knai6j57obtn'
               }
             },
             hideFromPalette: !this.showExtras
@@ -1577,23 +1632,43 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
       const { uri } = await BlockUser(args.DID, this.useCurrentDate, this.date)
       this.lastBlockedUserURI = Cast.toString(uri)
     }
-    bskyLastBlockedUser(){
-      return this.lastBlockedUserURI ?? "no data found"
+    bskyLastBlockedUser() {
+      return this.lastBlockedUserURI ?? 'no data found'
     }
     async bskyUnblockUser(args) {
       await UnblockUser(args.URI)
     }
 
-    async bskySearchPosts(args) {
-      const response = await SearchPosts(args.TERM)
-      const posts: PostView[] = response.data.posts
+    async bskySearch(args) {
+      const response = await BskySearchFuncs.Search(
+        args.TERM,
+        args.CURSOR,
+        args.LIMIT
+      )
+      const posts = response.posts
+      const actors = response.actors
+
       this.searchResult =
-        posts.length === 0
-          ? { posts: response.data.posts, headers: response.headers }
-          : 'found nothing'
+        posts.length !== 0 && actors.length !== 0 ? response : 'found nothing'
     }
+
+    async bskySearchSep(args) {
+      const response = await BskySearchFuncs.Search(
+        args.TERM,
+        this.cursor ?? '',
+        this.limit ?? 5
+      )
+      const posts = response.posts
+      const actors = response.actors
+
+      this.searchResult =
+        posts.length !== 0 && actors.length !== 0 ? response : 'found nothing'
+    }
+
     bskySearchResult() {
-      return (typeof this.searchResult === 'object' && !Array.isArray(this.searchResult)) ? JSON.stringify(this.searchResult) :this.searchResult
+      return typeof this.searchResult === 'object' && this.searchResult !== null
+        ? JSON.stringify(this.searchResult)
+        : this.searchResult
     }
 
     async bskyPostLinkToAtUri(args): Promise<string> {
@@ -1611,7 +1686,7 @@ import { PostView } from '@atproto/api/dist/client/types/app/bsky/feed/defs'
     bskyIsAtUri(args): boolean {
       return Cast.toBoolean(atUriConversions.isValidAtUri(args.URL))
     }
-    bskyExtractDID(args): string{
+    bskyExtractDID(args): string {
       return Cast.toString(atUriConversions.ExtractDID(args.URL))
     }
 
