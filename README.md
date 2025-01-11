@@ -44,7 +44,8 @@ Original API: [BlueSky TypeScript API](https://github.com/bluesky-social/atproto
 Extension Images are From [SVG Repo](https://www.svgrepo.com/) \
 
 ### Notes
-
-This Repository is licensed under the MIT license 👍📑 \
+<div align: "center">
+_This Repository is licensed under the MIT license 👍📑_ \
+</div>
 \
 Copied Some Text [Here](https://github.com/cloudlink-omega/extension)
