@@ -1,7 +1,7 @@
 ---
 name: Pull Request
 about: Create a Pull Request to improve the project
-title: "[PR]: Improvements"
+title: "[PR]: Your Changes"
 labels: enhancement
 assignees: hammouda101010
 
@@ -9,16 +9,13 @@ assignees: hammouda101010
 
 ### All Submissions:
 
-* [ ] Have you followed the guidelines in the Contributions document?
+* [ ] Have you followed the guidelines in [TurboWarp's Contributions](https://github.com/TurboWarp/extensions/blob/master/CONTRIBUTING.md) document?
 * [ ] Have you checked to ensure there aren't other open [Pull Requests](https://github.com/hammouda101010/turbowarp-bsky-api/pulls) for the same update/change?
-
-<!-- You can erase any parts of this template not applicable to your Pull Request. -->
 
 ### New Feature Submissions:
 
-1. [ ] Does your submission pass tests?
-2. [ ] Have you lint your code locally prior to submission?
-3. [ ] Have you tested your code on [Turbowarp](https://turbowarp.org/)?
+1. [ ] Have you lint your code locally prior to submission?
+2. [ ] Have you tested your code on [Turbowarp](https://turbowarp.org/)?
 
 ### Changes to Core Features:
 
