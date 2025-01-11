@@ -13,8 +13,9 @@ import { AtUri } from "@atproto/api"
   const runtime = vm.runtime
   const Cast = Scratch.Cast
 
-  // Patch
+  // Patches
 
+  // Allows Square Blocks for TW (Credits to SharkPool)
   //@ts-expect-error included in runtime
   const ogConverter = runtime._convertBlockForScratchBlocks.bind(runtime)
   //@ts-expect-error included in runtime
@@ -1138,6 +1139,28 @@ import { AtUri } from "@atproto/api"
             }
           },
           {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: "bskyMuteUser",
+            text: "mute user with DID [DID]",
+            arguments: {
+              DID: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: ""
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: "bskyUnmuteUser",
+            text: "unmute user with DID [DID]",
+            arguments: {
+              DID: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: ""
+              }
+            }
+          },
+          {
             blockType: Scratch.BlockType.LABEL,
             text: "Searching Posts and Profiles"
           },
@@ -1696,6 +1719,19 @@ import { AtUri } from "@atproto/api"
     }
     async bskyUnblockUser(args) {
       await UnblockUser(args.URI)
+    }
+
+    async bskyMuteUser(args){
+      const response = await agent.mute(args.DID)
+
+      console.info(`Muted User: ${await atUriConversions.atUritoProfileLink(`at://${args.DID}`)}`)
+      console.log(response)
+    }
+    async bskyUnmuteUser(args){
+      const response = await agent.unmute(args.DID)
+
+      console.info(`Unmuted User: ${await atUriConversions.atUritoProfileLink(`at://${args.DID}`)}`)
+      console.log(response)
     }
 
     async bskySearch(args) {
