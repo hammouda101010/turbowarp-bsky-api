@@ -8,7 +8,7 @@ export default defineConfig({
   outDir: 'dist',
   banner: {
     // Replace it with your extension's metadata
-    js: `// Name: TurboButterFly
+    js: `// Name: TurboButterfly
 // ID: HamBskyAPI
 // Description: Interact with the BlueSky API! Unofficial.
 // By: Hammouda101010 <https://scratch.mit.edu/users/hammouda101010/>
