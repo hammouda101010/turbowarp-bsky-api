@@ -35,7 +35,7 @@ Build: `npm run build`
 
 Build for Turbowarp (format to match its prettier): `npm run build:turbowarp`
 
-Development server: `npm run start` (Extension: <http://localhost:8080/index.global.js>)
+Development server: `npm run start` (Extension: <http://localhost:8080/withL10n.global.js>)
 
 ## 📑🦋💙🦋🦋 Credits/Aknowlegments 🦋🦋💙🦋📑
 

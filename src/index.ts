@@ -1772,40 +1772,6 @@ import { AtUri } from "@atproto/api"
     runtime.startHats("HamBskyAPI_bskyWhenLoggedOut")
   })
 
-  // The following snippet ensures compatibility with Turbowarp / Gandi IDE.
-  if (vm?.runtime) {
-    // For Turbowarp
-
-    //@ts-ignore
-    Scratch.extensions.register(new HamBskyAPI(Scratch.runtime))
-  } else {
-    // For Gandi
-    window.tempExt = {
-      //@ts-ignore
-      Extension: HamBskyAPI,
-      info: {
-        extensionId: "HamBskyAPI",
-        name: "HamBskyAPI.name",
-        description: "HamBskyAPI.description",
-        featured: true,
-        disabled: false,
-        collaboratorList: [
-          {
-            collaborator: "Hammouda101010",
-            collaboratorURL: "https://github.com/Hammouda101010"
-          }
-        ]
-      },
-      l10n: {
-        en: {
-          "newExtension.name": "BlueSky API",
-          "newExtension.description": "Interact with the BlueSky API!"
-        },
-        fr: {
-          "newExtension.name": "API BlueSky",
-          "newExtension.description": "Interagis avec L'API BlueSky!"
-        }
-      }
-    }
-  }
+  // @ts-ignore
+  Scratch.extensions.register(new HamBskyAPI(Scratch.runtime))
 })(Scratch)
