@@ -46,6 +46,8 @@ import { AtUri } from '@atproto/api'
     'https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/heartplus.svg'
   const HeartBrokenIcon =
     'https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/heartbroken.svg'
+  const SearchingLensIcon =
+    'https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/search-lens.svg'
   // const arrowURI =
   // "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNS44OTMiIGhlaWdodD0iMTUuODkzIiB2aWV3Qm94PSIwIDAgMTUuODkzIDE1Ljg5MyI+PHBhdGggZD0iTTkuMDIxIDEyLjI5NHYtMi4xMDdsLTYuODM5LS45MDVDMS4zOTggOS4xODQuODQ2IDguNDg2Ljk2MiA3LjcyN2MuMDktLjYxMi42MDMtMS4wOSAxLjIyLTEuMTY0bDYuODM5LS45MDVWMy42YzAtLjU4Ni43MzItLjg2OSAxLjE1Ni0uNDY0bDQuNTc2IDQuMzQ1YS42NDMuNjQzIDAgMCAxIDAgLjkxOGwtNC41NzYgNC4zNmMtLjQyNC40MDQtMS4xNTYuMTEtMS4xNTYtLjQ2NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9Ii4xNSIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjEuNzUiLz48cGF0aCBkPSJNOS4wMjEgMTIuMjk0di0yLjEwN2wtNi44MzktLjkwNUMxLjM5OCA5LjE4NC44NDYgOC40ODYuOTYyIDcuNzI3Yy4wOS0uNjEyLjYwMy0xLjA5IDEuMjItMS4xNjRsNi44MzktLjkwNVYzLjZjMC0uNTg2LjczMi0uODY5IDEuMTU2LS40NjRsNC41NzYgNC4zNDVhLjY0My42NDMgMCAwIDEgMCAuOTE4bC00LjU3NiA0LjM2Yy0uNDI0LjQwNC0xLjE1Ni4xMS0xLjE1Ni0uNDY1IiBmaWxsPSIjZmZmIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz48cGF0aCBkPSJNMCAxNS44OTJWMGgxNS44OTJ2MTUuODkyeiIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==";
 
@@ -53,7 +55,16 @@ import { AtUri } from '@atproto/api'
   const agent = new AtpAgent({
     service: 'https://bsky.social'
   })
-  type SearchResult = 'no search result yet' | 'found nothing' | object
+  interface SearchResultData {
+    posts: object[],
+    actors: object[],
+    cursor: any,
+    headers: object
+  }
+
+  type SearchResult = 'no search result yet' | 'found nothing' | SearchResultData
+
+  type ImageType = "avatar" | "banner" | "feed_thumbnail" | "feed_fullsize"
 
   // Special Functions
   /** Converts an image/video URL into a readable DataURI
@@ -185,6 +196,15 @@ import { AtUri } from '@atproto/api'
         throw new Error('Error: Invalid at:// URI.')
       }
       return match ? match[0] : null
+    },
+    BlobReftoLink: async (did: string, imgType: ImageType , blob: any) => {
+      const { data } = blob
+
+      let mimeType: string = data.blob.mimeType
+
+      mimeType.replace(/.+\//,"")
+      
+      return `https://cdn.bsky.app/img/${imgType}/plain/${did}/${data.blob.ref.$link}@${mimeType}`
     }
   }
 
@@ -366,7 +386,7 @@ import { AtUri } from '@atproto/api'
         limit
       )
 
-      const result = {
+      const result: SearchResultData = {
         posts: posts.data.posts,
         actors: actors.data.actors,
         cursor: posts.data.cursor ?? actors.data.cursor,
@@ -407,6 +427,25 @@ import { AtUri } from '@atproto/api'
       rkey
     })
     console.info(`Unblocked User With at:// URI: ${blockedUserAtUri}`)
+  }
+
+  async function EditProfile(displayName: string, description: string, userImageType: string = 'avatar', blob: any = {}){
+
+    await agent.upsertProfile(existingProfile =>{
+    const existing = existingProfile ?? {}
+
+    existing.displayName = displayName
+    existing.description = description
+
+    const { data } = blob
+
+    if (Object.keys(blob).length !== 0){
+      existing[userImageType] = data.blob
+    }
+    console.log(existing)
+
+    return existing
+    })
   }
 
   /**
@@ -1098,6 +1137,7 @@ import { AtUri } from '@atproto/api'
             opcode: 'bskySearch',
             text: 'search posts/profiles with search term [TERM] cursor [CURSOR] and limit [LIMIT]',
             hideFromPalette: this.sepCursorLimit,
+            blockIconURI: SearchingLensIcon,
             arguments: {
               TERM: {
                 type: Scratch.ArgumentType.STRING,
@@ -1118,6 +1158,7 @@ import { AtUri } from '@atproto/api'
             opcode: 'bskySearchSep',
             text: 'search posts/profiles with search term [TERM]',
             hideFromPalette: !this.sepCursorLimit,
+            blockIconURI: SearchingLensIcon,
             arguments: {
               TERM: {
                 type: Scratch.ArgumentType.STRING,
@@ -1626,6 +1667,10 @@ import { AtUri } from '@atproto/api'
       const { data } = await agent.getProfiles({ actors: JSON.parse(args.URI) })
 
       return JSON.stringify(data)
+    }
+
+    async bskyEditProfile(args){
+      await EditProfile(args.DISPLAY_NAME, args.DESCRIPTION, args.PROFILE_IMAGE_TYPE, args.IMAGE)
     }
 
     async bskyBlockUser(args) {
