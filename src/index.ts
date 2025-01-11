@@ -166,12 +166,12 @@ import { AtUri } from '@atproto/api'
     },
     /** Converts an at:// uri to a readable profile url. */
     atUritoProfileLink: async (profileAtUri: string) => {
-      const uri = atUriConversions.isValidAtUri(profileAtUri)
-        ? profileAtUri
+      const did = atUriConversions.isValidAtUri(profileAtUri)
+        ? atUriConversions.ExtractDID(profileAtUri)
         : null
 
       // Get the actor's data
-      const { data } = await agent.getProfile({ actor: uri })
+      const { data } = await agent.getProfile({ actor: did })
 
       const handle = data.handle
 
