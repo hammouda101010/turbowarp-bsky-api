@@ -75,6 +75,7 @@ import { AtUri } from "@atproto/api"
   type ImageType = "avatar" | "banner" | "feed_thumbnail" | "feed_fullsize"
 
   // Special Functions
+
   /** Converts an image/video URL into a readable DataURI
    * @param {string} URL - The URL of the image/video
    */
@@ -1384,8 +1385,7 @@ import { AtUri } from "@atproto/api"
           2. Avoid Copyright Infringements: https://bsky.social/about/support/copyright
           3. Respect Community Guidelines: https://bsky.social/about/support/community-guidelines
           4. Do Not Use This Extension for Malicious Purposes, such as Spam Bots, Scams, or Hacking other Accounts.
-          
-          Note: This Extension Might Not Work Well on Turbowarp Desktop and Electron Projects.`
+          `
       )
     }
     bskyShowExtras() {
