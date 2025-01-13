@@ -2,6 +2,9 @@
 import { AtpAgent } from "@atproto/api"
 import { RichText } from "@atproto/api"
 import { AtUri } from "@atproto/api"
+
+import  {Mime} from 'mime';
+
 ;(function (Scratch) {
   if (Scratch.extensions.unsandboxed === false) {
     throw new Error("TurboButterfly Extension Must Be Run Unsandboxed.")
@@ -58,6 +61,7 @@ import { AtUri } from "@atproto/api"
   const agent = new AtpAgent({
     service: "https://bsky.social"
   })
+  const mime = new Mime()
 
   /**Search Result Data */
   interface SearchResultData {
@@ -117,7 +121,9 @@ import { AtUri } from "@atproto/api"
       throw new Error("Error: File size is too big. It must be less than 1MB.")
     }
     console.log(`File size: ${blob.size} bytes`)
+    return blob.size
   }
+
 
   const atUriConversions = {
     /** Converts a readable post url to an at:// uri. */
@@ -214,7 +220,24 @@ import { AtUri } from "@atproto/api"
       mimeType.replace(/.+\//, "")
 
       return `https://cdn.bsky.app/img/${imgType}/plain/${did}/${data.blob.ref.$link}@${mimeType}`
+    },
+    LinktoBlobRef: async (link:string) =>{
+      const url = new URL(link)
+
+      const pathnames = url.pathname.split("/")
+      const id = pathnames[4].replace(/@.*/,"")
+      const type = mime.getType(pathnames[4].replace(/^[^@]*/,""))
+
+      return {
+        $type: "blob",
+        ref: {
+          $link:"bafkreiblzvfqwaixdxtud6ubeilb4yyc6zdfsmfinfh4lpojik2tql7gwa"
+        },
+        mimeType: type,
+        size: await getFileSize(link)
+      }
     }
+    
   }
 
   // Utility Functions
@@ -1303,8 +1326,19 @@ import { AtUri } from "@atproto/api"
             },
             hideFromPalette: !this.showExtras
           },
-
           "---",
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: "bskyExtractDID",
+            text: "extract DID from at:// uri [URL]",
+            arguments: {
+              URL: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "at://did:plc:6loexbxe5rv4knai6j57obtn"
+              }
+            },
+            hideFromPalette: !this.showExtras
+          },
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyOptions",
