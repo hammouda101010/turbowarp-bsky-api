@@ -17,9 +17,9 @@ This is the unofficial extension for the BlueSky API!
 ## Release Plan:
 ~~v1.0 pre-alpha: first version~~
 
-~~v1.0 alpha: Created testing bot and more API interactions~~
+~~v1.0 alpha: Created testing bot and more API interactions. major bug fixes. do not use.~~
 
-**v1.0 beta: current. unstable and unfinished.**
+**v1.0 beta: current. unstable and unfinished. major bug fixes.**
 
 _v1.0-release-candidate: Extension complete. Meets standards of full release with minimal issues. During this release period, preparations for full release include gallery thumbnail, sample project, documentation, etc._
 
