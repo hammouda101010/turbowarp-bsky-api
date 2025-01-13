@@ -1,9 +1,10 @@
-# 🦋🟦🌐 BlueSky API for Turbowarp
+# 🦋🟦🌐 TurboButterfly: BlueSky API for Turbowarp
 ![Banner](https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/turbobutterfly-banner.png)
 
 This is the unofficial extension for the BlueSky API!
 
 ### Things It Can Do:
+- Implements the Bluesky API into your Turbowarp projects
 - Create new posts and replies
 - Insert embeds into your posts
 - View feeds, feed generators and user posts
