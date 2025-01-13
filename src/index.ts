@@ -3,8 +3,7 @@ import { AtpAgent } from "@atproto/api"
 import { RichText } from "@atproto/api"
 import { AtUri } from "@atproto/api"
 
-import  {Mime} from 'mime';
-
+import { Mime } from "mime"
 ;(function (Scratch) {
   if (Scratch.extensions.unsandboxed === false) {
     throw new Error("TurboButterfly Extension Must Be Run Unsandboxed.")
@@ -67,7 +66,7 @@ import  {Mime} from 'mime';
   interface SearchResultData {
     posts: object[]
     actors: object[]
-    cursor: any
+    cursor: string
     headers: object
   }
 
@@ -123,7 +122,6 @@ import  {Mime} from 'mime';
     console.log(`File size: ${blob.size} bytes`)
     return blob.size
   }
-
 
   const atUriConversions = {
     /** Converts a readable post url to an at:// uri. */
@@ -212,32 +210,39 @@ import  {Mime} from 'mime';
       }
       return match ? match[0] : null
     },
-    BlobReftoLink: async (did: string, imgType: ImageType, blob: any) => {
+    BlobReftoURL: (did: string, imgType: ImageType, blob: object) => {
+      //@ts-expect-error data included in object
       const { data } = blob
 
       let mimeType: string = data.blob.mimeType
 
-      mimeType.replace(/.+\//, "")
+      mimeType = mimeType.replace(/.+\//, "")
 
       return `https://cdn.bsky.app/img/${imgType}/plain/${did}/${data.blob.ref.$link}@${mimeType}`
     },
-    LinktoBlobRef: async (link:string) =>{
+    URLtoBlobRef: async (link: string) => {
       const url = new URL(link)
 
       const pathnames = url.pathname.split("/")
-      const id = pathnames[4].replace(/@.*/,"")
-      const type = mime.getType(pathnames[4].replace(/^[^@]*/,""))
+
+      if (pathnames.length < 5) {
+        throw new Error("Invalid URL format")
+      }
+
+      const id = pathnames[4].replace(/@.*/, "")
+      const type =
+        mime.getType(pathnames[4].replace(/^[^@]*/, "")) ||
+        "application/octet-stream"
 
       return {
         $type: "blob",
         ref: {
-          $link:"bafkreiblzvfqwaixdxtud6ubeilb4yyc6zdfsmfinfh4lpojik2tql7gwa"
+          $link: id
         },
         mimeType: type,
         size: await getFileSize(link)
       }
     }
-    
   }
 
   // Utility Functions
@@ -465,7 +470,7 @@ import  {Mime} from 'mime';
     displayName: string,
     description: string,
     userImageType: string = "avatar",
-    blob: any = {}
+    blob: { data: { blob: object } }
   ) {
     await agent.upsertProfile(existingProfile => {
       const existing = existingProfile ?? {}
@@ -1164,6 +1169,7 @@ import  {Mime} from 'mime';
               }
             }
           },
+          "---",
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyMuteUser",
@@ -1251,7 +1257,7 @@ import  {Mime} from 'mime';
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: "bskyProfileLinkToAtUri",
-            text: "convert profile link/handle [URL] to at:// uri",
+            text: "convert profile URL/handle [URL] to at:// uri",
             outputShape: 3,
             arguments: {
               URL: {
@@ -1264,7 +1270,7 @@ import  {Mime} from 'mime';
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: "bskyPostLinkToAtUri",
-            text: "convert post link [URL] to at:// uri",
+            text: "convert post URL [URL] to at:// uri",
             outputShape: 3,
             arguments: {
               URL: {
@@ -1279,7 +1285,7 @@ import  {Mime} from 'mime';
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: "bskyAtUriToPostLink",
-            text: "convert at:// uri [URL] to post link",
+            text: "convert at:// uri [URL] to post URL",
             arguments: {
               URL: {
                 type: Scratch.ArgumentType.STRING,
@@ -1292,7 +1298,7 @@ import  {Mime} from 'mime';
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: "bskyAtUriToProfileLink",
-            text: "convert at:// uri [URL] to profile link",
+            text: "convert at:// uri [URL] to profile URL",
             arguments: {
               URL: {
                 type: Scratch.ArgumentType.STRING,
@@ -1329,16 +1335,38 @@ import  {Mime} from 'mime';
           "---",
           {
             blockType: Scratch.BlockType.REPORTER,
-            opcode: "bskyExtractDID",
-            text: "extract DID from at:// uri [URL]",
+            opcode: "bskyBlobReftoURL",
+            text: "convert blob reference [BLOB] to URL with DID [DID] and [IMAGE_TYPE] image type ",
             arguments: {
-              URL: {
+              BLOB: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: "at://did:plc:6loexbxe5rv4knai6j57obtn"
+                defaultValue: "blob ref"
+              },
+              DID: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "did:plc:6loexbxe5rv4knai6j57obtn"
+              },
+              IMAGE_TYPE: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "bskyIMAGE_TYPE"
               }
             },
             hideFromPalette: !this.showExtras
           },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: "bskyURLtoBlobRef",
+            text: "convert bluesky image URL [URL] to blob reference",
+            arguments: {
+              URL: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "url"
+              }
+            },
+            hideFromPalette: !this.showExtras,
+            outputShape: 3
+          },
+          "---",
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyOptions",
@@ -1403,6 +1431,15 @@ import  {Mime} from 'mime';
           bskyPROFILE_IMAGE_TYPE: {
             acceptReporters: true,
             items: ["avatar", "banner"]
+          },
+          bskyIMAGE_TYPE: {
+            acceptReporters: true,
+            items: [
+              "avatar",
+              "banner",
+              { text: "embed thumbnail", value: "feed_thumbnail" },
+              { text: "fullsize image", value: "feed_fullsize" }
+            ]
           }
         }
       }
@@ -1757,16 +1794,20 @@ import  {Mime} from 'mime';
       await UnblockUser(args.URI)
     }
 
-    async bskyMuteUser(args){
+    async bskyMuteUser(args) {
       const response = await agent.mute(args.DID)
 
-      console.info(`Muted User: ${await atUriConversions.atUritoProfileLink(`at://${args.DID}`)}`)
+      console.info(
+        `Muted User: ${await atUriConversions.atUritoProfileLink(`at://${args.DID}`)}`
+      )
       console.log(response)
     }
-    async bskyUnmuteUser(args){
+    async bskyUnmuteUser(args) {
       const response = await agent.unmute(args.DID)
 
-      console.info(`Unmuted User: ${await atUriConversions.atUritoProfileLink(`at://${args.DID}`)}`)
+      console.info(
+        `Unmuted User: ${await atUriConversions.atUritoProfileLink(`at://${args.DID}`)}`
+      )
       console.log(response)
     }
 
@@ -1819,6 +1860,13 @@ import  {Mime} from 'mime';
     }
     bskyExtractDID(args): string {
       return Cast.toString(atUriConversions.ExtractDID(args.URL))
+    }
+
+    bskyBlobReftoURL(args) {
+      return atUriConversions.BlobReftoURL(args.DID, args.IMAGE_TYPE, args.BLOB)
+    }
+    async bskyURLtoBlobRef(args) {
+      return await atUriConversions.URLtoBlobRef(args.URL)
     }
 
     bskyOptions(args) {
