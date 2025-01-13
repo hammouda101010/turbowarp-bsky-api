@@ -3,7 +3,6 @@ import { AppBskyGraphDefs, AtpAgent } from "@atproto/api"
 import { RichText } from "@atproto/api"
 import { AtUri } from "@atproto/api"
 import { Mime } from "mime"
-
 ;(function (Scratch) {
   if (Scratch.extensions.unsandboxed === false) {
     throw new Error("TurboButterfly Extension Must Be Run Unsandboxed.")
@@ -126,50 +125,58 @@ import { Mime } from "mime"
   const atUriConversions = {
     /** Converts a readable post url to an at:// uri. */
     postLinkToAtUri: async (postUrl: string) => {
-      const url = new URL(postUrl)
-      const pathSegments = url.pathname.split("/")
-      // Validate URL structure
-      if (
-        pathSegments.length < 5 ||
-        pathSegments[1] !== "profile" ||
-        pathSegments[3] !== "post"
-      ) {
-        throw new Error("Invalid Bluesky post URL format.")
+      try {
+        const url = new URL(postUrl)
+        const pathSegments = url.pathname.split("/")
+        // Validate URL structure
+        if (
+          pathSegments.length < 5 ||
+          pathSegments[1] !== "profile" ||
+          pathSegments[3] !== "post"
+        ) {
+          throw new Error("Invalid Bluesky post URL format.")
+        }
+
+        // Extract handle and post ID
+        const handle = pathSegments[2]
+        const postId = pathSegments[4]
+
+        // Initialize the Bluesky agent
+
+        // Resolve the handle to get the DID
+        const handleResolution = await agent.resolveHandle({ handle: handle })
+        const did = handleResolution.data.did
+
+        // Construct the AT URI
+        const atUri = `at://${did}/app.bsky.feed.post/${postId}`
+        return atUri
+      } catch (e) {
+        throw new Error(`Conversion Failed: ${e}`)
       }
-
-      // Extract handle and post ID
-      const handle = pathSegments[2]
-      const postId = pathSegments[4]
-
-      // Initialize the Bluesky agent
-
-      // Resolve the handle to get the DID
-      const handleResolution = await agent.resolveHandle({ handle: handle })
-      const did = handleResolution.data.did
-
-      // Construct the AT URI
-      const atUri = `at://${did}/app.bsky.feed.post/${postId}`
-      return atUri
     },
     /** Converts a readable handle/profile url to an at:// uri. */
     handleToAtUri: async (handleUrl: string) => {
-      let handle: string = Cast.toString(handleUrl)
-      if (!handle.startsWith("@")) {
-        if (handle.startsWith("http")) {
-          const url = new URL(handleUrl)
-          const pathSegments = url.pathname.split("/")
-          handle = pathSegments[2]
+      try {
+        let handle: string = Cast.toString(handleUrl)
+        if (!handle.startsWith("@")) {
+          if (handle.startsWith("http")) {
+            const url = new URL(handleUrl)
+            const pathSegments = url.pathname.split("/")
+            handle = pathSegments[2]
+          }
+        } else {
+          handle = handle.slice(1)
         }
-      } else {
-        handle = handle.slice(1)
+
+        // Resolve the handle to get the DID
+        const { data } = await agent.resolveHandle({ handle: handle })
+        const did = data.did
+
+        // Construct the AT URI
+        return `at://${did}/`
+      } catch (e) {
+        throw new Error(`Conversion Failed: ${e}`)
       }
-
-      // Resolve the handle to get the DID
-      const { data } = await agent.resolveHandle({ handle: handle })
-      const did = data.did
-
-      // Construct the AT URI
-      return `at://${did}/`
     },
     isValidAtUri: (atUri: string) => {
       return Cast.toBoolean(atUriPattern.test(atUri))
@@ -417,7 +424,11 @@ import { Mime } from "mime"
     },
     Search: async (searchTerm: string, cursor: string, limit: number) => {
       const posts = await BskySearchFuncs.SearchPosts(searchTerm, cursor, limit)
-      const actors = await BskySearchFuncs.SearchActors(searchTerm, cursor, limit)
+      const actors = await BskySearchFuncs.SearchActors(
+        searchTerm,
+        cursor,
+        limit
+      )
 
       const result: SearchResultData = {
         posts: posts.data.posts,
@@ -505,7 +516,7 @@ import { Mime } from "mime"
   }
 
   /**Gets a List and It's Members.
-   * 
+   *
    * @param fullListView: If enabled, paginates trough the entire list
    */
   async function GetBskyList(
@@ -514,7 +525,6 @@ import { Mime } from "mime"
     limit: number = 6,
     fullListView?: boolean
   ) {
-
     let response: unknown
 
     if (!fullListView) {
@@ -990,6 +1000,19 @@ import { Mime } from "mime"
               LIMIT: {
                 type: Scratch.ArgumentType.NUMBER,
                 defaultValue: 50
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: "bskyMostRecentPostfromUser",
+            text: "most recent post from [URI]",
+            hideFromPalette: !this.sepCursorLimit,
+            outputShape: 3,
+            arguments: {
+              URI: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "did:plc:z72i7hdynmk6r22z27h6tvur"
               }
             }
           },
@@ -1486,14 +1509,15 @@ import { Mime } from "mime"
     bskyDisclaimer() {
       alert(
         `DISCLAIMER:
-          When using the "Login" block, NEVER use your REAL password. Always use an app password instead.
+          When using the "Login" block, NEVER use your REAL password. Use an app password instead.
 
           Rules to Follow:
           1. Follow BlueSky's Terms of Service: https://bsky.social/about/support/tos
           2. Avoid Copyright Infringements: https://bsky.social/about/support/copyright
           3. Respect Community Guidelines: https://bsky.social/about/support/community-guidelines
           4. Do Not Use This Extension for Malicious Purposes, such as Spam Bots, Scams, or Hacking other Accounts.
-          `
+          
+          Note: This Extension Pairs Well With JSON Extensions.`
       )
     }
     bskyShowExtras() {
@@ -1732,6 +1756,19 @@ import { Mime } from "mime"
 
       return JSON.stringify(data)
     }
+    async bskyMostRecentPostfromUser(args) {
+      const { data } = await agent.getAuthorFeed({
+        actor: args.URI,
+        filter: args.FILTER,
+        cursor: this.cursor ?? "",
+        limit: this.limit ?? 50
+      })
+
+      const recentPost = data.feed[0]
+
+      return JSON.stringify(recentPost)
+    }
+
     bskySetCursor(args) {
       this.cursor = args.CURSOR
     }
@@ -1903,7 +1940,7 @@ import { Mime } from "mime"
       return atUriConversions.BlobReftoURL(args.DID, args.IMAGE_TYPE, args.BLOB)
     }
     async bskyURLtoBlobRef(args) {
-      return await atUriConversions.URLtoBlobRef(args.URL)
+      return JSON.stringify(await atUriConversions.URLtoBlobRef(args.URL))
     }
 
     bskyOptions(args) {
