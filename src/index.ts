@@ -1,5 +1,5 @@
 // Required Modules
-import { AtpAgent } from "@atproto/api"
+import { AppBskyGraphDefs, AtpAgent } from "@atproto/api"
 import { RichText } from "@atproto/api"
 import { AtUri } from "@atproto/api"
 
@@ -506,6 +506,37 @@ import { Mime } from "mime"
       }
     }
     return markdown
+  }
+
+  async function GetBskyList(
+    uri,
+    cursorArg: string = "",
+    limit: number = 6,
+    fullListView?: boolean
+  ) {
+    let response
+    if (!fullListView) {
+      response = await agent.app.bsky.graph.getList({
+        list: uri,
+        limit: limit,
+        cursor: cursorArg
+      })
+    } else {
+      let cursor: string | undefined = cursorArg
+      let members: AppBskyGraphDefs.ListItemView[] = []
+      do {
+        let res = await agent.app.bsky.graph.getList({
+          list: uri,
+          limit: limit,
+          cursor
+        })
+        cursor = res.data.cursor
+        members = members.concat(res.data.items)
+      } while (cursor)
+      response = members
+    }
+
+    return response
   }
 
   class HamBskyAPI implements Scratch.Extension {
@@ -1253,7 +1284,6 @@ import { Mime } from "mime"
             text: "Hide Extras",
             hideFromPalette: !this.showExtras
           },
-          "---",
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: "bskyProfileLinkToAtUri",
