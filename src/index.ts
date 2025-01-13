@@ -1,5 +1,6 @@
 // Required Modules
 import { AppBskyGraphDefs, AtpAgent } from "@atproto/api"
+// import { moderatePost } from "@atproto/api"
 import { RichText } from "@atproto/api"
 import { AtUri } from "@atproto/api"
 import { Mime } from "mime"
@@ -8,7 +9,6 @@ import { Mime } from "mime"
     throw new Error("TurboButterfly Extension Must Be Run Unsandboxed.")
   }
   // The extension"s code
-
   // Scratch's Stuff
   const vm = Scratch.vm
   const runtime = vm.runtime
@@ -415,7 +415,7 @@ import { Mime } from "mime"
       return response
     },
     SearchActors: async (searchTerm: string, cursor: string, limit: number) => {
-      const response = agent.app.bsky.actor.searchActors({
+      const response = agent.searchActors({
         q: searchTerm,
         cursor: cursor,
         limit: limit

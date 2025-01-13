@@ -30,6 +30,7 @@ _v1.0-release-candidate: Extension complete. Meets standards of full release wit
 - Bug-fixes
 - More error-handling
 - video embeds
+- (if required) future rewrite in favor of Bluesky's OAuth login method
 
 
 
