@@ -1,7 +1,33 @@
-![Banner](https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/turbobutterfly-banner.png)
 # 🦋🟦🌐 BlueSky API for Turbowarp
+![Banner](https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/turbobutterfly-banner.png)
 
-Hello! this is the unofficial extension for the BlueSky API!
+This is the unofficial extension for the BlueSky API!
+
+Things it can do:
+- Create new posts and replies
+- Insert embeds into your posts
+- View feeds, feed generators and user posts
+- Get post threads and accounts information
+- Like, follow, and repost stuff you like
+- Edit your profile
+- Block and mute annoying users
+- Search posts and profiles
+- ...and more!
+
+## Release Plan:
+~~v1.0 pre-alpha: first version~~
+~~v1.0 alpha: Created testing bot and more API interactions~~
+**v1.0 beta: current. unstable and unfinished.**
+_v1.0-release-candidate: Extension complete. Meets standards of full release with minimal issues. During this release period, preparations for full release include gallery thumbnail, sample project, documentation, etc._
+
+## Active Development
+### v1.0-beta:
+- Complete the rest of the API (thread gates, user lists, post filters, languages list, etc.)
+- Bug-fixes
+- More error-handling
+- video embeds
+
+
 
 ## Getting Started
 
