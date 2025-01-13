@@ -417,11 +417,7 @@ import { Mime } from "mime"
     },
     Search: async (searchTerm: string, cursor: string, limit: number) => {
       const posts = await BskySearchFuncs.SearchPosts(searchTerm, cursor, limit)
-      const actors = await BskySearchFuncs.SearchActors(
-        searchTerm,
-        cursor,
-        limit
-      )
+      const actors = await BskySearchFuncs.SearchActors(searchTerm, cursor, limit)
 
       const result: SearchResultData = {
         posts: posts.data.posts,
@@ -508,22 +504,33 @@ import { Mime } from "mime"
     return markdown
   }
 
+  /**Gets a List and It's Members.
+   * 
+   * @param fullListView: If enabled, paginates trough the entire list
+   */
   async function GetBskyList(
     uri,
     cursorArg: string = "",
     limit: number = 6,
     fullListView?: boolean
   ) {
-    let response
+
+    let response: unknown
+
     if (!fullListView) {
+      // Get List, as Normal
       response = await agent.app.bsky.graph.getList({
         list: uri,
         limit: limit,
         cursor: cursorArg
       })
     } else {
+      // Use the Cursor argument
       let cursor: string | undefined = cursorArg
+      // setup a members list
       let members: AppBskyGraphDefs.ListItemView[] = []
+
+      // View the entire list
       do {
         let res = await agent.app.bsky.graph.getList({
           list: uri,
@@ -1858,7 +1865,7 @@ import { Mime } from "mime"
       const response = await BskySearchFuncs.Search(
         args.TERM,
         this.cursor ?? "",
-        this.limit ?? 5
+        this.limit ?? 50
       )
       const posts = response.posts
       const actors = response.actors
