@@ -4,16 +4,16 @@
 This is the unofficial extension for the BlueSky API!
 
 ### Things It Can Do:
-- Implements the Bluesky API into your Turbowarp projects
-- Create new posts and replies
-- Insert embeds into your posts
-- View feeds, feed generators and user posts
-- Get post threads and accounts information
-- Like, follow, and repost stuff you like
-- Edit your profile
-- Block and mute annoying users
-- Search posts and profiles
-- ...and more!
+- Implements the Bluesky API into your Turbowarp projects:
+- - Create new posts and replies
+- - Insert embeds into your posts
+- - View feeds, feed generators and user posts
+- - Get post threads and accounts information
+- - Like, follow, and repost stuff you like
+- - Edit your profile
+- - Block and mute annoying users
+- - Search posts and profiles
+- - ...and more!
 
 ## Release Plan:
 ~~v1.0 pre-alpha: first version~~
