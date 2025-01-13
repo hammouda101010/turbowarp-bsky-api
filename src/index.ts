@@ -2,8 +2,8 @@
 import { AppBskyGraphDefs, AtpAgent } from "@atproto/api"
 import { RichText } from "@atproto/api"
 import { AtUri } from "@atproto/api"
-
 import { Mime } from "mime"
+
 ;(function (Scratch) {
   if (Scratch.extensions.unsandboxed === false) {
     throw new Error("TurboButterfly Extension Must Be Run Unsandboxed.")
