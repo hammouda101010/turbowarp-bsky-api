@@ -3,7 +3,7 @@
 
 This is the unofficial extension for the BlueSky API!
 
-Things it can do:
+### Things It Can Do:
 - Create new posts and replies
 - Insert embeds into your posts
 - View feeds, feed generators and user posts
@@ -16,8 +16,11 @@ Things it can do:
 
 ## Release Plan:
 ~~v1.0 pre-alpha: first version~~
+
 ~~v1.0 alpha: Created testing bot and more API interactions~~
+
 **v1.0 beta: current. unstable and unfinished.**
+
 _v1.0-release-candidate: Extension complete. Meets standards of full release with minimal issues. During this release period, preparations for full release include gallery thumbnail, sample project, documentation, etc._
 
 ## Active Development
