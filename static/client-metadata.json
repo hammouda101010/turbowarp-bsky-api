@@ -1,0 +1,15 @@
+{
+    "client_id": "https://example.com/client-metadata.json",
+    "client_name": "TurboWarp/Penguinmod",
+    "client_uri": "https://turbowarp.org/",
+    "logo_uri": "https://turbowarp.org/favicon.ico",
+    "tos_uri": "https://scratch.mit.edu/terms_of_use",
+    "policy_uri": "https://turbowarp.org/privacy.html",
+    "redirect_uris": ["https://turbowarp.github.io"],
+    "scope": "atproto",
+    "grant_types": ["authorization_code", "refresh_token"],
+    "response_types": ["code"],
+    "token_endpoint_auth_method": "none",
+    "application_type": "web",
+    "dpop_bound_access_tokens": true
+  }
