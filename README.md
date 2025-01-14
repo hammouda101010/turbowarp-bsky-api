@@ -63,11 +63,11 @@ Check for eslint: `npm run lint` (Fix: `npm run fix`)
 
 ### 📦🔨🦋 Building
 
-Build: `npm run build`
+Build: `npm run build` (OAuth Ver: `npm run build-OAuth`)
 
-Build for Turbowarp (format to match its prettier): `npm run build:turbowarp`
+Build for Turbowarp (format to match its prettier): `npm run build:turbowarp` (OAuth Ver: `npm run build-OAuth:turbowarp`)
 
-Development server: `npm run start` (Extension: <http://localhost:8080/index.global.js>)
+Development server: `npm run start` (Extension: <http://localhost:8080/index.global.js>) (OAuth Ver: `npm run start-OAuth`)
 
 ## 📑🦋💙🦋🦋 Credits/Aknowlegments 🦋🦋💙🦋📑
 

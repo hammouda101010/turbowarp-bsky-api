@@ -519,7 +519,6 @@ import { Mime } from "mime"
    *
    * @param fullListView: If enabled, paginates trough the entire list
    */
- 
 
   class HamBskyAPI implements Scratch.Extension {
     runtime: VM.Runtime

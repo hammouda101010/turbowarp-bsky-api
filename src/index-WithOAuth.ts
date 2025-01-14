@@ -521,7 +521,7 @@ import { Mime } from "mime"
 
       // View the entire list
       do {
-        let res = await agent.app.bsky.graph.getList({
+        const res = await agent.app.bsky.graph.getList({
           list: uri,
           limit: limit,
           cursor
@@ -567,6 +567,8 @@ import { Mime } from "mime"
       this.lastBlockedUserURI = null
 
       this.showExtras = false
+
+
     }
     //@ts-ignore
     getInfo() {
@@ -1506,7 +1508,7 @@ import { Mime } from "mime"
     }
     /* ---- BUTTONS----*/
 
-    async bskyLoadOAuthClient() {
+    async LoadOAuthClient() {
       // Load The OAuth Client
       this.OAuthClient = await BrowserOAuthClient.load({
         clientId:
@@ -1527,30 +1529,58 @@ import { Mime } from "mime"
 
     async bskyLogin(args): Promise<void> {
       if (!this.session) {
-        await this.bskyLoadOAuthClient()
-
+        await this.LoadOAuthClient()
+        
         const handle = args.HANDLE
         if (!handle)
           throw new Error("Authentication process canceled by the user")
 
         const url = await this.OAuthClient.authorize(handle)
 
-        // Redirect the user to the authorization page
-        window.open(url, "PopupWindow", "width=500,height=600")
+        // Open a popup window for authentication
+        // Open the authentication popup
+        const popup = window.open(
+          url,
+          "authPopup",
+          "width=500,height=600,noopener"
+        )
+        console.log(popup)
 
-        // Protect against browser's back-forward cache
-        await new Promise<never>((resolve, reject) => {
-          setTimeout(
-            reject,
-            10_000,
-            new Error("User navigated back from the authorization page")
-          )
+        // Monitor the popup window for completion
+        const popupWatcher = new Promise((resolve, reject) => {
+          const interval = setInterval(() => {
+            if (popup.closed) {
+              clearInterval(interval)
+              reject(new Error("Authentication canceled or popup closed."))
+            }
+            try {
+              // Check if the popup redirected back to the origin
+              if (popup.location.origin === window.location.origin) {
+                const params = new URLSearchParams(popup.location.search)
+                const code = params.get("code")
+                if (code) {
+                  clearInterval(interval)
+                  popup.close()
+                  resolve(code)
+                }
+              }
+            } catch (err) {
+              // Ignore cross-origin errors until redirected back
+            }
+          }, 500)
         })
+
+        try {
+          const authCode = await popupWatcher
+          console.log("Authorization Code:", authCode)
+          // Continue with token exchange
+        } catch (err) {
+          console.error(err.message)
+        }
+
+        agent = new Agent(this.session)
+        document.dispatchEvent(BskyLoginEvent)
       }
-
-      agent = new Agent(this.session)
-
-      document.dispatchEvent(BskyLoginEvent)
     }
     async bskyLogout(): Promise<void> {
       await this.session.signOut()
@@ -1984,13 +2014,16 @@ import { Mime } from "mime"
           throw new Error("Error: This option doesn't exist. at all")
       }
     }
+    
   }
+  
   document.addEventListener("bskyLogin", () => {
     runtime.startHats("HamBskyAPI_bskyWhenLoggedIn")
   })
   document.addEventListener("bskyLogout", () => {
     runtime.startHats("HamBskyAPI_bskyWhenLoggedOut")
   })
+
 
   // @ts-ignore
   Scratch.extensions.register(new HamBskyAPI(Scratch.runtime))
