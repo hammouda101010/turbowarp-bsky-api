@@ -9,8 +9,11 @@
     "lint:type": "tsc --noEmit -p ./tsconfig.json",
     "fix": "eslint ./src --fix",
     "start": "tsup src/index.ts && http-server ./dist -p 8080 --cors",
+    "start-OAuth": "tsup src/index-WithOAuth.ts && http-server ./dist -p 8080 --cors",
     "build": "tsup src/index.ts",
+    "build-OAuth": "tsup src/index-WithOAuth.ts",
     "build:turbowarp": "tsup src/index.ts && (npx prettier --config turbowarp/.prettierrc --parser acorn < dist/index.global.js) > dist/index.global.formatted.js && rimraf dist/index.global.js",
+    "build-OAuth:turbowarp": "tsup src/index-WithOAuth.ts && (npx prettier --config turbowarp/.prettierrc --parser acorn < dist/index.global.js) > dist/index.global.formatted.js && rimraf dist/index.global.js",
     "format": "prettier ./src -c -w",
     "lint:format": "prettier ./src -c"
   },
@@ -28,6 +31,7 @@
   },
   "dependencies": {
     "@atproto/api": "^0.13.20",
+    "@atproto/oauth-client-browser": "^0.3.7",
     "mime": "^4.0.6"
   }
 }

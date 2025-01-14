@@ -1,5 +1,7 @@
+// This is The New OAuth Rewrite. It may be unstable
 // Required Modules
-import { AppBskyGraphDefs, AtpAgent, Agent } from "@atproto/api"
+import { BrowserOAuthClient, OAuthSession } from "@atproto/oauth-client-browser"
+import { AppBskyGraphDefs, Agent } from "@atproto/api"
 // import { moderatePost } from "@atproto/api"
 import { RichText } from "@atproto/api"
 import { AtUri } from "@atproto/api"
@@ -56,9 +58,7 @@ import { Mime } from "mime"
   // "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNS44OTMiIGhlaWdodD0iMTUuODkzIiB2aWV3Qm94PSIwIDAgMTUuODkzIDE1Ljg5MyI+PHBhdGggZD0iTTkuMDIxIDEyLjI5NHYtMi4xMDdsLTYuODM5LS45MDVDMS4zOTggOS4xODQuODQ2IDguNDg2Ljk2MiA3LjcyN2MuMDktLjYxMi42MDMtMS4wOSAxLjIyLTEuMTY0bDYuODM5LS45MDVWMy42YzAtLjU4Ni43MzItLjg2OSAxLjE1Ni0uNDY0bDQuNTc2IDQuMzQ1YS42NDMuNjQzIDAgMCAxIDAgLjkxOGwtNC41NzYgNC4zNmMtLjQyNC40MDQtMS4xNTYuMTEtMS4xNTYtLjQ2NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9Ii4xNSIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjEuNzUiLz48cGF0aCBkPSJNOS4wMjEgMTIuMjk0di0yLjEwN2wtNi44MzktLjkwNUMxLjM5OCA5LjE4NC44NDYgOC40ODYuOTYyIDcuNzI3Yy4wOS0uNjEyLjYwMy0xLjA5IDEuMjItMS4xNjRsNi44MzktLjkwNVYzLjZjMC0uNTg2LjczMi0uODY5IDEuMTU2LS40NjRsNC41NzYgNC4zNDVhLjY0My42NDMgMCAwIDEgMCAuOTE4bC00LjU3NiA0LjM2Yy0uNDI0LjQwNC0xLjE1Ni4xMS0xLjE1Ni0uNDY1IiBmaWxsPSIjZmZmIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz48cGF0aCBkPSJNMCAxNS44OTJWMGgxNS44OTJ2MTUuODkyeiIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==";
 
   // Objects
-  const agent = new AtpAgent({
-    service: "https://bsky.social"
-  })
+  let agent: Agent
   const mime = new Mime()
 
   /**Search Result Data */
@@ -255,30 +255,8 @@ import { Mime } from "mime"
   // Utility Functions
 
   /**
-   * Logs the user in the API with their BlueSky account credentrials
-   */
-  async function Login(handle: string, password: string) {
-    const response = await agent.login({
-      identifier: handle,
-      password: password
-    })
-
-    console.info(`Logged In as: ${handle}`)
-    console.info(response)
-
-    document.dispatchEvent(BskyLoginEvent)
-  } // This will also create a session
-
-  /**
    * Logs the user out from the API when their done with it.
    */
-  async function Logout() {
-    await agent.logout()
-
-    console.info(`Logged Out from API.`)
-
-    document.dispatchEvent(BskyLogoutEvent)
-  }
 
   // Posting, Repling
 
@@ -444,11 +422,12 @@ import { Mime } from "mime"
   /**Blocks an User on BlueSky using it's DID */
   async function BlockUser(
     blockingUserDid: string,
+    session: OAuthSession,
     useCurrentDate: boolean,
     date: string
   ) {
     const data = await agent.app.bsky.graph.block.create(
-      { repo: agent.session.did },
+      { repo: session.did },
       {
         subject: blockingUserDid,
         createdAt: useCurrentDate
@@ -467,7 +446,7 @@ import { Mime } from "mime"
     const { rkey } = new AtUri(blockedUserAtUri)
 
     await agent.app.bsky.graph.block.delete({
-      repo: agent.session.did,
+      repo: this.session.did,
       rkey
     })
     console.info(`Unblocked User With at:// URI: ${blockedUserAtUri}`)
@@ -566,7 +545,8 @@ import { Mime } from "mime"
     limit: number
     sepCursorLimit: boolean
 
-    sessionDID: string | null
+    OAuthClient: BrowserOAuthClient
+    session: OAuthSession | null
     searchResult: SearchResult
     lastBlockedUserURI: string | null
 
@@ -583,7 +563,7 @@ import { Mime } from "mime"
       this.sepCursorLimit = true
 
       this.searchResult = "no search result yet"
-      this.sessionDID = null
+      this.session = null
       this.lastBlockedUserURI = null
 
       this.showExtras = false
@@ -607,15 +587,11 @@ import { Mime } from "mime"
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyLogin",
-            text: "login to bluesky API with handle: [HANDLE] and password: [PASSWORD]",
+            text: "login to bluesky API OAuth with handle: [HANDLE]",
             arguments: {
               HANDLE: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: "@example.bsky.social"
-              },
-              PASSWORD: {
-                type: Scratch.ArgumentType.STRING,
-                defaultValue: "example"
               }
             }
           },
@@ -1530,18 +1506,61 @@ import { Mime } from "mime"
     }
     /* ---- BUTTONS----*/
 
-    async bskyLogin(args): Promise<void> {
-      await Login(args.HANDLE, args.PASSWORD)
+    async bskyLoadOAuthClient() {
+      // Load The OAuth Client
+      this.OAuthClient = await BrowserOAuthClient.load({
+        clientId:
+          "https://hammouda101010.github.io/turbowarp-bsky-api/static/client-metadata.json",
+        handleResolver: "https://bsky.social/"
+      })
+      const result = await this.OAuthClient.init()
 
-      this.sessionDID = agent.session.did
+      // Check if User Logged In
+      if (result) {
+        if ("state" in result) {
+          console.log("Redirected back from the authorization page")
+        }
+        console.log(`Logged in in as ${result.session.did}`)
+      }
+      this.session = result?.session
+    }
+
+    async bskyLogin(args): Promise<void> {
+      if (!this.session) {
+        await this.bskyLoadOAuthClient()
+
+        const handle = args.HANDLE
+        if (!handle)
+          throw new Error("Authentication process canceled by the user")
+
+        const url = await this.OAuthClient.authorize(handle)
+
+        // Redirect the user to the authorization page
+        window.open(url, "PopupWindow", "width=500,height=600")
+
+        // Protect against browser's back-forward cache
+        await new Promise<never>((resolve, reject) => {
+          setTimeout(
+            reject,
+            10_000,
+            new Error("User navigated back from the authorization page")
+          )
+        })
+      }
+
+      agent = new Agent(this.session)
+
+      document.dispatchEvent(BskyLoginEvent)
     }
     async bskyLogout(): Promise<void> {
-      await Logout()
+      await this.session.signOut()
 
-      this.sessionDID = null
+      console.info(`Logged Out from API.`)
+
+      document.dispatchEvent(BskyLogoutEvent)
     }
     bskyLoggedIn() {
-      return this.sessionDID !== null
+      return this.session
     }
     async bskyPost(args): Promise<void> {
       if (!this.richText) {
@@ -1858,7 +1877,12 @@ import { Mime } from "mime"
     }
 
     async bskyBlockUser(args) {
-      const { uri } = await BlockUser(args.DID, this.useCurrentDate, this.date)
+      const { uri } = await BlockUser(
+        args.DID,
+        this.session,
+        this.useCurrentDate,
+        this.date
+      )
       this.lastBlockedUserURI = Cast.toString(uri)
     }
     bskyLastBlockedUser() {

@@ -1,5 +1,5 @@
 // Required Modules
-import { AppBskyGraphDefs, AtpAgent } from "@atproto/api"
+import { AtpAgent } from "@atproto/api"
 // import { moderatePost } from "@atproto/api"
 import { RichText } from "@atproto/api"
 import { AtUri } from "@atproto/api"
@@ -519,42 +519,7 @@ import { Mime } from "mime"
    *
    * @param fullListView: If enabled, paginates trough the entire list
    */
-  async function GetBskyList(
-    uri,
-    cursorArg: string = "",
-    limit: number = 6,
-    fullListView?: boolean
-  ) {
-    let response: unknown
-
-    if (!fullListView) {
-      // Get List, as Normal
-      response = await agent.app.bsky.graph.getList({
-        list: uri,
-        limit: limit,
-        cursor: cursorArg
-      })
-    } else {
-      // Use the Cursor argument
-      let cursor: string | undefined = cursorArg
-      // setup a members list
-      let members: AppBskyGraphDefs.ListItemView[] = []
-
-      // View the entire list
-      do {
-        let res = await agent.app.bsky.graph.getList({
-          list: uri,
-          limit: limit,
-          cursor
-        })
-        cursor = res.data.cursor
-        members = members.concat(res.data.items)
-      } while (cursor)
-      response = members
-    }
-
-    return response
-  }
+ 
 
   class HamBskyAPI implements Scratch.Extension {
     runtime: VM.Runtime
@@ -1508,7 +1473,8 @@ import { Mime } from "mime"
     /* ---- BUTTONS----*/
     bskyDisclaimer() {
       alert(
-        `DISCLAIMER:
+        `DEPRECATED: This extension version is deprecated and won't get any updates any more. use the OAuth Rewrite instead.
+         DISCLAIMER:
           When using the "Login" block, NEVER use your REAL password. Use an app password instead.
 
           Rules to Follow:
