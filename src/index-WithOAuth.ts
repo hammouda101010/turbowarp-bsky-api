@@ -586,6 +586,11 @@ import { Mime } from "mime"
           },
           {
             blockType: Scratch.BlockType.COMMAND,
+            opcode: "bskyLoadOAuthClient",
+            text: "load OAuth client"
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyLogin",
             text: "login to bluesky API OAuth with handle: [HANDLE]",
             arguments: {
@@ -1532,15 +1537,19 @@ import { Mime } from "mime"
       console.log("Loaded OAuth Client")
     }
 
-    async bskyLogin(args): Promise<void> {
+    async bskyLoadOAuthClient() {
       await this.LoadOAuthClient()
+    }
 
+    async bskyLogin(args) {
       if (!this.session) {
         const handle = args.HANDLE
         if (!handle)
           throw new Error("Authentication process canceled by the user")
 
-        this.session = await this.OAuthClient.signInPopup(handle)
+        this.session = await this.OAuthClient.signInPopup(handle, {
+          display:"popup"
+        })
 
         agent = new Agent(this.session)
         document.dispatchEvent(BskyLoginEvent)
@@ -1549,6 +1558,7 @@ import { Mime } from "mime"
         document.dispatchEvent(BskyLoginEvent)
       }
     }
+
     async bskyLogout(): Promise<void> {
       await this.session.signOut()
 
@@ -1559,6 +1569,7 @@ import { Mime } from "mime"
     bskyLoggedIn() {
       return this.session
     }
+    
     async bskyPost(args): Promise<void> {
       if (!this.richText) {
         const rt = new RichText({ text: args.POST })
