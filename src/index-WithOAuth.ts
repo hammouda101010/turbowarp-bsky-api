@@ -1515,69 +1515,48 @@ import { Mime } from "mime"
           "https://hammouda101010.github.io/turbowarp-bsky-api/static/client-metadata.json",
         handleResolver: "https://bsky.social/"
       })
-      const result = await this.OAuthClient.init()
+      const result: undefined | { session: OAuthSession; state?: string } = await this.OAuthClient.init()
+
+      if  (!result.session) result.session = null
+
+      const {session , state} = result
 
       // Check if User Logged In
       if (result) {
         if ("state" in result) {
           console.log("Redirected back from the authorization page")
         }
-        console.log(`Logged in in as ${result.session.did}`)
+        console.log(`Logged in With DID: ${session.sub} (state${state})`)
       }
-      this.session = result?.session
+      else {
+        console.log(`DID: ${session.sub}'s session was restored`)
+      }
+      this.session = session
+
+      console.log("Loaded OAuth Client")
+
     }
+    
 
     async bskyLogin(args): Promise<void> {
+      await this.LoadOAuthClient()
+
       if (!this.session) {
-        await this.LoadOAuthClient()
         
         const handle = args.HANDLE
         if (!handle)
           throw new Error("Authentication process canceled by the user")
 
-        const url = await this.OAuthClient.authorize(handle)
-
-        // Open a popup window for authentication
-        // Open the authentication popup
-        const popup = window.open(
-          url,
-          "authPopup",
-          "width=500,height=600,noopener"
+        this.OAuthClient.signInPopup(handle,
+          {
+            ui_locales: 'fr-CA fr en', // Only supported by some OAuth servers (requires OpenID Connect support + i18n support)
+            signal: new AbortController().signal, // Optional, allows to cancel the sign in (and destroy the pending authorization, for better security)
+          }
         )
-        console.log(popup)
 
-        // Monitor the popup window for completion
-        const popupWatcher = new Promise((resolve, reject) => {
-          const interval = setInterval(() => {
-            if (popup.closed) {
-              clearInterval(interval)
-              reject(new Error("Authentication canceled or popup closed."))
-            }
-            try {
-              // Check if the popup redirected back to the origin
-              if (popup.location.origin === window.location.origin) {
-                const params = new URLSearchParams(popup.location.search)
-                const code = params.get("code")
-                if (code) {
-                  clearInterval(interval)
-                  popup.close()
-                  resolve(code)
-                }
-              }
-            } catch (err) {
-              // Ignore cross-origin errors until redirected back
-            }
-          }, 500)
-        })
-
-        try {
-          const authCode = await popupWatcher
-          console.log("Authorization Code:", authCode)
-          // Continue with token exchange
-        } catch (err) {
-          console.error(err.message)
-        }
-
+        agent = new Agent(this.session)
+        document.dispatchEvent(BskyLoginEvent)
+      }else{
         agent = new Agent(this.session)
         document.dispatchEvent(BskyLoginEvent)
       }
