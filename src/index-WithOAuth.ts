@@ -1517,21 +1517,19 @@ import { Mime } from "mime"
       })
       const result: undefined | { session: OAuthSession; state?: string } = await this.OAuthClient.init()
 
-      if  (!result.session) result.session = null
-
-      const {session , state} = result
-
       // Check if User Logged In
       if (result) {
-        if ("state" in result) {
-          console.log("Redirected back from the authorization page")
+        const {session , state} = result
+
+        this.session = session
+
+        if (state !== null){
+          console.log(`Logged in With DID: ${session.sub} (state${state})`)
+        }else {
+          console.log(`DID: ${session.sub}'s session was restored`)
         }
-        console.log(`Logged in With DID: ${session.sub} (state${state})`)
       }
-      else {
-        console.log(`DID: ${session.sub}'s session was restored`)
-      }
-      this.session = session
+      
 
       console.log("Loaded OAuth Client")
 
@@ -1547,12 +1545,7 @@ import { Mime } from "mime"
         if (!handle)
           throw new Error("Authentication process canceled by the user")
 
-        this.OAuthClient.signInPopup(handle,
-          {
-            ui_locales: 'fr-CA fr en', // Only supported by some OAuth servers (requires OpenID Connect support + i18n support)
-            signal: new AbortController().signal, // Optional, allows to cancel the sign in (and destroy the pending authorization, for better security)
-          }
-        )
+        this.session = await this.OAuthClient.signInPopup(handle)
 
         agent = new Agent(this.session)
         document.dispatchEvent(BskyLoginEvent)

@@ -31,9 +31,6 @@
     "types": [],
     "baseUrl": ".",
     "paths": {
-      // "~/*": [
-      //   "./types/*"
-      // ]
       "scratch-vm": ["./node_modules/@turbowarp/types/index.d.ts"],
       "scratch-render": ["./node_modules/@turbowarp/types/index.d.ts"],
       "scratch-svg-renderer": ["./node_modules/@turbowarp/types/index.d.ts"],
@@ -52,7 +49,7 @@
   "include": [
     "node_modules/@turbowarp/types/types/scratch-vm-extension.d.ts",
     "types/universal.d.ts",
-    "types/turbowarp.d.ts", // For better experience on Turbowarp
+    "types/turbowarp.d.ts",
     "src/**/*",
     "tsup.config.ts",
     "package.json"
