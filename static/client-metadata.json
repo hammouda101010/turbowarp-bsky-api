@@ -5,7 +5,7 @@
     "logo_uri": "https://turbowarp.org/favicon.ico",
     "tos_uri": "https://scratch.mit.edu/terms_of_use",
     "policy_uri": "https://turbowarp.org/privacy.html",
-    "redirect_uris": ["https://hammouda101010.github.io/turbowarp-bsky-api/static/redirect.html"],
+    "redirect_uris": ["https://hammouda101010.github.io/turbowarp-bsky-api/redirect.html"],
     "scope": "atproto",
     "grant_types": ["authorization_code", "refresh_token"],
     "response_types": ["code"],
