@@ -567,8 +567,6 @@ import { Mime } from "mime"
       this.lastBlockedUserURI = null
 
       this.showExtras = false
-
-
     }
     //@ts-ignore
     getInfo() {
@@ -1515,32 +1513,29 @@ import { Mime } from "mime"
           "https://hammouda101010.github.io/turbowarp-bsky-api/static/client-metadata.json",
         handleResolver: "https://bsky.social/"
       })
-      const result: undefined | { session: OAuthSession; state?: string } = await this.OAuthClient.init()
+      const result: undefined | { session: OAuthSession; state?: string } =
+        await this.OAuthClient.init()
 
       // Check if User Logged In
       if (result) {
-        const {session , state} = result
+        const { session, state } = result
 
         this.session = session
 
-        if (state !== null){
+        if (state !== null) {
           console.log(`Logged in With DID: ${session.sub} (state${state})`)
-        }else {
+        } else {
           console.log(`DID: ${session.sub}'s session was restored`)
         }
       }
-      
 
       console.log("Loaded OAuth Client")
-
     }
-    
 
     async bskyLogin(args): Promise<void> {
       await this.LoadOAuthClient()
 
       if (!this.session) {
-        
         const handle = args.HANDLE
         if (!handle)
           throw new Error("Authentication process canceled by the user")
@@ -1549,7 +1544,7 @@ import { Mime } from "mime"
 
         agent = new Agent(this.session)
         document.dispatchEvent(BskyLoginEvent)
-      }else{
+      } else {
         agent = new Agent(this.session)
         document.dispatchEvent(BskyLoginEvent)
       }
@@ -1986,16 +1981,14 @@ import { Mime } from "mime"
           throw new Error("Error: This option doesn't exist. at all")
       }
     }
-    
   }
-  
+
   document.addEventListener("bskyLogin", () => {
     runtime.startHats("HamBskyAPI_bskyWhenLoggedIn")
   })
   document.addEventListener("bskyLogout", () => {
     runtime.startHats("HamBskyAPI_bskyWhenLoggedOut")
   })
-
 
   // @ts-ignore
   Scratch.extensions.register(new HamBskyAPI(Scratch.runtime))
