@@ -1,6 +1,6 @@
 // This is The New OAuth Rewrite. It may be unstable
 // Required Modules
-import { BrowserOAuthClient, OAuthSession } from "@atproto/oauth-client-browser"
+import { BrowserOAuthClient, OAuthClient, OAuthSession } from "@atproto/oauth-client-browser"
 import { AppBskyGraphDefs, Agent } from "@atproto/api"
 // import { moderatePost } from "@atproto/api"
 import { RichText } from "@atproto/api"
@@ -1518,8 +1518,12 @@ import { Mime } from "mime"
           "https://hammouda101010.github.io/turbowarp-bsky-api/static/client-metadata.json",
         handleResolver: "https://bsky.social/"
       })
+
+      console.log(this.OAuthClient)
+      
       const result: undefined | { session: OAuthSession; state?: string } =
         await this.OAuthClient.init()
+
 
       console.log(result)
 
@@ -1550,9 +1554,7 @@ import { Mime } from "mime"
         if (!handle)
           throw new Error("Authentication process canceled by the user")
 
-        this.session = await this.OAuthClient.signIn(handle, {
-          display:"popup"
-        })
+        this.session = await this.OAuthClient.signInPopup(handle)
 
         agent = new Agent(this.session)
         document.dispatchEvent(BskyLoginEvent)

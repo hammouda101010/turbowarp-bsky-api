@@ -1,23 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Redirecting...</title>
-    <script type="text/javascript">
-        document.addEventListener("DOMContentLoaded", () => {
-            // Get the hash from the current URL
-            const hash = window.location.hash;
+  <head>
+    <meta charset="UTF-8" />
+    <title>OAuth Callback</title>
+    <script>
+      // Extract the authorization code from the URL
+      const urlParams = new URLSearchParams(window.location.search);
+      console.log(urlParams)
+      const authCode = urlParams.get('code');
 
-            // Build the new URL with the hash
-            const newUrl = `https://turbowarp.org/${hash}`;
-
-            // Redirect to the new URL
-            window.location.href = newUrl;
-    
-        });
+      // Send the authorization code to the main application
+      if (window.opener) {
+        window.opener.postMessage({ authCode }, window.location.origin);
+        window.close();
+      } else {
+        console.error('No opener window found.');
+      }
     </script>
-</head>
-<body>
-    <p>Redirecting to TurboWarp...</p>
-</body>
+  </head>
+  <body>
+    <p>Processing authentication...</p>
+  </body>
 </html>
