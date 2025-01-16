@@ -1521,6 +1521,8 @@ import { Mime } from "mime"
       const result: undefined | { session: OAuthSession; state?: string } =
         await this.OAuthClient.init()
 
+      console.log(result)
+
       // Check if User Logged In
       if (result) {
         const { session, state } = result
@@ -1535,6 +1537,7 @@ import { Mime } from "mime"
       }
 
       console.log("Loaded OAuth Client")
+
     }
 
     async bskyLoadOAuthClient() {
@@ -1547,7 +1550,7 @@ import { Mime } from "mime"
         if (!handle)
           throw new Error("Authentication process canceled by the user")
 
-        this.session = await this.OAuthClient.signInPopup(handle, {
+        this.session = await this.OAuthClient.signIn(handle, {
           display:"popup"
         })
 
