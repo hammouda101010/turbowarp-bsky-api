@@ -6,14 +6,19 @@
     <script>
       // Extract the authorization code from the URL
       const urlParams = new URLSearchParams(window.location.search);
+
+      console.log("Url Params:")
       console.log(urlParams)
+
       const authCode = urlParams.get('code');
 
       // Send the authorization code to the main application
       if (window.opener) {
         window.opener.postMessage({ authCode }, window.location.origin);
         window.close();
+
       } else {
+
         console.error('No opener window found.');
       }
     </script>
