@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <title>OAuth Callback</title>
+    <link rel="stylesheet" href="src/styles/auth.css">
     <script>
       // Extract the authorization code from the URL
       const urlParams = new URLSearchParams(window.location.search);
@@ -13,17 +14,21 @@
       const authCode = urlParams.get('code');
 
       // Send the authorization code to the main application
-      if (window.opener) {
-        window.opener.postMessage({ authCode }, window.location.origin);
-        window.close();
+      try{
+        if (window.opener) {
+          window.opener.postMessage({ authCode }, window.location.origin);
+          window.close();
 
-      } else {
-
-        console.error('No opener window found.');
-      }
+        } else {
+          console.error('No opener window found.');
+        }
+      }catch(e){
+        document.getElementById("auth_result").innerHTML = `Something Went Wrong: ${e === "No opener window found." ? e : "Not a Popup Window."}`
+        document.getElementById("auth_result").style.color = "red"
+    }
     </script>
   </head>
   <body>
-    <p>Processing authentication...</p>
+    <p id="auth_result">Processing authentication...</p>
   </body>
 </html>
