@@ -20,3 +20,7 @@ body {
         color: black; /* Optional: change text color for better contrast */
     }
 }
+
+#auth_result{
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}

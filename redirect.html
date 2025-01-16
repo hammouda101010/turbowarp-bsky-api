@@ -20,10 +20,10 @@
           window.close();
 
         } else {
-          console.error('No opener window found.');
+          throw new Error('No opener window found.');
         }
       }catch(e){
-        document.getElementById("auth_result").innerHTML = `Something Went Wrong: ${e === "No opener window found." ? e : "Not a Popup Window."}`
+        document.getElementById("auth_result").innerHTML = `Something Went Wrong: ${e.message.includes("No opener window found") ? e : "Not a Popup Window (Reason: Couldn't Find an Opener Window.)"}`
         document.getElementById("auth_result").style.color = "red"
     }
     </script>
