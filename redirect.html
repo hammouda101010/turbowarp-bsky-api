@@ -1,9 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <title>OAuth Callback</title>
+    <meta charset="UTF-8"/>
+    <title>TurboButterfly OAuth Callback</title>
     <link rel="stylesheet" href="src/styles/auth.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="static/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="static/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="static/icons/favicon-16x16.png">
+    <link rel="manifest" href="static/icons/site.webmanifest">
   </head>
   <body>
     <p id="auth_result">Processing authentication...</p>
@@ -28,7 +32,7 @@
       }
     }catch(e){
       const auth_result = document.getElementById("auth_result")
-      auth_result.innerHTML = `Something Went Wrong: ${e.message.includes("No opener window found") ? e : "Not a Popup Window (Reason: Couldn't Find an Opener Window.)"}`
+      auth_result.innerHTML = `Something Went Wrong: ${e.message.includes("No opener window found.") ? e : "Not a Popup Window (Reason: Couldn't Find an Opener Window.)"}`
       auth_result.style.color = "red"
   }
   </script>
