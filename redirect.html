@@ -35,7 +35,9 @@
       const auth_result = document.getElementById("auth_result")
       auth_result.innerHTML = `Something Went Wrong: ${e.message.includes("Error: No opener window found.") ? e : "Not a Popup Window (Reason: Couldn't Find an Opener Window.)"}.\n\n Resetting in 3 Seconds`
       auth_result.style.color = "red"
-      setTimeout(window.close(), 3000)
+      setTimeout(() => {
+        window.close()
+      }, 3000)
   }
   </script>
 </html>
