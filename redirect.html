@@ -28,8 +28,8 @@
       }
     }catch(e){
       const auth_result = document.getElementById("auth_result")
-      document.getElementById("auth_result").innerHTML = `Something Went Wrong: ${e.message.includes("No opener window found") ? e : "Not a Popup Window (Reason: Couldn't Find an Opener Window.)"}`
-      document.getElementById("auth_result").style.color = "red"
+      auth_result.innerHTML = `Something Went Wrong: ${e.message.includes("No opener window found") ? e : "Not a Popup Window (Reason: Couldn't Find an Opener Window.)"}`
+      auth_result.style.color = "red"
   }
   </script>
 </html>
