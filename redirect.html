@@ -4,31 +4,32 @@
     <meta charset="UTF-8" />
     <title>OAuth Callback</title>
     <link rel="stylesheet" href="src/styles/auth.css">
-    <script>
-      // Extract the authorization code from the URL
-      const urlParams = new URLSearchParams(window.location.search);
-
-      console.log("Url Params:")
-      console.log(urlParams)
-
-      const authCode = urlParams.get('code');
-
-      // Send the authorization code to the main application
-      try{
-        if (window.opener) {
-          window.opener.postMessage({ authCode }, window.location.origin);
-          window.close();
-
-        } else {
-          throw new Error('No opener window found.');
-        }
-      }catch(e){
-        document.getElementById("auth_result").innerHTML = `Something Went Wrong: ${e.message.includes("No opener window found") ? e : "Not a Popup Window (Reason: Couldn't Find an Opener Window.)"}`
-        document.getElementById("auth_result").style.color = "red"
-    }
-    </script>
   </head>
   <body>
     <p id="auth_result">Processing authentication...</p>
   </body>
+  <script>
+    // Extract the authorization code from the URL
+    const urlParams = new URLSearchParams(window.location.search);
+
+    console.log("Url Params:")
+    console.log(urlParams)
+
+    const authCode = urlParams.get('code');
+
+    // Send the authorization code to the main application
+    try{
+      if (window.opener) {
+        window.opener.postMessage({ authCode }, window.location.origin);
+        window.close();
+
+      } else {
+        throw new Error('No opener window found.');
+      }
+    }catch(e){
+      const auth_result = document.getElementById("auth_result")
+      document.getElementById("auth_result").innerHTML = `Something Went Wrong: ${e.message.includes("No opener window found") ? e : "Not a Popup Window (Reason: Couldn't Find an Opener Window.)"}`
+      document.getElementById("auth_result").style.color = "red"
+  }
+  </script>
 </html>
