@@ -14,6 +14,7 @@
   </body>
   <script>
     // Extract the authorization code from the URL
+    window.location.hash.replace("#","?")
     const urlParams = new URLSearchParams(window.location.search);
 
     console.log("Url Params:")
