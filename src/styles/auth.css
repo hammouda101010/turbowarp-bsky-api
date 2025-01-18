@@ -1,26 +1,24 @@
-
-
 body {
-    background-color: white; /* Default background color for light theme */
-    transition: background-color 0.3s ease;
+  background-color: white; /* Default background color for light theme */
+  transition: background-color 0.3s ease;
 }
 
 /* Dark theme */
 @media (prefers-color-scheme: dark) {
-    body {
-        background-color: rgb(7, 44, 61);; /* Dark mode background color */
-        color: white; /* Optional: change text color for better contrast */
-    }
+  body {
+    background-color: rgb(7, 44, 61); /* Dark mode background color */
+    color: white; /* Optional: change text color for better contrast */
+  }
 }
 
 /* Light theme */
 @media (prefers-color-scheme: light) {
-    body {
-        background-color: lightblue; /* Custom light mode background color */
-        color: black; /* Optional: change text color for better contrast */
-    }
+  body {
+    background-color: lightblue; /* Custom light mode background color */
+    color: black; /* Optional: change text color for better contrast */
+  }
 }
 
-#auth_result{
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+#auth_result { /* Authorization Result Text*/
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }

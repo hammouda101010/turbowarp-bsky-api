@@ -1,10 +1,6 @@
 // This is The New OAuth Rewrite. It may be unstable
 // Required Modules
-import {
-  BrowserOAuthClient,
-  OAuthClient,
-  OAuthSession
-} from "@atproto/oauth-client-browser"
+import { BrowserOAuthClient, OAuthSession } from "@atproto/oauth-client-browser"
 import { AppBskyGraphDefs, Agent } from "@atproto/api"
 // import { moderatePost } from "@atproto/api"
 import { RichText } from "@atproto/api"
@@ -1525,25 +1521,27 @@ import { Mime } from "mime"
 
       console.log(this.OAuthClient)
 
-      const result: undefined | { session: OAuthSession; state?: string } =
-        await this.OAuthClient.init()
+      const result = await this.OAuthClient.init()
 
-      console.log(result)
+      console.log(result ?? "No Result")
 
       // Check if User Logged In
       if (result) {
+        //@ts-ignore
         const { session, state } = result
 
         this.session = session
 
         if (state !== null) {
-          console.log(`Logged in With DID: ${session.sub} (state${state})`)
+          console.log(`Logged in With DID: ${session.sub} (state: ${state})`)
         } else {
           console.log(`DID: ${session.sub}'s session was restored`)
         }
       }
 
       console.log("Loaded OAuth Client")
+
+      this.session = result?.session
     }
 
     async bskyLoadOAuthClient() {
