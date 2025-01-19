@@ -1554,7 +1554,9 @@ import { Mime } from "mime"
         if (!handle)
           throw new Error("Authentication process canceled by the user")
 
-        this.session = await this.OAuthClient.signInPopup(handle)
+        this.session = await this.OAuthClient.signIn(handle, {
+          display: 'popup',
+        })
 
         agent = new Agent(this.session)
         document.dispatchEvent(BskyLoginEvent)

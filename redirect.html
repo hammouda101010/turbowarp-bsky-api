@@ -12,41 +12,15 @@
   <body>
     <p id="auth_result">Processing authentication...</p>
   </body>
-  <script type= "module">
-    import { BrowserOAuthClient } from '@atproto/oauth-client-browser'
-
-    const OAuthClient = await BrowserOAuthClient.load({
-        clientId:
-          "https://hammouda101010.github.io/turbowarp-bsky-api/static/client-metadata.json",
-        handleResolver: "https://bsky.social/"
-      })
-
-      const result = await client.init()
-
-      if (result) {
-      const { session, state } = result
-      if (state != null) {
-        console.log(
-          `${session.sub} was successfully authenticated (state: ${state})`,
-        )
-      } else {
-        console.log(`${session.sub} was restored (last active session)`)
-      }
-    }
-  </script>
-</html>
-
-<!-- Old Code
-
-
-// Extract the authorization code from the URL
-    window.location.hash.replace("#","?")
-    const urlParams = new URLSearchParams(window.location.search);
+  <script>
+    // Extract the authorization code from the URL
+    const fragment = window.location.hash;
+    const params = new URLSearchParams(fragment.substring(1));
 
     console.log("Url Params:")
-    console.log(urlParams)
+    console.log(params)
 
-    const authCode = urlParams.get('code');
+    const authCode = params.get('code');
 
     // Send the authorization code to the main application
     try{
@@ -57,13 +31,14 @@
       } else {
         throw new Error('No opener window found.');
       }
-    }catch(e){
+    } catch(e){
       const auth_result = document.getElementById("auth_result")
-      auth_result.innerHTML = `Something Went Wrong: ${e.message.includes("Error: No opener window found.") ? e : "Not a Popup Window (Reason: Couldn't Find an Opener Window.)"}.\n\n Resetting in 3 Seconds`
+      auth_result.innerHTML = `Something Went Wrong: ${e.message.includes("Error: No opener window found.") ? e : "Not a Popup Window (Reason: Couldn't Find an Opener Window.)"}.\n\n Closing Window in 30 Seconds`
       auth_result.style.color = "red"
       setTimeout(() => {
         window.close()
-      }, 3000)
+      }, 30000)
   }
 
--->
+  </script>
+</html>
