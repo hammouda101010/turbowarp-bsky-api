@@ -19,6 +19,7 @@ body {
   }
 }
 
-#auth_result { /* Authorization Result Text*/
+#auth_result {
+  /* Authorization Result Text*/
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }

@@ -13,32 +13,38 @@
     <p id="auth_result">Processing authentication...</p>
   </body>
   <script>
-    // Extract the authorization code from the URL
-    const fragment = window.location.hash;
-    const params = new URLSearchParams(fragment.substring(1));
+    window.onload = function () {
+      // Get the query parameters from the URL
+      const queryParams = new URLSearchParams(window.location.search);
 
-    console.log("Url Params:")
-    console.log(params)
+      if (queryParams) {
+        // Extract parameters: ISS, state, and code
+        const iss = queryParams.get('iss'); // The authorization server's URL (issuer)
+        const state = queryParams.get('state'); // CSRF protection value (match with request state)
+        const code = queryParams.get('code'); // Authorization code
 
-    const authCode = params.get('code');
+        if (iss && state && code) {
+          console.log('Issuer:', iss);
+          console.log('State:', state);
+          console.log('Authorization Code:', code);
+          
 
-    // Send the authorization code to the main application
-    try{
-      if (window.opener) {
-        window.opener.postMessage({ authCode }, window.location.origin);
-        window.close();
+          // return the code to the parent window
+          // This will pass the code (or any other parameters) back to the main window
+          window.opener.postMessage({ iss, state, code }, window.opener.location.origin);
 
+          // Step 5: Close the popup
+          window.close();
+        } else {
+          console.error('Missing parameters: iss, state, or code');
+        }
       } else {
-        throw new Error('No opener window found.');
+        console.error('No OAuth response query parameters found.');
       }
-    } catch(e){
-      const auth_result = document.getElementById("auth_result")
-      auth_result.innerHTML = `Something Went Wrong: ${e.message.includes("Error: No opener window found.") ? e : "Not a Popup Window (Reason: Couldn't Find an Opener Window.)"}.\n\n Closing Window in 30 Seconds`
-      auth_result.style.color = "red"
-      setTimeout(() => {
-        window.close()
-      }, 30000)
-  }
-
+    };
   </script>
+</head>
+<body>
+  <p id="auth_result">Processing OAuth Response...</p>
+</body>
 </html>

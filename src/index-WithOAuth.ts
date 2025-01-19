@@ -547,6 +547,9 @@ import { Mime } from "mime"
 
     OAuthClient: BrowserOAuthClient
     session: OAuthSession | null
+    clientID: string
+    handleResolver: string
+
     searchResult: SearchResult
     lastBlockedUserURI: string | null
 
@@ -561,6 +564,9 @@ import { Mime } from "mime"
       this.cursor = null
       this.limit = null
       this.sepCursorLimit = true
+      this.clientID =
+        "https://hammouda101010.github.io/turbowarp-bsky-api/static/client-metadata.json"
+      this.handleResolver = "https://bsky.social/"
 
       this.searchResult = "no search result yet"
       this.session = null
@@ -1409,6 +1415,11 @@ import { Mime } from "mime"
           },
           "---",
           {
+            blockType: Scratch.BlockType.LABEL,
+            text: "Advanced",
+            hideFromPalette: !this.showExtras
+          },
+          {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyOptions",
             text: "set [OPTION] to [ONOFF]",
@@ -1514,9 +1525,9 @@ import { Mime } from "mime"
     async LoadOAuthClient() {
       // Load The OAuth Client
       this.OAuthClient = await BrowserOAuthClient.load({
-        clientId:
-          "https://hammouda101010.github.io/turbowarp-bsky-api/static/client-metadata.json",
-        handleResolver: "https://bsky.social/"
+        clientId: this.clientID,
+        handleResolver: this.handleResolver,
+        responseMode: "query"
       })
 
       console.log(this.OAuthClient)
@@ -1538,7 +1549,6 @@ import { Mime } from "mime"
           console.log(`DID: ${session.sub}'s session was restored`)
         }
       }
-
       console.log("Loaded OAuth Client")
 
       this.session = result?.session
@@ -1555,7 +1565,9 @@ import { Mime } from "mime"
           throw new Error("Authentication process canceled by the user")
 
         this.session = await this.OAuthClient.signIn(handle, {
-          display: 'popup',
+          display: "popup",
+          ui_locales: "fr-CA fr en",
+          signal: new AbortController().signal
         })
 
         agent = new Agent(this.session)
