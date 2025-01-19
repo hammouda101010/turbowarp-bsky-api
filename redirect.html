@@ -14,11 +14,11 @@
   </body>
   <script>
     window.onload = function () {
-      // Get the query parameters from the URL
-      const queryParams = new URLSearchParams(window.location.search);
+      // Step 1: Get the query parameters from the search (URL)
+      const queryParams = new URLSearchParams(window.location.search); // Get the query parameters
 
       if (queryParams) {
-        // Extract parameters: ISS, state, and code
+        // Step 2: Extract parameters: iss, state, and code
         const iss = queryParams.get('iss'); // The authorization server's URL (issuer)
         const state = queryParams.get('state'); // CSRF protection value (match with request state)
         const code = queryParams.get('code'); // Authorization code
@@ -27,13 +27,11 @@
           console.log('Issuer:', iss);
           console.log('State:', state);
           console.log('Authorization Code:', code);
-          
 
-          // return the code to the parent window
-          // This will pass the code (or any other parameters) back to the main window
-          window.opener.postMessage({ iss, state, code }, window.opener.location.origin);
+          // Step 4: Send the data back to the parent window via postMessage
+          window.opener.postMessage({ type: 'oauthCallback', iss, state, code }, '*');
 
-          // Step 5: Close the popup
+          // Step 5: Close the popup window after sending the data
           window.close();
         } else {
           console.error('Missing parameters: iss, state, or code');
