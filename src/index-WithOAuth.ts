@@ -608,6 +608,17 @@ import { Mime } from "mime"
           },
           {
             blockType: Scratch.BlockType.COMMAND,
+            opcode: "bskyOAuthCallback",
+            text: "callback url query [QUERY]",
+            arguments:{
+              QUERY: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "?iss=&state=&code="
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyLogout",
             text: "logout from bluesky API"
           },
@@ -1577,6 +1588,11 @@ import { Mime } from "mime"
         document.dispatchEvent(BskyLoginEvent)
       }
     }
+    async bskyOAuthCallback(args){
+      const result = await this.OAuthClient.callback(new URLSearchParams(args.QUERY))
+
+      this.session = result.session
+    }
 
     async bskyLogout(): Promise<void> {
       await this.session.signOut()
@@ -1586,7 +1602,7 @@ import { Mime } from "mime"
       document.dispatchEvent(BskyLogoutEvent)
     }
     bskyLoggedIn() {
-      return this.session
+      return Cast.toBoolean(this.session)
     }
 
     async bskyPost(args): Promise<void> {
