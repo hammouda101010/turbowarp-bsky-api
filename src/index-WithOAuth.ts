@@ -1576,6 +1576,7 @@ import { Mime } from "mime"
           throw new Error("Authentication process canceled by the user")
 
         this.session = await this.OAuthClient.signIn(handle, {
+          scope: "transition:generic",
           display: "popup",
           ui_locales: "fr-CA fr en",
           signal: new AbortController().signal
