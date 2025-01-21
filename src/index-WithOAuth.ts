@@ -1,6 +1,6 @@
 // This is The New OAuth Rewrite. It may be unstable
 // Required Modules
-import { BrowserOAuthClient, OAuthSession } from "@atproto/oauth-client-browser"
+import { BrowserOAuthClient, OAuthClientMetadataInput, OAuthSession } from "@atproto/oauth-client-browser"
 import { AppBskyGraphDefs, Agent } from "@atproto/api"
 // import { moderatePost } from "@atproto/api"
 import { RichText } from "@atproto/api"
@@ -550,6 +550,8 @@ import { Mime } from "mime"
     OAuthClient: BrowserOAuthClient
     session: OAuthSession | null
     clientID: string
+    injectMetadata: boolean
+    clientMetadata: OAuthClientMetadataInput
     handleResolver: string
 
     searchResult: SearchResult
@@ -569,6 +571,22 @@ import { Mime } from "mime"
       this.clientID =
         "https://hammouda101010.github.io/turbowarp-bsky-api/static/client-metadata.json"
       this.handleResolver = "https://bsky.social/"
+      this.injectMetadata = true
+      this.clientMetadata = {
+        client_id: "https://hammouda101010.github.io/turbowarp-bsky-api/static/client-metadata.json",
+        client_name: "TurboWarp/Penguinmod",
+        client_uri: "https://hammouda101010.github.io/turbowarp-bsky-api",
+        logo_uri: "https://hammouda101010.github.io/turbowarp-bsky-api/static/icons/favicon.ico",
+        tos_uri: "https://scratch.mit.edu/terms_of_use",
+        policy_uri: "https://turbowarp.org/privacy.html",
+        redirect_uris: ["https://hammouda101010.github.io/turbowarp-bsky-api/redirect.html"],
+        scope: "atproto transition:generic",
+        grant_types: ["authorization_code", "refresh_token"],
+        response_types: ["code"],
+        token_endpoint_auth_method: "none",
+        application_type: "web",
+        dpop_bound_access_tokens: true
+      }
 
       this.searchResult = "no search result yet"
       this.session = null
@@ -1564,11 +1582,20 @@ import { Mime } from "mime"
 
     async LoadOAuthClient() {
       // Load The OAuth Client
-      this.OAuthClient = await BrowserOAuthClient.load({
-        clientId: this.clientID,
-        handleResolver: this.handleResolver,
-        responseMode: "query"
-      })
+      if (this.injectMetadata){
+        this.OAuthClient = new BrowserOAuthClient({
+          clientMetadata: this.clientMetadata,
+          handleResolver: this.handleResolver,       
+          responseMode: "query"
+        })
+      }else{
+        this.OAuthClient = await BrowserOAuthClient.load({
+          clientId: this.clientID,
+          handleResolver: this.handleResolver,
+          
+          responseMode: "query"
+        })
+      }
 
       console.log(this.OAuthClient)
 
@@ -1605,7 +1632,7 @@ import { Mime } from "mime"
           throw new Error("Authentication process canceled by the user")
 
         this.session = await this.OAuthClient.signIn(handle, {
-          scope: "transition:generic",
+          scope: "atproto transition:generic",
           display: "popup",
           ui_locales: "fr-CA fr en",
           signal: new AbortController().signal

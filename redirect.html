@@ -32,8 +32,6 @@
           const popupChannel = new BroadcastChannel("@@atproto/oauth-client-browser(popup-channel)")
           popupChannel.postMessage({ iss, state, code }, '*')
 
-          // Step 5: Close the popup window after sending the data
-          window.close();
         } else {
           console.error('Missing parameters: iss, state, or code');
         }
