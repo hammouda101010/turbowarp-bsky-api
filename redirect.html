@@ -29,7 +29,8 @@
           console.log('Authorization Code:', code);
 
           // Step 4: Send the data back to the parent window via postMessage
-          window.opener.postMessage({ type: 'oauthCallback', iss, state, code }, '*');
+          const popupChannel = new BroadcastChannel("@@atproto/oauth-client-browser(popup-channel)")
+          popupChannel.postMessage({ iss, state, code }, '*')
 
           // Step 5: Close the popup window after sending the data
           window.close();
