@@ -1458,11 +1458,29 @@ import { Mime } from "mime"
               LEXICON: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: "app.bsky.feed"
+              },
+              INPUTS:{
+                type: null,
               }
             },
             hideFromPalette: !this.showExtras,
 
             outputShape: 3
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: "bskyLexiconReporter",
+            text: "use bluesky lexicon [LEXICON] with inputs [INPUTS]",
+            arguments: {
+              LEXICON: {
+                type: null,
+                defaultValue: "app.bsky.feed"
+              },
+              INPUTS:{
+                type: null,
+              }
+            },
+            hideFromPalette: !this.showExtras,
           },
           {
             blockType: Scratch.BlockType.REPORTER,
@@ -1599,7 +1617,7 @@ import { Mime } from "mime"
 
       console.log(this.OAuthClient)
 
-      const result = await this.OAuthClient.init()
+      const result = await this.OAuthClient.init(true)
 
       console.log(result ?? "No Result")
 
@@ -1617,7 +1635,7 @@ import { Mime } from "mime"
         }
       }
       console.log("Loaded OAuth Client")
-
+     
       this.session = result?.session
     }
 
@@ -2095,6 +2113,35 @@ import { Mime } from "mime"
             : currentKey(...lexiconArgs) // Call the lexicon
         } else {
           console.error(`This property "${args.LEXICON}" is not a function.`)
+        }
+      } catch {
+        throw new Error("Must have an active OAuth session to use this block.")
+      }
+    }
+    async bskyLexiconReporter(args){
+      const keys: string[] = args.LEXICON.split(".") // Split the path into keys
+      try {
+        let currentKey: object = agent
+
+        // Traverse the object using the keys
+        for (const key of keys) {
+          if (currentKey.hasOwnProperty(key)) {
+            currentKey = currentKey[key]
+          } else {
+            throw new Error(`Lexicon function "${key}" isn't found in "${args.LEXICON}".`)
+          }
+        }
+
+        const lexiconArgs = JSON.parse(args.INPUTS)
+
+        // Check if the final property is a function and execute it
+        if (typeof currentKey === "function") {
+          const response = currentKey().constructor.name === "AsyncFunction"
+          ? await currentKey(...lexiconArgs)
+          : currentKey(...lexiconArgs); // Call the lexicon
+          return JSON.stringify(response)
+        } else {
+          throw new Error(`This property "${args.LEXICON}" is not a function.`)
         }
       } catch {
         throw new Error("Must have an active OAuth session to use this block.")
