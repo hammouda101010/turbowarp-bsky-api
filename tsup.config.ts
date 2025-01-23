@@ -5,7 +5,7 @@ export default defineConfig({
   entry: ['src/index.ts', 'src/index.js'],
   target: ['esnext'],
   format: ['iife'],
-  outDir: 'dist',
+  outDir: 'dist/extension',
   banner: {
     // Replace it with your extension's metadata
     js: `// Name: TurboButterfly

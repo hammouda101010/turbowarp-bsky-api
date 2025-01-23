@@ -1,5 +1,2 @@
 node_modules/
-dist/index.global.js
-dist/index.global.formatted.js
-dist/index-WithOAuth.global.js
-dist/index-WithOAuth.global.formatted.js
+dist/extension

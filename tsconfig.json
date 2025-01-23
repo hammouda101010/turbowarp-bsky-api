@@ -52,6 +52,5 @@
     "types/turbowarp.d.ts",
     "src/**/*",
     "tsup.config.ts",
-    "package.json"
-, "dist/callback.js"  ]
+    "package.json"]
 }
