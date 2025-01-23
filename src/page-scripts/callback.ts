@@ -1,6 +1,7 @@
 import { BrowserOAuthClient } from "@atproto/oauth-client-browser"
     
-const client =  new BrowserOAuthClient({
+async function main() {
+  const client =  new BrowserOAuthClient({
     clientMetadata: {
         "client_id": "https://hammouda101010.github.io/turbowarp-bsky-api/static/client-metadata.json",
         "client_name": "TurboWarp/Penguinmod",
@@ -18,7 +19,10 @@ const client =  new BrowserOAuthClient({
       },
     handleResolver: "https://bsky.social/",       
     responseMode: "query"
-})
-const params = new URLSearchParams(window.location.search) 
+  })
+  const params = new URLSearchParams(window.location.search) 
 
-client.callback(params)
+  await client.callback(params)
+}
+
+document.addEventListener('DOMContentLoaded', main)
