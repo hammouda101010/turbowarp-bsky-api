@@ -12,33 +12,8 @@
   <body>
     <p id="auth_result">Processing authentication...</p>
   </body>
-  <script>
-    window.onload = function () {
-      // Step 1: Get the query parameters from the search (URL)
-      const queryParams = new URLSearchParams(window.location.search); // Get the query parameters
-
-      if (queryParams) {
-        // Step 2: Extract parameters: iss, state, and code
-        const iss = queryParams.get('iss'); // The authorization server's URL (issuer)
-        const state = queryParams.get('state'); // CSRF protection value (match with request state)
-        const code = queryParams.get('code'); // Authorization code
-
-        if (iss && state && code) {
-          console.log('Issuer:', iss);
-          console.log('State:', state);
-          console.log('Authorization Code:', code);
-
-          // Step 4: Send the data back to the parent window via postMessage
-          const popupChannel = new BroadcastChannel("@@atproto/oauth-client-browser(popup-channel)")
-          popupChannel.postMessage({ iss, state, code }, '*')
-
-        } else {
-          console.error('Missing parameters: iss, state, or code');
-        }
-      } else {
-        console.error('No OAuth response query parameters found.');
-      }
-    };
+  <script type="module" src="dist/callback.js">
+    
   </script>
 </head>
 <body>

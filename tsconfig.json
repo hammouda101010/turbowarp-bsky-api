@@ -53,5 +53,5 @@
     "src/**/*",
     "tsup.config.ts",
     "package.json"
-  ]
+, "dist/callback.js"  ]
 }
