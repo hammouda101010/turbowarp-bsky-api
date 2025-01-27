@@ -10,7 +10,7 @@ import { Mime } from "mime"
   if (Scratch.extensions.unsandboxed === false) {
     throw new Error("TurboButterfly Extension Must Be Run Unsandboxed.")
   }
-  // The extension"s code
+  // The extension's code
   // Scratch's Stuff
   const vm = Scratch.vm
   const runtime = vm.runtime
@@ -95,7 +95,7 @@ import { Mime } from "mime"
   }
 
   /** Converts a DataURI into an Unit8Array
-   * @param {any} dataURI - The DataURI of the image/video
+   * @param {string} dataURI - The DataURI of the image/video
    */
   async function convertDataURIToUint8Array(dataURI: string) {
     let URI = dataURI
@@ -1599,14 +1599,13 @@ import { Mime } from "mime"
     /* ---- BUTTONS----*/
 
     async LoadOAuthClient() {
-      // Load The OAuth Client
-      if (this.injectMetadata){
+      if (this.injectMetadata){ // Hardcode the metadata if this.injectMetadata is true
         this.OAuthClient = new BrowserOAuthClient({
           clientMetadata: this.clientMetadata,
           handleResolver: this.handleResolver,       
           responseMode: "query"
         })
-      }else{
+      }else{ // Otherwise load it from static file hosting
         this.OAuthClient = await BrowserOAuthClient.load({
           clientId: this.clientID,
           handleResolver: this.handleResolver,
@@ -1621,7 +1620,6 @@ import { Mime } from "mime"
 
       console.log(result ?? "No Result")
 
-      // Check if User Logged In
       if (result) {
         //@ts-ignore
         const { session, state } = result
@@ -1631,7 +1629,7 @@ import { Mime } from "mime"
         if (state !== null) {
           console.log(`Logged in With DID: ${session.sub} (state: ${state})`)
         } else {
-          console.log(`DID: ${session.sub}'s session was restored`)
+          console.log(`${session.sub}'s session was restored`)
         }
       }
       console.log("Loaded OAuth Client")
@@ -2189,6 +2187,7 @@ import { Mime } from "mime"
           ?.mutation
       )
     }
+    
   }
 
   // Event Blocks
