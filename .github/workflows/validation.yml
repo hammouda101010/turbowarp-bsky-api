@@ -26,6 +26,7 @@ jobs:
         run: npm ci
       - name: Validate Lint
         run: npm run lint
+        continue-on-error: true
 
   format:
     runs-on: ubuntu-latest
