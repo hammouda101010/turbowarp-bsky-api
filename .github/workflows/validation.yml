@@ -1,3 +1,5 @@
+# Credits to Turbowarp/GarboMuffin for this workflow
+
 name: Validation
 
 
@@ -26,6 +28,12 @@ jobs:
         run: npm ci
       - name: Validate Lint
         run: npm run lint
+        continue-on-error: true
+      - name: Validate Lint Type
+        run: npm run lint:type
+        continue-on-error: true
+      - name: Fix Lint
+        run: npm run fix
         continue-on-error: true
 
   format:
