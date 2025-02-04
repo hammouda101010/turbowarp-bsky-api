@@ -18406,7 +18406,11 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       responseMode: "query"
     });
     const params = new URLSearchParams(window.location.search);
+    try {
     await client.callback(params);
+    } catch(e){
+      alert(e);
+    }
   }
   document.addEventListener("DOMContentLoaded", main);
 
