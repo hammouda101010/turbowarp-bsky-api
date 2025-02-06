@@ -30,6 +30,7 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Commit and push changes
+        if: github.actor != 'github-actions[bot]'
         run: |
           git add .
           git commit -m "Auto-update \"index-WithOAuth.global.js\" on $(date)"
