@@ -7,8 +7,6 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
-  schedule:
-    - cron: '16 11 * * 1'
 
 jobs:
 
