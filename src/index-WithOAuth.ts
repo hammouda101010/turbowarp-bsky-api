@@ -1603,14 +1603,15 @@ import { Mime } from "mime"
         this.OAuthClient = new BrowserOAuthClient({
           clientMetadata: this.clientMetadata,
           handleResolver: this.handleResolver,       
-          responseMode: "query"
+          responseMode: "query",
+          fetch: Scratch.fetch
         })
       }else{ // Otherwise load it from static file hosting
         this.OAuthClient = await BrowserOAuthClient.load({
           clientId: this.clientID,
           handleResolver: this.handleResolver,
-          
-          responseMode: "query"
+          responseMode: "query",
+          fetch: Scratch.fetch
         })
       }
 
