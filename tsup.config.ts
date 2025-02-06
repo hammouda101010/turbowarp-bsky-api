@@ -13,7 +13,7 @@ export default defineConfig({
 // Description: Interact with the BlueSky API! Unofficial.
 // By: Hammouda101010 <https://scratch.mit.edu/users/hammouda101010/>
 // Original: BlueSky <https://bsky.app>
-// License: MPL-2.0 & MIT
+// License: MIT
 `
   },
   platform: 'browser',

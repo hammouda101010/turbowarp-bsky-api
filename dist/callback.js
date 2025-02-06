@@ -18405,9 +18405,8 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       handleResolver: "https://bsky.social/",
       responseMode: "query"
     });
-    const params = new URLSearchParams(window.location.search);
     try {
-    await client.callback(params);
+    await client.init();
     } catch(e){
       alert(e);
     }
