@@ -1616,7 +1616,7 @@ import { Mime } from "mime"
 
       console.log(this.OAuthClient)
 
-      const result = await this.OAuthClient.init(true)
+      const result = await this.OAuthClient.init()
 
       console.log(result ?? "No Result")
 

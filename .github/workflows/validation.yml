@@ -34,8 +34,6 @@ jobs:
         continue-on-error: true
       - name: Fix Lint
         run: npm run fix
-        continue-on-error: true
-
   format:
     runs-on: ubuntu-latest
     steps:

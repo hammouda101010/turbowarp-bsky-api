@@ -1,0 +1,33 @@
+# Credits to Turbowarp/GarboMuffin for this workflow
+
+name: Building Extension
+
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+  schedule:
+    - cron: '16 11 * * 1'
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Install Node.js
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build Extension (Normal)
+        run: npm run build
+      - name: Build Extension (OAuth)
+        run: npm run build-OAuth
+        
+        
