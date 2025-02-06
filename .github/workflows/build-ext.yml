@@ -1,6 +1,6 @@
 # Credits to Turbowarp/GarboMuffin for this workflow
 
-name: Building Extension
+name: build-ext
 
 
 on:
@@ -11,7 +11,7 @@ on:
     - cron: '16 11 * * 1'
 
 jobs:
-  format:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

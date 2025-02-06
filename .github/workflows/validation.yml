@@ -1,6 +1,6 @@
 # Credits to Turbowarp/GarboMuffin for this workflow
 
-name: Validation
+name: validation
 
 
 on:
