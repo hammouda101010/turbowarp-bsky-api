@@ -3,7 +3,7 @@
 // Description: Interact with the BlueSky API! Unofficial.
 // By: Hammouda101010 <https://scratch.mit.edu/users/hammouda101010/>
 // Original: BlueSky <https://bsky.app>
-// License: MPL-2.0 & MIT
+// License: MIT
 
 (() => {
   var __create = Object.create;
@@ -60620,17 +60620,19 @@ if (cid) {
           this.OAuthClient = new import_oauth_client_browser.BrowserOAuthClient({
             clientMetadata: this.clientMetadata,
             handleResolver: this.handleResolver,
-            responseMode: "query"
+            responseMode: "query",
+            fetch: Scratch2.fetch
           });
         } else {
           this.OAuthClient = await import_oauth_client_browser.BrowserOAuthClient.load({
             clientId: this.clientID,
             handleResolver: this.handleResolver,
-            responseMode: "query"
+            responseMode: "query",
+            fetch: Scratch2.fetch
           });
         }
         console.log(this.OAuthClient);
-        const result = await this.OAuthClient.init(true);
+        const result = await this.OAuthClient.init();
         console.log(result ?? "No Result");
         if (result) {
           const { session, state } = result;
