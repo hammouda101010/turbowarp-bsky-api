@@ -31,9 +31,7 @@ jobs:
         continue-on-error: true
       - name: Validate Lint Type
         run: npm run lint:type
-        continue-on-error: true
-      - name: Fix Lint
-        run: npm run fix
+
   format:
     runs-on: ubuntu-latest
     steps:
@@ -50,8 +48,5 @@ jobs:
         run: npm ci
       - name: Validate Format
         run: npm run lint:format
-        continue-on-error: true
-      - name: Fix Format
-        run: npm run format
         
         

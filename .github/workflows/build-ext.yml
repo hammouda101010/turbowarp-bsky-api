@@ -1,5 +1,3 @@
-# Credits to Turbowarp/GarboMuffin for this workflow
-
 name: build-ext
 
 
@@ -26,5 +24,15 @@ jobs:
         run: npm run build
       - name: Build Extension (OAuth)
         run: npm run build-OAuth
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit and push changes
+        run: |
+          git add .
+          git commit -m "Auto-update \"index-WithOAuth.global.js\" on $(date)"
+          git push
         
         
