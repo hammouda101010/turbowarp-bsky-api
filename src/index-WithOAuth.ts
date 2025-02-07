@@ -1,6 +1,10 @@
 // This is The New OAuth Rewrite. It may be unstable
 // Required Modules
-import { BrowserOAuthClient, OAuthClientMetadataInput, OAuthSession } from "@atproto/oauth-client-browser"
+import {
+  BrowserOAuthClient,
+  OAuthClientMetadataInput,
+  OAuthSession
+} from "@atproto/oauth-client-browser"
 import { AppBskyGraphDefs, Agent } from "@atproto/api"
 // import { moderatePost } from "@atproto/api"
 import { RichText } from "@atproto/api"
@@ -62,6 +66,11 @@ import { Mime } from "mime"
   // Objects
   let agent: Agent
   const mime = new Mime()
+
+  /** Custom Fetch for Scratch With Included Credentials
+   * @param {string} url - URL to fetch
+   * @param {RequestInit} options - Optional fetch options. Always has `credentials: "include"` option.
+   */
 
   /**Search Result Data */
   interface SearchResultData {
@@ -573,13 +582,17 @@ import { Mime } from "mime"
       this.handleResolver = "https://bsky.social/"
       this.injectMetadata = true
       this.clientMetadata = {
-        client_id: "https://hammouda101010.github.io/turbowarp-bsky-api/static/client-metadata.json",
+        client_id:
+          "https://hammouda101010.github.io/turbowarp-bsky-api/static/client-metadata.json",
         client_name: "TurboWarp/Penguinmod",
         client_uri: "https://hammouda101010.github.io/turbowarp-bsky-api",
-        logo_uri: "https://hammouda101010.github.io/turbowarp-bsky-api/static/icons/favicon.ico",
+        logo_uri:
+          "https://hammouda101010.github.io/turbowarp-bsky-api/static/icons/favicon.ico",
         tos_uri: "https://scratch.mit.edu/terms_of_use",
         policy_uri: "https://turbowarp.org/privacy.html",
-        redirect_uris: ["https://hammouda101010.github.io/turbowarp-bsky-api/redirect.html"],
+        redirect_uris: [
+          "https://hammouda101010.github.io/turbowarp-bsky-api/redirect.html"
+        ],
         scope: "atproto transition:generic",
         grant_types: ["authorization_code", "refresh_token"],
         response_types: ["code"],
@@ -1459,8 +1472,8 @@ import { Mime } from "mime"
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: "app.bsky.feed"
               },
-              INPUTS:{
-                type: null,
+              INPUTS: {
+                type: null
               }
             },
             hideFromPalette: !this.showExtras,
@@ -1476,11 +1489,11 @@ import { Mime } from "mime"
                 type: null,
                 defaultValue: "app.bsky.feed"
               },
-              INPUTS:{
-                type: null,
+              INPUTS: {
+                type: null
               }
             },
-            hideFromPalette: !this.showExtras,
+            hideFromPalette: !this.showExtras
           },
           {
             blockType: Scratch.BlockType.REPORTER,
@@ -1599,14 +1612,16 @@ import { Mime } from "mime"
     /* ---- BUTTONS----*/
 
     async LoadOAuthClient() {
-      if (this.injectMetadata){ // Hardcode the metadata if this.injectMetadata is true
+      if (this.injectMetadata) {
+        // Hardcode the metadata if this.injectMetadata is true
         this.OAuthClient = new BrowserOAuthClient({
           clientMetadata: this.clientMetadata,
-          handleResolver: this.handleResolver,       
+          handleResolver: this.handleResolver,
           responseMode: "query",
           fetch: Scratch.fetch
         })
-      }else{ // Otherwise load it from static file hosting
+      } else {
+        // Otherwise load it from static file hosting
         this.OAuthClient = await BrowserOAuthClient.load({
           clientId: this.clientID,
           handleResolver: this.handleResolver,
@@ -1634,7 +1649,7 @@ import { Mime } from "mime"
         }
       }
       console.log("Loaded OAuth Client")
-     
+
       this.session = result?.session
     }
 
@@ -2117,7 +2132,7 @@ import { Mime } from "mime"
         throw new Error("Must have an active OAuth session to use this block.")
       }
     }
-    async bskyLexiconReporter(args){
+    async bskyLexiconReporter(args) {
       const keys: string[] = args.LEXICON.split(".") // Split the path into keys
       try {
         let currentKey: object = agent
@@ -2127,7 +2142,9 @@ import { Mime } from "mime"
           if (currentKey.hasOwnProperty(key)) {
             currentKey = currentKey[key]
           } else {
-            throw new Error(`Lexicon function "${key}" isn't found in "${args.LEXICON}".`)
+            throw new Error(
+              `Lexicon function "${key}" isn't found in "${args.LEXICON}".`
+            )
           }
         }
 
@@ -2135,9 +2152,10 @@ import { Mime } from "mime"
 
         // Check if the final property is a function and execute it
         if (typeof currentKey === "function") {
-          const response = currentKey().constructor.name === "AsyncFunction"
-          ? await currentKey(...lexiconArgs)
-          : currentKey(...lexiconArgs); // Call the lexicon
+          const response =
+            currentKey().constructor.name === "AsyncFunction"
+              ? await currentKey(...lexiconArgs)
+              : currentKey(...lexiconArgs) // Call the lexicon
           return JSON.stringify(response)
         } else {
           throw new Error(`This property "${args.LEXICON}" is not a function.`)
@@ -2188,7 +2206,6 @@ import { Mime } from "mime"
           ?.mutation
       )
     }
-    
   }
 
   // Event Blocks
