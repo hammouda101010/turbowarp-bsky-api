@@ -1,6 +1,5 @@
 // Required Modules
 import { AtpAgent } from "@atproto/api"
-// import { moderatePost } from "@atproto/api"
 import { RichText } from "@atproto/api"
 import { AtUri } from "@atproto/api"
 import { Mime } from "mime"
@@ -552,7 +551,7 @@ import { Mime } from "mime"
 
       this.showExtras = false
     }
-    //@ts-ignore
+    //@ts-expect-error ignore
     getInfo() {
       return {
         id: "HamBskyAPI",
@@ -1933,6 +1932,6 @@ import { Mime } from "mime"
     runtime.startHats("HamBskyAPI_bskyWhenLoggedOut")
   })
 
-  // @ts-ignore
+  // @ts-expect-error ignore
   Scratch.extensions.register(new HamBskyAPI(Scratch.runtime))
 })(Scratch)

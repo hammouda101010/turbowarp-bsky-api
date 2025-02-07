@@ -67,11 +67,6 @@ import { Mime } from "mime"
   let agent: Agent
   const mime = new Mime()
 
-  /** Custom Fetch for Scratch With Included Credentials
-   * @param {string} url - URL to fetch
-   * @param {RequestInit} options - Optional fetch options. Always has `credentials: "include"` option.
-   */
-
   /**Search Result Data */
   interface SearchResultData {
     posts: object[]
@@ -88,6 +83,15 @@ import { Mime } from "mime"
   type ImageType = "avatar" | "banner" | "feed_thumbnail" | "feed_fullsize"
 
   // Special Functions
+
+  /**
+   * Parses the handle to be usable by the API
+   * @param {string} handle - The handle to parse
+   * @returns the handle without the @ symbol
+   */
+  const parseHandle = (handle: string): string => {
+    return handle.replace("@", "")
+  }
 
   /** Converts an image/video URL into a readable DataURI
    * @param {string} URL - The URL of the image/video
@@ -607,7 +611,7 @@ import { Mime } from "mime"
 
       this.showExtras = false
     }
-    //@ts-ignore
+    //@ts-expect-error
     getInfo() {
       return {
         id: "HamBskyAPI",
@@ -630,8 +634,13 @@ import { Mime } from "mime"
           },
           {
             blockType: Scratch.BlockType.COMMAND,
+            opcode: "bskyInitOAuthClient",
+            text: "initialize OAuth session"
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyLogin",
-            text: "login to bluesky API OAuth with handle: [HANDLE]",
+            text: "login to bluesky API with OAuth using handle: [HANDLE]",
             arguments: {
               HANDLE: {
                 type: Scratch.ArgumentType.STRING,
@@ -1632,12 +1641,20 @@ import { Mime } from "mime"
 
       console.log(this.OAuthClient)
 
+      console.log("Loaded OAuth Client")
+    }
+
+    async bskyLoadOAuthClient() {
+      await this.LoadOAuthClient()
+    }
+
+    async bskyInitOAuthClient() {
       const result = await this.OAuthClient.init()
 
       console.log(result ?? "No Result")
 
       if (result) {
-        //@ts-ignore
+        //@ts-expect-error
         const { session, state } = result
 
         this.session = session
@@ -1648,21 +1665,13 @@ import { Mime } from "mime"
           console.log(`${session.sub}'s session was restored`)
         }
       }
-      console.log("Loaded OAuth Client")
-
       this.session = result?.session
-    }
-
-    async bskyLoadOAuthClient() {
-      await this.LoadOAuthClient()
     }
 
     async bskyLogin(args) {
       if (!this.session) {
-        const handle = args.HANDLE
-        if (!handle)
-          throw new Error("Authentication process canceled by the user")
-
+        const handle = parseHandle(args.HANDLE)
+        if (!handle) throw new Error("No Handle Found")
         this.session = await this.OAuthClient.signIn(handle, {
           scope: "atproto transition:generic",
           display: "popup",
@@ -1799,7 +1808,7 @@ import { Mime } from "mime"
     bskyImgEmbed(args) {
       return JSON.stringify({
         $type: "app.bsky.embed.images",
-        images: Array.isArray(args.IMAGES)
+        images: Array.isArray(args.IMAGES) // The list of images
           ? JSON.parse(args.IMAGES)
           : [JSON.parse(args.IMAGES)]
       })
@@ -1891,7 +1900,7 @@ import { Mime } from "mime"
     // Getting an User's Posts
     async bskyGetAuthorFeed(args) {
       const { data } = await agent.getAuthorFeed({
-        actor: args.URI,
+        actor: parseHandle(args.URI),
         filter: args.FILTER,
         cursor: args.CURSOR,
         limit: args.LIMIT ?? 50
@@ -1901,7 +1910,7 @@ import { Mime } from "mime"
     }
     async bskyGetAuthorFeedSep(args) {
       const { data } = await agent.getAuthorFeed({
-        actor: args.URI,
+        actor: parseHandle(args.URI),
         filter: args.FILTER,
         cursor: this.cursor ?? "",
         limit: this.limit ?? 50
@@ -1913,8 +1922,8 @@ import { Mime } from "mime"
       const { data } = await agent.getAuthorFeed({
         actor: args.URI,
         filter: args.FILTER,
-        cursor: this.cursor ?? "",
-        limit: this.limit ?? 50
+        cursor: "",
+        limit: 1
       })
 
       const recentPost = data.feed[0]
@@ -1948,7 +1957,7 @@ import { Mime } from "mime"
     async bskyGetPost(args) {
       const res = await agent.getPostThread({
         uri: args.URI,
-        depth: args.DEPTH,
+        depth: 1,
         parentHeight: 1
       })
       const { thread } = res.data
@@ -1967,7 +1976,7 @@ import { Mime } from "mime"
       console.info(`Reposted Post: ${JSON.stringify(uri)}`)
     }
     async bskyFollow(args) {
-      const { uri } = await agent.follow(args.DID)
+      const { uri } = await agent.follow(parseHandle(args.DID))
 
       console.info(`Followed User: ${JSON.stringify(uri)}`)
     }
@@ -1985,13 +1994,13 @@ import { Mime } from "mime"
     }
 
     async bskyUnFollow(args) {
-      const response = await agent.follow(args.DID)
+      const response = await agent.follow(parseHandle(args.DID))
 
       console.info(`Unfollowed User: ${JSON.stringify(response)}`)
     }
 
     async bskyViewProfile(args) {
-      const { data } = await agent.getProfile({ actor: args.URI })
+      const { data } = await agent.getProfile({ actor: parseHandle(args.URI) })
 
       return JSON.stringify(data)
     }
@@ -2012,7 +2021,7 @@ import { Mime } from "mime"
 
     async bskyBlockUser(args) {
       const { uri } = await BlockUser(
-        args.DID,
+        parseHandle(args.DID),
         this.session,
         this.useCurrentDate,
         this.date
@@ -2027,7 +2036,7 @@ import { Mime } from "mime"
     }
 
     async bskyMuteUser(args) {
-      const response = await agent.mute(args.DID)
+      const response = await agent.mute(parseHandle(args.DID))
 
       console.info(
         `Muted User: ${await atUriConversions.atUritoProfileLink(`at://${args.DID}`)}`
@@ -2035,7 +2044,7 @@ import { Mime } from "mime"
       console.log(response)
     }
     async bskyUnmuteUser(args) {
-      const response = await agent.unmute(args.DID)
+      const response = await agent.unmute(parseHandle(args.DID))
 
       console.info(
         `Unmuted User: ${await atUriConversions.atUritoProfileLink(`at://${args.DID}`)}`
@@ -2197,8 +2206,6 @@ import { Mime } from "mime"
     }
     // Utilities
     getCurrentMutation(args, util) {
-      // In the interpreter, args.mutation exists (thanks FurryR for notifying me about this, yes that's their username),
-      // and in the compiler, util.thread.peekStack() works for reporters
       return (
         args.mutation ||
         util.target.blocks.getBlock(util.thread.peekStack())?.mutation ||
@@ -2220,9 +2227,9 @@ import { Mime } from "mime"
 
   /* eslint-disable */
 
-  // @ts-ignore
+  // @ts-expect-error
   const cbfsb = runtime._convertBlockForScratchBlocks.bind(runtime)
-  // @ts-ignore
+  // @ts-expect-error
   runtime._convertBlockForScratchBlocks = function (blockInfo, categoryInfo) {
     const res = cbfsb(blockInfo, categoryInfo)
     if (blockInfo.mutator) {
@@ -2232,7 +2239,7 @@ import { Mime } from "mime"
   }
 
   function patchSB() {
-    // @ts-ignore
+    // @ts-expect-error
     const ScratchBlocks = window?.ScratchBlocks
     if (!ScratchBlocks) return
 
@@ -2467,9 +2474,9 @@ import { Mime } from "mime"
           for (const name of Object.keys(inputs)) {
             const input = inputs[name]
             if (!usedInputs.has(name)) {
-              // @ts-ignore
+              // @ts-expect-error
               blocks.deleteBlock(input.block)
-              // @ts-ignore
+              // @ts-expect-error
               blocks.deleteBlock(input.shadow)
               delete inputs[name]
             }
@@ -2964,6 +2971,6 @@ import { Mime } from "mime"
   }
   /* eslint-enable */
 
-  // @ts-ignore
+  // @ts-expect-error
   Scratch.extensions.register(new HamBskyAPI(Scratch.runtime))
 })(Scratch)
