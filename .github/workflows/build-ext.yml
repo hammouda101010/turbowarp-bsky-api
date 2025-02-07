@@ -34,6 +34,6 @@ jobs:
         run: |
           git add .
           git commit -m "Auto-update \"index-WithOAuth.global.js\" on $(date)"
-          git push https://x-access-token:${{ secrets.GH_KEY }}@github.com/${{ github.repository }}.git HEAD:main
+          git push https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git HEAD:main
         
         
