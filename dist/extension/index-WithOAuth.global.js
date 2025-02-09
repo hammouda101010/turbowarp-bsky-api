@@ -59266,6 +59266,9 @@ if (cid) {
     const SearchingLensIcon = "data:image/svg+xml;base64,PCFET0NUWVBFIHN2ZyBQVUJMSUMgIi0vL1czQy8vRFREIFNWRyAxLjEvL0VOIiAiaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkIj4KDTwhLS0gVXBsb2FkZWQgdG86IFNWRyBSZXBvLCB3d3cuc3ZncmVwby5jb20sIFRyYW5zZm9ybWVkIGJ5OiBTVkcgUmVwbyBNaXhlciBUb29scyAtLT4KPHN2ZyBmaWxsPSIjZmZmZmZmIiB2ZXJzaW9uPSIxLjEiIGlkPSJDYXBhXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSI2NHB4IiBoZWlnaHQ9IjY0cHgiIHZpZXdCb3g9IjAgMCA0NS45MjMgNDUuOTIzIiB4bWw6c3BhY2U9InByZXNlcnZlIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMC4wMDA0NTkyMzAwMDAwMDAwMDAwMyI+Cg08ZyBpZD0iU1ZHUmVwb19iZ0NhcnJpZXIiIHN0cm9rZS13aWR0aD0iMCIvPgoNPGcgaWQ9IlNWR1JlcG9fdHJhY2VyQ2FycmllciIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cg08ZyBpZD0iU1ZHUmVwb19pY29uQ2FycmllciI+IDxnPiA8cGF0aCBkPSJNNDUuNDk0LDQ0LjQ0M2MtMC4wMDQsMC4zODctMC4wMjUsMC42MTEtMC4wMjUsMC42MTFsLTAuODM4LDAuODM4YzAsMC0wLjIyNSwwLjAyMS0wLjYxMiwwLjAyNSBjLTAuMiwwLjAxLTAuNDMsMC4wMDItMC42OTYtMC4wMWMtMC4yNjYtMC4wMTMtMC41ODQtMC4wMTMtMC44OTgtMC4wNTdjLTAuNjUtMC4wNjQtMS40MzgtMC4xNDYtMi4yNDItMC4zMzggYy0wLjgxNi0wLjE4LTEuNjk5LTAuNDIxLTIuNTgyLTAuNzY0Yy0wLjg5MS0wLjMzNi0xLjgwMi0wLjc1Mi0yLjY4OC0xLjI3MWMtMC44OTEtMC41MTUtMS43NjQtMS4xMjMtMi41MDItMS45MTcgYy0wLjc0OC0wLjc4NC0xLjM0OC0xLjc3LTEuOTI4LTIuNzk3Yy0wLjU4LTEuMDMtMS4xNzctMi4wNjctMS44NjEtMy4wMTljLTAuOTYxLTEuMzI5LTEuODkxLTIuNjY0LTIuNzg3LTMuOTg4IGMyLjI2Ni0xLjM2Miw0LjIyMi0zLjE4NCw1LjcyMS01LjM1MmMxLjI1MiwwLjg1MywyLjUxMiwxLjczMSwzLjc2OCwyLjY0YzAuOTUxLDAuNjg0LDEuOTg4LDEuMjgsMy4wMTksMS44NiBjMS4wMjgsMC41ODIsMi4wMTIsMS4xODEsMi43OTcsMS45MjhjMC43OTQsMC43MzgsMS40MDEsMS42MTEsMS45MTcsMi41MDJjMC41MiwwLjg4NiwwLjkzNiwxLjc5NywxLjI3MSwyLjY4OCBjMC4zNDMsMC44ODMsMC41ODQsMS43NjYsMC43NjQsMi41ODJjMC4xOTEsMC44MDUsMC4yNzMsMS41OTIsMC4zMzgsMi4yNDJjMC4wNDQsMC4zMTQsMC4wNDQsMC42MzMsMC4wNTcsMC44OTggQzQ1LjQ5Niw0NC4wMTMsNDUuNTA0LDQ0LjI0LDQ1LjQ5NCw0NC40NDN6IE0yNC40MjksMjkuNjUyYy0yLjM2OSwxLjM5Ny01LjEyMiwyLjIxMy04LjA3MiwyLjIxMyBjLTguOCwwLTE1LjkzMy03LjEzMy0xNS45MzMtMTUuOTMzQzAuNDI0LDcuMTM0LDcuNTU4LDAsMTYuMzU3LDBzMTUuOTMyLDcuMTM0LDE1LjkzMiwxNS45MzNjMCwzLjM2OS0xLjA1MSw2LjQ5LTIuODM2LDkuMDYzIEMyOC4xMzksMjYuODkxLDI2LjQyMSwyOC40NzgsMjQuNDI5LDI5LjY1MnogTTIwLjU3MSwyMy40MjdjMS4wMzItMC41ODEsMS45MjctMS4zNzEsMi42MzgtMi4zMSBjMS4wOTMtMS40NDIsMS43NDktMy4yMzQsMS43NDktNS4xODNjMC00Ljc1LTMuODUtOC42MDEtOC42LTguNjAxcy04LjYwMSwzLjg1MS04LjYwMSw4LjYwMXMzLjg1MSw4LjYwMiw4LjYwMSw4LjYwMiBDMTcuODg5LDI0LjUzMywxOS4zMjUsMjQuMTI5LDIwLjU3MSwyMy40Mjd6Ii8+IDwvZz4gPC9nPgoNPC9zdmc+";
     let agent;
     const mime = new Mime_default();
+    const parseHandle = (handle) => {
+      return handle.replace("@", "");
+    };
     async function URLAsDataURI(URL2) {
       const response = await Scratch2.fetch(URL2);
       const blob = await response.blob();
@@ -59638,7 +59641,7 @@ if (cid) {
         this.lastBlockedUserURI = null;
         this.showExtras = false;
       }
-      //@ts-ignore
+      //@ts-expect-error
       getInfo() {
         return {
           id: "HamBskyAPI",
@@ -59662,8 +59665,13 @@ if (cid) {
             },
             {
               blockType: Scratch2.BlockType.COMMAND,
+              opcode: "bskyInitOAuthClient",
+              text: "initialize OAuth session"
+            },
+            {
+              blockType: Scratch2.BlockType.COMMAND,
               opcode: "bskyLogin",
-              text: "login to bluesky API OAuth with handle: [HANDLE]",
+              text: "login to bluesky API with OAuth using handle: [HANDLE]",
               arguments: {
                 HANDLE: {
                   type: Scratch2.ArgumentType.STRING,
@@ -60634,6 +60642,12 @@ if (cid) {
           });
         }
         console.log(this.OAuthClient);
+        console.log("Loaded OAuth Client");
+      }
+      async bskyLoadOAuthClient() {
+        await this.LoadOAuthClient();
+      }
+      async bskyInitOAuthClient() {
         const result = await this.OAuthClient.init();
         console.log(result ?? "No Result");
         if (result) {
@@ -60645,17 +60659,12 @@ if (cid) {
             console.log(`${session.sub}'s session was restored`);
           }
         }
-        console.log("Loaded OAuth Client");
         this.session = result?.session;
-      }
-      async bskyLoadOAuthClient() {
-        await this.LoadOAuthClient();
       }
       async bskyLogin(args) {
         if (!this.session) {
-          const handle = args.HANDLE;
-          if (!handle)
-            throw new Error("Authentication process canceled by the user");
+          const handle = parseHandle(args.HANDLE);
+          if (!handle) throw new Error("No Handle Found");
           this.session = await this.OAuthClient.signIn(handle, {
             scope: "atproto transition:generic",
             display: "popup",
@@ -60860,7 +60869,7 @@ if (cid) {
       // Getting an User's Posts
       async bskyGetAuthorFeed(args) {
         const { data } = await agent.getAuthorFeed({
-          actor: args.URI,
+          actor: parseHandle(args.URI),
           filter: args.FILTER,
           cursor: args.CURSOR,
           limit: args.LIMIT ?? 50
@@ -60869,7 +60878,7 @@ if (cid) {
       }
       async bskyGetAuthorFeedSep(args) {
         const { data } = await agent.getAuthorFeed({
-          actor: args.URI,
+          actor: parseHandle(args.URI),
           filter: args.FILTER,
           cursor: this.cursor ?? "",
           limit: this.limit ?? 50
@@ -60880,8 +60889,8 @@ if (cid) {
         const { data } = await agent.getAuthorFeed({
           actor: args.URI,
           filter: args.FILTER,
-          cursor: this.cursor ?? "",
-          limit: this.limit ?? 50
+          cursor: "",
+          limit: 1
         });
         const recentPost = data.feed[0];
         return JSON.stringify(recentPost);
@@ -60908,7 +60917,7 @@ if (cid) {
       async bskyGetPost(args) {
         const res = await agent.getPostThread({
           uri: args.URI,
-          depth: args.DEPTH,
+          depth: 1,
           parentHeight: 1
         });
         const { thread } = res.data;
@@ -60923,7 +60932,7 @@ if (cid) {
         console.info(`Reposted Post: ${JSON.stringify(uri)}`);
       }
       async bskyFollow(args) {
-        const { uri } = await agent.follow(args.DID);
+        const { uri } = await agent.follow(parseHandle(args.DID));
         console.info(`Followed User: ${JSON.stringify(uri)}`);
       }
       async bskyUnLike(args) {
@@ -60935,11 +60944,11 @@ if (cid) {
         console.info(`Unreposted Post: ${JSON.stringify(uri)}`);
       }
       async bskyUnFollow(args) {
-        const response = await agent.follow(args.DID);
+        const response = await agent.follow(parseHandle(args.DID));
         console.info(`Unfollowed User: ${JSON.stringify(response)}`);
       }
       async bskyViewProfile(args) {
-        const { data } = await agent.getProfile({ actor: args.URI });
+        const { data } = await agent.getProfile({ actor: parseHandle(args.URI) });
         return JSON.stringify(data);
       }
       async bskyViewProfiles(args) {
@@ -60956,7 +60965,7 @@ if (cid) {
       }
       async bskyBlockUser(args) {
         const { uri } = await BlockUser(
-          args.DID,
+          parseHandle(args.DID),
           this.session,
           this.useCurrentDate,
           this.date
@@ -60970,14 +60979,14 @@ if (cid) {
         await UnblockUser(args.URI);
       }
       async bskyMuteUser(args) {
-        const response = await agent.mute(args.DID);
+        const response = await agent.mute(parseHandle(args.DID));
         console.info(
           `Muted User: ${await atUriConversions.atUritoProfileLink(`at://${args.DID}`)}`
         );
         console.log(response);
       }
       async bskyUnmuteUser(args) {
-        const response = await agent.unmute(args.DID);
+        const response = await agent.unmute(parseHandle(args.DID));
         console.info(
           `Unmuted User: ${await atUriConversions.atUritoProfileLink(`at://${args.DID}`)}`
         );
