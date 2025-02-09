@@ -269,10 +269,6 @@ import { Mime } from "mime"
 
   // Utility Functions
 
-  /**
-   * Logs the user out from the API when their done with it.
-   */
-
   // Posting, Repling
 
   /** For posting on BlueSky */
@@ -396,14 +392,38 @@ import { Mime } from "mime"
     return blob
   }
 
-  /** Search Posts on BlueSky Using a Search Term */
+  /**Finds hashtags inside text. (search params, post text, etc) */
+  const FindTags = async (txt: string) => {
+    const rt = new RichText({ text: txt })
+    const tags: string[] = []
+    await rt.detectFacets(agent)
+
+    for (const segment of rt.segments()) {
+      if (segment.isTag()) {
+        tags.push(segment.tag?.tag)
+      }
+    }
+
+    return tags
+  }
+
+  /** Cluster of functions to search posts and actors */
 
   const BskySearchFuncs = {
-    SearchPosts: async (searchTerm: string, cursor: string, limit: number) => {
+    SearchPosts: async (
+      searchTerm: string,
+      sortBy: "top" | "latest",
+      cursor: string,
+      limit: number,
+      miscOptions: object = {}
+    ) => {
       const response = await agent.app.bsky.feed.searchPosts({
         q: searchTerm,
         cursor: cursor,
-        limit: limit
+        sort: sortBy,
+        limit: limit,
+        tag: await FindTags(searchTerm),
+        ...miscOptions
       })
       return response
     },
@@ -415,8 +435,18 @@ import { Mime } from "mime"
       })
       return response
     },
-    Search: async (searchTerm: string, cursor: string, limit: number) => {
-      const posts = await BskySearchFuncs.SearchPosts(searchTerm, cursor, limit)
+    Search: async (
+      searchTerm: string,
+      sortBy: "top" | "latest",
+      cursor: string,
+      limit: number
+    ) => {
+      const posts = await BskySearchFuncs.SearchPosts(
+        searchTerm,
+        sortBy,
+        cursor,
+        limit
+      )
       const actors = await BskySearchFuncs.SearchActors(
         searchTerm,
         cursor,
@@ -457,11 +487,11 @@ import { Mime } from "mime"
   }
 
   /**Unblocks an User on BlueSky using a block record DID */
-  async function UnblockUser(blockedUserAtUri: string) {
+  async function UnblockUser(blockedUserAtUri: string, session: OAuthSession) {
     const { rkey } = new AtUri(blockedUserAtUri)
 
     await agent.app.bsky.graph.block.delete({
-      repo: this.session.did,
+      repo: session.did,
       rkey
     })
     console.info(`Unblocked User With at:// URI: ${blockedUserAtUri}`)
@@ -511,7 +541,7 @@ import { Mime } from "mime"
 
   /**Gets a List and It's Members.
    *
-   * @param fullListView: If enabled, paginates trough the entire list
+   * @param {boolean} fullListView: If enabled, paginates trough the entire list
    */
   async function GetBskyList(
     uri,
@@ -568,6 +598,7 @@ import { Mime } from "mime"
     handleResolver: string
 
     searchResult: SearchResult
+    sortSearch: "top" | "latest"
     lastBlockedUserURI: string | null
 
     showExtras: boolean
@@ -606,6 +637,7 @@ import { Mime } from "mime"
       }
 
       this.searchResult = "no search result yet"
+      this.sortSearch = "top"
       this.session = null
       this.lastBlockedUserURI = null
 
@@ -637,6 +669,7 @@ import { Mime } from "mime"
             opcode: "bskyInitOAuthClient",
             text: "initialize OAuth session"
           },
+          "---",
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyLogin",
@@ -648,10 +681,11 @@ import { Mime } from "mime"
               }
             }
           },
+          "---",
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyOAuthCallback",
-            text: "callback url query [QUERY]",
+            text: "callback this url query: [QUERY]",
             arguments: {
               QUERY: {
                 type: Scratch.ArgumentType.STRING,
@@ -1338,6 +1372,28 @@ import { Mime } from "mime"
             disableMonitor: false
           },
           {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: "bskySearchSort",
+            text: "sort post search results by [POST_SORT]",
+            hideFromPalette: !this.sepCursorLimit,
+            blockIconURI: SearchingLensIcon,
+            arguments: {
+              POST_SORT: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "bskySEARCH_SORT_BY"
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.LABEL,
+            text: "OAuth Configuration"
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: "bskySetOAuthMetadata",
+            text: "set [KEY] OAuth metadata to [VALUE]"
+          },
+          {
             blockType: Scratch.BlockType.LABEL,
             text: "Extras"
           },
@@ -1495,7 +1551,7 @@ import { Mime } from "mime"
             text: "use bluesky lexicon [LEXICON] with inputs [INPUTS]",
             arguments: {
               LEXICON: {
-                type: null,
+                type: Scratch.ArgumentType.STRING,
                 defaultValue: "app.bsky.feed"
               },
               INPUTS: {
@@ -1554,7 +1610,13 @@ import { Mime } from "mime"
               { text: "off", value: "false" }
             ]
           },
-
+          bskySEARCH_SORT_BY: {
+            acceptReporters: false,
+            items: [
+              { text: Scratch.translate("top posts"), value: "top" },
+              { text: Scratch.translate("latest posts"), value: "latest" }
+            ]
+          },
           bskyENCODING: {
             acceptReporters: true,
             items: [
@@ -1626,16 +1688,14 @@ import { Mime } from "mime"
         this.OAuthClient = new BrowserOAuthClient({
           clientMetadata: this.clientMetadata,
           handleResolver: this.handleResolver,
-          responseMode: "query",
-          fetch: Scratch.fetch
+          responseMode: "query"
         })
       } else {
         // Otherwise load it from static file hosting
         this.OAuthClient = await BrowserOAuthClient.load({
           clientId: this.clientID,
           handleResolver: this.handleResolver,
-          responseMode: "query",
-          fetch: Scratch.fetch
+          responseMode: "query"
         })
       }
 
@@ -2032,7 +2092,7 @@ import { Mime } from "mime"
       return this.lastBlockedUserURI ?? "no data found"
     }
     async bskyUnblockUser(args) {
-      await UnblockUser(args.URI)
+      await UnblockUser(args.URI, this.session)
     }
 
     async bskyMuteUser(args) {
@@ -2055,6 +2115,7 @@ import { Mime } from "mime"
     async bskySearch(args) {
       const response = await BskySearchFuncs.Search(
         args.TERM,
+        this.sortSearch,
         args.CURSOR,
         args.LIMIT
       )
@@ -2064,10 +2125,14 @@ import { Mime } from "mime"
       this.searchResult =
         posts.length !== 0 && actors.length !== 0 ? response : "found nothing"
     }
+    bskySearchSort(args) {
+      this.sortSearch = args.POST_SORT
+    }
 
     async bskySearchSep(args) {
       const response = await BskySearchFuncs.Search(
         args.TERM,
+        this.sortSearch,
         this.cursor ?? "",
         this.limit ?? 50
       )
@@ -2176,7 +2241,7 @@ import { Mime } from "mime"
 
     bskyLexiconInputs(args) {
       const prefix = "ARG"
-      let array: string[] = []
+      const array: string[] = []
       for (let i = 0; prefix + i in args; i++) {
         array.push(
           args[prefix + i].startsWith("{") && args[prefix + i].endsWith("}")
@@ -2209,8 +2274,7 @@ import { Mime } from "mime"
       return (
         args.mutation ||
         util.target.blocks.getBlock(util.thread.peekStack())?.mutation ||
-        Scratch.vm.runtime.flyoutBlocks.getBlock(util.thread.peekStack())
-          ?.mutation
+        runtime.flyoutBlocks.getBlock(util.thread.peekStack())?.mutation
       )
     }
   }

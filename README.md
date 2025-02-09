@@ -1,4 +1,4 @@
-# 🦋🟦🌐 TurboButterfly: BlueSky API for Turbowarp
+# 🦋🟦🌐 TurboButterfly: BlueSky API for Turbowarp 🌐🟦🦋
 ![Banner](https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/turbobutterfly-banner.png)
 
 This is the unofficial extension for the BlueSky API!
@@ -30,7 +30,7 @@ _v1.0-release-candidate: Extension complete. Meets standards of full release wit
 - Bug-fixes
 - More error-handling
 - video embeds
-- (if required) future rewrite in favor of Bluesky's OAuth login method
+- ~~(if required) future rewrite in favor of Bluesky's OAuth login method~~
 
 
 

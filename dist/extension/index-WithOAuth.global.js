@@ -9772,8 +9772,8 @@ ${newlined}
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.JoseKey = void 0;
-      var jwk_1 = require_dist();
       var jose_1 = (init_browser(), __toCommonJS(browser_exports));
+      var jwk_1 = require_dist();
       var util_1 = require_util3();
       var { JOSEError: JOSEError2 } = jose_1.errors;
       var JoseKey = class _JoseKey extends jwk_1.Key {
@@ -10035,16 +10035,13 @@ ${newlined}
   var require_webcrypto_key = __commonJS({
     "node_modules/@atproto/jwk-webcrypto/dist/webcrypto-key.js"(exports) {
       "use strict";
-      var __importDefault = exports && exports.__importDefault || function(mod) {
-        return mod && mod.__esModule ? mod : { "default": mod };
-      };
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.WebcryptoKey = exports.jwkWithAlgSchema = void 0;
+      var zod_1 = require_lib();
       var jwk_1 = require_dist();
       var jwk_jose_1 = require_dist2();
-      var zod_1 = __importDefault(require_lib());
       var util_js_1 = require_util4();
-      exports.jwkWithAlgSchema = zod_1.default.intersection(jwk_1.jwkSchema, zod_1.default.object({ alg: zod_1.default.string() }));
+      exports.jwkWithAlgSchema = zod_1.z.intersection(jwk_1.jwkSchema, zod_1.z.object({ alg: zod_1.z.string() }));
       var WebcryptoKey = class _WebcryptoKey extends jwk_jose_1.JoseKey {
         // We need to override the static method generate from JoseKey because
         // the browser needs both the private and public keys
@@ -10209,11 +10206,11 @@ ${newlined}
         if (typeof input !== "string") {
           throw new did_error_js_1.InvalidDidError(typeof input, `DID must be a string`);
         }
-        if (input.length !== DID_PLC_LENGTH) {
-          throw new did_error_js_1.InvalidDidError(input, `did:plc must be ${DID_PLC_LENGTH} characters long`);
-        }
         if (!input.startsWith(DID_PLC_PREFIX)) {
           throw new did_error_js_1.InvalidDidError(input, `Invalid did:plc prefix`);
+        }
+        if (input.length !== DID_PLC_LENGTH) {
+          throw new did_error_js_1.InvalidDidError(input, `did:plc must be ${DID_PLC_LENGTH} characters long`);
         }
         for (let i = DID_PLC_PREFIX_LENGTH; i < DID_PLC_LENGTH; i++) {
           if (!isBase32Char(input.charCodeAt(i))) {
@@ -10368,8 +10365,12 @@ ${newlined}
       function isDidWeb(input) {
         if (typeof input !== "string")
           return false;
+        if (!input.startsWith(exports.DID_WEB_PREFIX))
+          return false;
+        if (input.charAt(exports.DID_WEB_PREFIX.length) === ":")
+          return false;
         try {
-          assertDidWeb(input);
+          didWebToUrl(input);
           return true;
         } catch {
           return false;
@@ -10383,20 +10384,22 @@ ${newlined}
         if (typeof input !== "string") {
           throw new did_error_js_1.InvalidDidError(typeof input, `DID must be a string`);
         }
+        if (!input.startsWith(exports.DID_WEB_PREFIX)) {
+          throw new did_error_js_1.InvalidDidError(input, `Invalid did:web prefix`);
+        }
+        if (input.charAt(exports.DID_WEB_PREFIX.length) === ":") {
+          throw new did_error_js_1.InvalidDidError(input, "did:web MSID must not start with a colon");
+        }
         void didWebToUrl(input);
       }
       function didWebToUrl(did) {
-        if (!did.startsWith(exports.DID_WEB_PREFIX)) {
-          throw new did_error_js_1.InvalidDidError(did, `did:web must start with ${exports.DID_WEB_PREFIX}`);
-        }
-        if (did.charAt(exports.DID_WEB_PREFIX.length) === ":") {
-          throw new did_error_js_1.InvalidDidError(did, "did:web MSID must not start with a colon");
-        }
         (0, did_js_1.assertDidMsid)(did, exports.DID_WEB_PREFIX.length);
+        const hostIdx = exports.DID_WEB_PREFIX.length;
+        const pathIdx = did.indexOf(":", hostIdx);
+        const host = pathIdx === -1 ? did.slice(hostIdx) : did.slice(hostIdx, pathIdx);
+        const path = pathIdx === -1 ? "" : did.slice(pathIdx);
         try {
-          const msid = did.slice(exports.DID_WEB_PREFIX.length);
-          const parts = msid.split(":").map(decodeURIComponent);
-          const url = new URL(`https://${parts.join("/")}`);
+          const url = new URL(`https://${host.replaceAll("%3A", ":")}${path.replaceAll(":", "/")}`);
           if (url.hostname === "localhost") {
             url.protocol = "http:";
           }
@@ -10406,8 +10409,9 @@ ${newlined}
         }
       }
       function urlToDidWeb(url) {
-        const path = url.pathname === "/" ? "" : url.pathname.slice(1).split("/").map(encodeURIComponent).join(":");
-        return `did:web:${encodeURIComponent(url.host)}${path ? `:${path}` : ""}`;
+        const port = url.port ? `%3A${url.port}` : "";
+        const path = url.pathname === "/" ? "" : url.pathname.replaceAll("/", ":");
+        return `did:web:${url.hostname}${port}${path}`;
       }
     }
   });
@@ -11990,7 +11994,7 @@ ${newlined}
     "node_modules/@atproto-labs/simple-store-memory/dist/util.js"(exports) {
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
-      exports.roughSizeOfObject = void 0;
+      exports.roughSizeOfObject = roughSizeOfObject;
       var knownSizes = /* @__PURE__ */ new WeakMap();
       function roughSizeOfObject(value) {
         const objectList = /* @__PURE__ */ new Set();
@@ -12053,7 +12057,6 @@ ${newlined}
         }
         return bytes;
       }
-      exports.roughSizeOfObject = roughSizeOfObject;
     }
   });
 
@@ -12998,9 +13001,9 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.DidResolverBase = void 0;
-      var fetch_1 = require_dist8();
-      var did_1 = require_dist4();
       var zod_1 = require_lib();
+      var did_1 = require_dist4();
+      var fetch_1 = require_dist8();
       var DidResolverBase = class {
         constructor(methods) {
           Object.defineProperty(this, "methods", {
@@ -13025,7 +13028,11 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
             }
             return document2;
           } catch (err) {
-            if (err instanceof fetch_1.FetchRequestError) {
+            if (err instanceof fetch_1.FetchResponseError) {
+              const status = err.response.status >= 500 ? 502 : err.response.status;
+              throw new did_1.DidError(did, err.message, "did-fetch-error", status, err);
+            }
+            if (err instanceof fetch_1.FetchError) {
               throw new did_1.DidError(did, err.message, "did-fetch-error", 400, err);
             }
             if (err instanceof zod_1.ZodError) {
@@ -13045,9 +13052,9 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.DidPlcMethod = void 0;
+      var did_1 = require_dist4();
       var fetch_1 = require_dist8();
       var pipe_1 = require_dist7();
-      var did_1 = require_dist4();
       var fetchSuccessHandler = (0, pipe_1.pipe)((0, fetch_1.fetchOkProcessor)(), (0, fetch_1.fetchJsonProcessor)(/^application\/(did\+ld\+)?json$/), (0, fetch_1.fetchJsonZodProcessor)(did_1.didDocumentValidator));
       var DidPlcMethod = class {
         constructor(options) {
@@ -13087,9 +13094,9 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.DidWebMethod = void 0;
       exports.buildDidWebDocumentUrl = buildDidWebDocumentUrl;
+      var did_1 = require_dist4();
       var fetch_1 = require_dist8();
       var pipe_1 = require_dist7();
-      var did_1 = require_dist4();
       var fetchSuccessHandler = (0, pipe_1.pipe)((0, fetch_1.fetchOkProcessor)(), (0, fetch_1.fetchJsonProcessor)(/^application\/(did\+ld\+)?json$/), (0, fetch_1.fetchJsonZodProcessor)(did_1.didDocumentValidator));
       var DidWebMethod = class {
         constructor({ fetch: fetch2 = globalThis.fetch, allowHttp = true } = {}) {
@@ -13111,7 +13118,7 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
         async resolve(did, options) {
           const didDocumentUrl = buildDidWebDocumentUrl(did);
           if (!this.allowHttp && didDocumentUrl.protocol === "http:") {
-            throw new Error(`Cannot resolve DID document for localhost: ${didDocumentUrl}`);
+            throw new did_1.DidError(did, 'Resolution of "http" did:web is not allowed', "did-web-http-not-allowed");
           }
           return this.fetch(didDocumentUrl, {
             redirect: "error",
@@ -13244,16 +13251,13 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
   var require_app_view_handle_resolver = __commonJS({
     "node_modules/@atproto-labs/handle-resolver/dist/app-view-handle-resolver.js"(exports) {
       "use strict";
-      var __importDefault = exports && exports.__importDefault || function(mod) {
-        return mod && mod.__esModule ? mod : { "default": mod };
-      };
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.AppViewHandleResolver = exports.xrpcErrorSchema = void 0;
-      var zod_1 = __importDefault(require_lib());
+      var zod_1 = require_lib();
       var types_js_1 = require_types2();
-      exports.xrpcErrorSchema = zod_1.default.object({
-        error: zod_1.default.string(),
-        message: zod_1.default.string().optional()
+      exports.xrpcErrorSchema = zod_1.z.object({
+        error: zod_1.z.string(),
+        message: zod_1.z.string().optional()
       });
       var AppViewHandleResolver = class _AppViewHandleResolver {
         static from(service, options) {
@@ -13654,7 +13658,19 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       exports.privateUseUriSchema = exports.webUriSchema = exports.httpsUriSchema = exports.loopbackUriSchema = exports.dangerousUriSchema = void 0;
       var zod_1 = require_lib();
       var util_js_1 = require_util8();
-      exports.dangerousUriSchema = zod_1.z.string().refine((data) => data.includes(":") && URL.canParse(data), {
+      var canParseUrl = (
+        // eslint-disable-next-line n/no-unsupported-features/node-builtins
+        URL.canParse ?? // URL.canParse is not available in Node.js < 18.7.0
+        ((urlStr) => {
+          try {
+            new URL(urlStr);
+            return true;
+          } catch {
+            return false;
+          }
+        })
+      );
+      exports.dangerousUriSchema = zod_1.z.string().refine((data) => data.includes(":") && canParseUrl(data), {
         message: "Invalid URL"
       });
       exports.loopbackUriSchema = exports.dangerousUriSchema.superRefine((value, ctx) => {
@@ -13982,8 +13998,8 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.oauthAuthorizationRequestJarSchema = void 0;
-      var jwk_1 = require_dist();
       var zod_1 = require_lib();
+      var jwk_1 = require_dist();
       exports.oauthAuthorizationRequestJarSchema = zod_1.z.object({
         /**
          * AuthorizationRequest inside a JWT:
@@ -14105,8 +14121,8 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.oauthAuthorizationRequestParametersSchema = void 0;
-      var jwk_1 = require_dist();
       var zod_1 = require_lib();
+      var jwk_1 = require_dist();
       var oauth_authorization_details_js_1 = require_oauth_authorization_details();
       var oauth_client_id_js_1 = require_oauth_client_id();
       var oauth_code_challenge_method_js_1 = require_oauth_code_challenge_method();
@@ -14360,8 +14376,8 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       exports.oauthClientCredentialsSchema = exports.oauthClientCredentialsNoneSchema = exports.oauthClientCredentialsSecretPostSchema = exports.oauthClientCredentialsJwtBearerSchema = void 0;
       var zod_1 = require_lib();
       var jwk_1 = require_dist();
-      var oauth_client_id_js_1 = require_oauth_client_id();
       var constants_js_1 = require_constants();
+      var oauth_client_id_js_1 = require_oauth_client_id();
       exports.oauthClientCredentialsJwtBearerSchema = zod_1.z.object({
         client_id: oauth_client_id_js_1.oauthClientIdSchema,
         client_assertion_type: zod_1.z.literal(constants_js_1.CLIENT_ASSERTION_TYPE_JWT_BEARER),
@@ -14508,8 +14524,8 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.oauthClientMetadataSchema = void 0;
-      var jwk_1 = require_dist();
       var zod_1 = require_lib();
+      var jwk_1 = require_dist();
       var oauth_client_id_js_1 = require_oauth_client_id();
       var oauth_endpoint_auth_method_js_1 = require_oauth_endpoint_auth_method();
       var oauth_grant_type_js_1 = require_oauth_grant_type();
@@ -14797,8 +14813,8 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.oauthTokenResponseSchema = void 0;
-      var jwk_1 = require_dist();
       var zod_1 = require_lib();
+      var jwk_1 = require_dist();
       var oauth_authorization_details_js_1 = require_oauth_authorization_details();
       var oauth_token_type_js_1 = require_oauth_token_type();
       exports.oauthTokenResponseSchema = zod_1.z.object({
@@ -15036,9 +15052,9 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.OAuthAuthorizationServerMetadataResolver = void 0;
+      var oauth_types_1 = require_dist11();
       var fetch_1 = require_dist8();
       var simple_store_1 = require_dist6();
-      var oauth_types_1 = require_dist11();
       var util_js_1 = require_util9();
       var OAuthAuthorizationServerMetadataResolver = class extends simple_store_1.CachedGetter {
         constructor(cache, fetch2, config) {
@@ -15367,8 +15383,8 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.ensureValidAtUriRegex = exports.ensureValidAtUri = void 0;
-      var handle_1 = require_handle();
       var did_1 = require_did2();
+      var handle_1 = require_handle();
       var nsid_1 = require_nsid();
       var ensureValidAtUri = (uri) => {
         const uriParts = uri.split("#");
@@ -15815,8 +15831,8 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.IdentityResolver = void 0;
-      var handle_resolver_1 = require_dist10();
       var syntax_1 = require_dist12();
+      var handle_resolver_1 = require_dist10();
       var IdentityResolver = class {
         constructor(didResolver, handleResolver) {
           Object.defineProperty(this, "didResolver", {
@@ -15929,9 +15945,9 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.OAuthProtectedResourceMetadataResolver = void 0;
+      var oauth_types_1 = require_dist11();
       var fetch_1 = require_dist8();
       var simple_store_1 = require_dist6();
-      var oauth_types_1 = require_dist11();
       var util_js_1 = require_util9();
       var OAuthProtectedResourceMetadataResolver = class extends simple_store_1.CachedGetter {
         constructor(cache, fetch2 = globalThis.fetch, config) {
@@ -16122,9 +16138,9 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.atprotoTokenResponseSchema = exports.atprotoScopeSchema = exports.isAtprotoScope = void 0;
+      var zod_1 = require_lib();
       var did_1 = require_dist4();
       var oauth_types_1 = require_dist11();
-      var zod_1 = require_lib();
       var util_1 = require_util9();
       var isAtprotoScope = (input) => (0, util_1.includesSpaceSeparatedValue)(input, "atproto");
       exports.isAtprotoScope = isAtprotoScope;
@@ -16166,8 +16182,8 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.dpopFetchWrapper = dpopFetchWrapper;
-      var fetch_1 = require_dist8();
       var base64_1 = (init_base64(), __toCommonJS(base64_exports));
+      var fetch_1 = require_dist8();
       var subtle = globalThis.crypto?.subtle;
       var ReadableStream = globalThis.ReadableStream;
       function dpopFetchWrapper({ key, iss, supportedAlgs, nonces, sha256: sha2562 = typeof subtle !== "undefined" ? subtleSha256 : void 0, isAuthServer, fetch: fetch2 = globalThis.fetch }) {
@@ -16403,8 +16419,8 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       });
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.OAuthServerAgent = void 0;
-      var fetch_1 = require_dist8();
       var oauth_types_1 = require_dist11();
+      var fetch_1 = require_dist8();
       var atproto_token_response_js_1 = require_atproto_token_response();
       var constants_js_1 = require_constants2();
       var token_refresh_error_js_1 = require_token_refresh_error();
@@ -17191,8 +17207,8 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.clientMetadataSchema = void 0;
-      var oauth_types_1 = require_dist11();
       var zod_1 = require_lib();
+      var oauth_types_1 = require_dist11();
       exports.clientMetadataSchema = oauth_types_1.oauthClientMetadataSchema.extend({
         client_id: zod_1.z.union([
           oauth_types_1.oauthClientIdDiscoverableSchema,
@@ -17275,12 +17291,12 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.OAuthClient = void 0;
+      var jwk_1 = require_dist();
+      var oauth_types_1 = require_dist11();
       var did_resolver_1 = require_dist9();
       var handle_resolver_1 = require_dist10();
       var identity_resolver_1 = require_dist13();
       var simple_store_memory_1 = require_dist5();
-      var jwk_1 = require_dist();
-      var oauth_types_1 = require_dist11();
       var constants_js_1 = require_constants2();
       var token_revoked_error_js_1 = require_token_revoked_error();
       var oauth_authorization_server_metadata_resolver_js_1 = require_oauth_authorization_server_metadata_resolver();
@@ -18931,494 +18947,6 @@ ${(0, util_js_1.padLines)(responseMessage, "  ")}`);
     }
   });
 
-  // node_modules/@atproto/common-web/dist/check.js
-  var require_check = __commonJS({
-    "node_modules/@atproto/common-web/dist/check.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.isObject = exports.assure = exports.create = exports.is = void 0;
-      var is = (obj, def) => {
-        return def.safeParse(obj).success;
-      };
-      exports.is = is;
-      var create2 = (def) => (v) => def.safeParse(v).success;
-      exports.create = create2;
-      var assure = (def, obj) => {
-        return def.parse(obj);
-      };
-      exports.assure = assure;
-      var isObject2 = (obj) => {
-        return typeof obj === "object" && obj !== null;
-      };
-      exports.isObject = isObject2;
-    }
-  });
-
-  // node_modules/@atproto/common-web/dist/util.js
-  var require_util13 = __commonJS({
-    "node_modules/@atproto/common-web/dist/util.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.parseIntWithFallback = exports.dedupeStrs = exports.range = exports.chunkArray = exports.errHasMsg = exports.isErrnoException = exports.asyncFilter = exports.s32decode = exports.s32encode = exports.streamToBuffer = exports.flattenUint8Arrays = exports.bailableWait = exports.wait = exports.jitter = exports.noUndefinedVals = void 0;
-      exports.omit = omit;
-      var noUndefinedVals = (obj) => {
-        Object.keys(obj).forEach((k) => {
-          if (obj[k] === void 0) {
-            delete obj[k];
-          }
-        });
-        return obj;
-      };
-      exports.noUndefinedVals = noUndefinedVals;
-      function omit(src2, rejectedKeys) {
-        if (!src2)
-          return src2;
-        const dst = {};
-        const srcKeys = Object.keys(src2);
-        for (let i = 0; i < srcKeys.length; i++) {
-          const key = srcKeys[i];
-          if (!rejectedKeys.includes(key)) {
-            dst[key] = src2[key];
-          }
-        }
-        return dst;
-      }
-      var jitter = (maxMs) => {
-        return Math.round((Math.random() - 0.5) * maxMs * 2);
-      };
-      exports.jitter = jitter;
-      var wait = (ms) => {
-        return new Promise((res) => setTimeout(res, ms));
-      };
-      exports.wait = wait;
-      var bailableWait = (ms) => {
-        let bail;
-        const waitPromise = new Promise((res) => {
-          const timeout = setTimeout(res, ms);
-          bail = () => {
-            clearTimeout(timeout);
-            res();
-          };
-        });
-        return { bail, wait: () => waitPromise };
-      };
-      exports.bailableWait = bailableWait;
-      var flattenUint8Arrays = (arrs) => {
-        const length2 = arrs.reduce((acc, cur) => {
-          return acc + cur.length;
-        }, 0);
-        const flattened = new Uint8Array(length2);
-        let offset = 0;
-        arrs.forEach((arr) => {
-          flattened.set(arr, offset);
-          offset += arr.length;
-        });
-        return flattened;
-      };
-      exports.flattenUint8Arrays = flattenUint8Arrays;
-      var streamToBuffer = async (stream) => {
-        const arrays = [];
-        for await (const chunk of stream) {
-          arrays.push(chunk);
-        }
-        return (0, exports.flattenUint8Arrays)(arrays);
-      };
-      exports.streamToBuffer = streamToBuffer;
-      var S32_CHAR = "234567abcdefghijklmnopqrstuvwxyz";
-      var s32encode = (i) => {
-        let s = "";
-        while (i) {
-          const c = i % 32;
-          i = Math.floor(i / 32);
-          s = S32_CHAR.charAt(c) + s;
-        }
-        return s;
-      };
-      exports.s32encode = s32encode;
-      var s32decode = (s) => {
-        let i = 0;
-        for (const c of s) {
-          i = i * 32 + S32_CHAR.indexOf(c);
-        }
-        return i;
-      };
-      exports.s32decode = s32decode;
-      var asyncFilter = async (arr, fn) => {
-        const results = await Promise.all(arr.map((t) => fn(t)));
-        return arr.filter((_, i) => results[i]);
-      };
-      exports.asyncFilter = asyncFilter;
-      var isErrnoException = (err) => {
-        return !!err && err["code"];
-      };
-      exports.isErrnoException = isErrnoException;
-      var errHasMsg = (err, msg) => {
-        return !!err && typeof err === "object" && err["message"] === msg;
-      };
-      exports.errHasMsg = errHasMsg;
-      var chunkArray = (arr, chunkSize) => {
-        return arr.reduce((acc, cur, i) => {
-          const chunkI = Math.floor(i / chunkSize);
-          if (!acc[chunkI]) {
-            acc[chunkI] = [];
-          }
-          acc[chunkI].push(cur);
-          return acc;
-        }, []);
-      };
-      exports.chunkArray = chunkArray;
-      var range = (num) => {
-        const nums = [];
-        for (let i = 0; i < num; i++) {
-          nums.push(i);
-        }
-        return nums;
-      };
-      exports.range = range;
-      var dedupeStrs = (strs) => {
-        return [...new Set(strs)];
-      };
-      exports.dedupeStrs = dedupeStrs;
-      var parseIntWithFallback = (value, fallback) => {
-        const parsed = parseInt(value || "", 10);
-        return isNaN(parsed) ? fallback : parsed;
-      };
-      exports.parseIntWithFallback = parseIntWithFallback;
-    }
-  });
-
-  // node_modules/@atproto/common-web/dist/arrays.js
-  var require_arrays = __commonJS({
-    "node_modules/@atproto/common-web/dist/arrays.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.mapDefined = exports.keyBy = void 0;
-      var keyBy = (arr, key) => {
-        return arr.reduce((acc, cur) => {
-          acc[cur[key]] = cur;
-          return acc;
-        }, {});
-      };
-      exports.keyBy = keyBy;
-      var mapDefined = (arr, fn) => {
-        const output = [];
-        for (const item of arr) {
-          const val = fn(item);
-          if (val !== void 0) {
-            output.push(val);
-          }
-        }
-        return output;
-      };
-      exports.mapDefined = mapDefined;
-    }
-  });
-
-  // node_modules/@atproto/common-web/dist/async.js
-  var require_async = __commonJS({
-    "node_modules/@atproto/common-web/dist/async.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.AsyncBufferFullError = exports.AsyncBuffer = exports.allComplete = exports.createDeferrables = exports.createDeferrable = exports.readFromGenerator = void 0;
-      exports.allFulfilled = allFulfilled;
-      exports.handleAllSettledErrors = handleAllSettledErrors;
-      exports.isRejectedResult = isRejectedResult;
-      exports.isFulfilledResult = isFulfilledResult;
-      var util_1 = require_util13();
-      var readFromGenerator = async (gen, isDone, waitFor = Promise.resolve(), maxLength = Number.MAX_SAFE_INTEGER) => {
-        const evts = [];
-        let bail;
-        let hasBroke = false;
-        const awaitDone = async () => {
-          if (await isDone(evts.at(-1))) {
-            return true;
-          }
-          const bailable = (0, util_1.bailableWait)(20);
-          await bailable.wait();
-          bail = bailable.bail;
-          if (hasBroke)
-            return false;
-          return await awaitDone();
-        };
-        const breakOn = new Promise((resolve) => {
-          waitFor.then(() => {
-            awaitDone().then(() => resolve());
-          });
-        });
-        try {
-          while (evts.length < maxLength) {
-            const maybeEvt = await Promise.race([gen.next(), breakOn]);
-            if (!maybeEvt)
-              break;
-            const evt = maybeEvt;
-            if (evt.done)
-              break;
-            evts.push(evt.value);
-          }
-        } finally {
-          hasBroke = true;
-          bail && bail();
-        }
-        return evts;
-      };
-      exports.readFromGenerator = readFromGenerator;
-      var createDeferrable = () => {
-        let resolve;
-        const promise = new Promise((res) => {
-          resolve = () => res();
-        });
-        return { resolve, complete: promise };
-      };
-      exports.createDeferrable = createDeferrable;
-      var createDeferrables = (count) => {
-        const list = [];
-        for (let i = 0; i < count; i++) {
-          list.push((0, exports.createDeferrable)());
-        }
-        return list;
-      };
-      exports.createDeferrables = createDeferrables;
-      var allComplete = async (deferrables) => {
-        await Promise.all(deferrables.map((d) => d.complete));
-      };
-      exports.allComplete = allComplete;
-      var AsyncBuffer = class {
-        constructor(maxSize) {
-          Object.defineProperty(this, "maxSize", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: maxSize
-          });
-          Object.defineProperty(this, "buffer", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-          });
-          Object.defineProperty(this, "promise", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-          });
-          Object.defineProperty(this, "resolve", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-          });
-          Object.defineProperty(this, "closed", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-          });
-          Object.defineProperty(this, "toThrow", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-          });
-          this.promise = Promise.resolve();
-          this.resolve = () => null;
-          this.resetPromise();
-        }
-        get curr() {
-          return this.buffer;
-        }
-        get size() {
-          return this.buffer.length;
-        }
-        get isClosed() {
-          return this.closed;
-        }
-        resetPromise() {
-          this.promise = new Promise((r) => this.resolve = r);
-        }
-        push(item) {
-          this.buffer.push(item);
-          this.resolve();
-        }
-        pushMany(items) {
-          items.forEach((i) => this.buffer.push(i));
-          this.resolve();
-        }
-        async *events() {
-          while (true) {
-            if (this.closed && this.buffer.length === 0) {
-              if (this.toThrow) {
-                throw this.toThrow;
-              } else {
-                return;
-              }
-            }
-            await this.promise;
-            if (this.toThrow) {
-              throw this.toThrow;
-            }
-            if (this.maxSize && this.size > this.maxSize) {
-              throw new AsyncBufferFullError(this.maxSize);
-            }
-            const [first, ...rest] = this.buffer;
-            if (first) {
-              this.buffer = rest;
-              yield first;
-            } else {
-              this.resetPromise();
-            }
-          }
-        }
-        throw(err) {
-          this.toThrow = err;
-          this.closed = true;
-          this.resolve();
-        }
-        close() {
-          this.closed = true;
-          this.resolve();
-        }
-      };
-      exports.AsyncBuffer = AsyncBuffer;
-      var AsyncBufferFullError = class extends Error {
-        constructor(maxSize) {
-          super(`ReachedMaxBufferSize: ${maxSize}`);
-        }
-      };
-      exports.AsyncBufferFullError = AsyncBufferFullError;
-      function allFulfilled(promises) {
-        return Promise.allSettled(promises).then(handleAllSettledErrors);
-      }
-      function handleAllSettledErrors(results) {
-        const errors = results.filter(isRejectedResult).map(extractReason);
-        if (errors.length === 0) {
-          return results.map(extractValue);
-        }
-        if (errors.length === 1) {
-          throw errors[0];
-        }
-        throw new AggregateError(errors, `Multiple errors: ${errors.map(stringifyReason).join("\n")}`);
-      }
-      function isRejectedResult(result) {
-        return result.status === "rejected";
-      }
-      function extractReason(result) {
-        return result.reason;
-      }
-      function isFulfilledResult(result) {
-        return result.status === "fulfilled";
-      }
-      function extractValue(result) {
-        return result.value;
-      }
-      function stringifyReason(reason) {
-        if (reason instanceof Error) {
-          return reason.message;
-        }
-        return String(reason);
-      }
-    }
-  });
-
-  // node_modules/@atproto/common-web/dist/tid.js
-  var require_tid2 = __commonJS({
-    "node_modules/@atproto/common-web/dist/tid.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.TID = void 0;
-      var util_1 = require_util13();
-      var TID_LEN = 13;
-      var lastTimestamp = 0;
-      var timestampCount = 0;
-      var clockid = null;
-      function dedash(str) {
-        return str.replaceAll("-", "");
-      }
-      var TID = class _TID {
-        constructor(str) {
-          Object.defineProperty(this, "str", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-          });
-          const noDashes = dedash(str);
-          if (noDashes.length !== TID_LEN) {
-            throw new Error(`Poorly formatted TID: ${noDashes.length} length`);
-          }
-          this.str = noDashes;
-        }
-        static next(prev) {
-          const time = Math.max(Date.now(), lastTimestamp);
-          if (time === lastTimestamp) {
-            timestampCount++;
-          }
-          lastTimestamp = time;
-          const timestamp = time * 1e3 + timestampCount;
-          if (clockid === null) {
-            clockid = Math.floor(Math.random() * 32);
-          }
-          const tid = _TID.fromTime(timestamp, clockid);
-          if (!prev || tid.newerThan(prev)) {
-            return tid;
-          }
-          return _TID.fromTime(prev.timestamp() + 1, clockid);
-        }
-        static nextStr(prev) {
-          return _TID.next(prev ? new _TID(prev) : void 0).toString();
-        }
-        static fromTime(timestamp, clockid2) {
-          const str = `${(0, util_1.s32encode)(timestamp)}${(0, util_1.s32encode)(clockid2).padStart(2, "2")}`;
-          return new _TID(str);
-        }
-        static fromStr(str) {
-          return new _TID(str);
-        }
-        static oldestFirst(a, b) {
-          return a.compareTo(b);
-        }
-        static newestFirst(a, b) {
-          return b.compareTo(a);
-        }
-        static is(str) {
-          return dedash(str).length === TID_LEN;
-        }
-        timestamp() {
-          return (0, util_1.s32decode)(this.str.slice(0, 11));
-        }
-        clockid() {
-          return (0, util_1.s32decode)(this.str.slice(11, 13));
-        }
-        formatted() {
-          const str = this.toString();
-          return `${str.slice(0, 4)}-${str.slice(4, 7)}-${str.slice(7, 11)}-${str.slice(11, 13)}`;
-        }
-        toString() {
-          return this.str;
-        }
-        // newer > older
-        compareTo(other) {
-          if (this.str > other.str)
-            return 1;
-          if (this.str < other.str)
-            return -1;
-          return 0;
-        }
-        equals(other) {
-          return this.str === other.str;
-        }
-        newerThan(other) {
-          return this.compareTo(other) > 0;
-        }
-        olderThan(other) {
-          return this.compareTo(other) < 0;
-        }
-      };
-      exports.TID = TID;
-      exports.default = TID;
-    }
-  });
-
   // node_modules/multiformats/esm/vendor/varint.js
   function encode4(num, out, offset) {
     out = out || [];
@@ -19962,6 +19490,493 @@ if (cid) {
   doSomethingWithCID(cid)
 }
 `;
+    }
+  });
+
+  // node_modules/@atproto/common-web/dist/check.js
+  var require_check = __commonJS({
+    "node_modules/@atproto/common-web/dist/check.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.isObject = exports.assure = exports.create = exports.is = void 0;
+      var is = (obj, def) => {
+        return def.safeParse(obj).success;
+      };
+      exports.is = is;
+      var create2 = (def) => (v) => def.safeParse(v).success;
+      exports.create = create2;
+      var assure = (def, obj) => {
+        return def.parse(obj);
+      };
+      exports.assure = assure;
+      var isObject2 = (obj) => {
+        return typeof obj === "object" && obj !== null;
+      };
+      exports.isObject = isObject2;
+    }
+  });
+
+  // node_modules/@atproto/common-web/dist/util.js
+  var require_util13 = __commonJS({
+    "node_modules/@atproto/common-web/dist/util.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.parseIntWithFallback = exports.dedupeStrs = exports.range = exports.chunkArray = exports.errHasMsg = exports.isErrnoException = exports.asyncFilter = exports.s32decode = exports.s32encode = exports.streamToBuffer = exports.flattenUint8Arrays = exports.bailableWait = exports.wait = exports.jitter = exports.noUndefinedVals = void 0;
+      exports.omit = omit;
+      var noUndefinedVals = (obj) => {
+        Object.keys(obj).forEach((k) => {
+          if (obj[k] === void 0) {
+            delete obj[k];
+          }
+        });
+        return obj;
+      };
+      exports.noUndefinedVals = noUndefinedVals;
+      function omit(src2, rejectedKeys) {
+        if (!src2)
+          return src2;
+        const dst = {};
+        const srcKeys = Object.keys(src2);
+        for (let i = 0; i < srcKeys.length; i++) {
+          const key = srcKeys[i];
+          if (!rejectedKeys.includes(key)) {
+            dst[key] = src2[key];
+          }
+        }
+        return dst;
+      }
+      var jitter = (maxMs) => {
+        return Math.round((Math.random() - 0.5) * maxMs * 2);
+      };
+      exports.jitter = jitter;
+      var wait = (ms) => {
+        return new Promise((res) => setTimeout(res, ms));
+      };
+      exports.wait = wait;
+      var bailableWait = (ms) => {
+        let bail;
+        const waitPromise = new Promise((res) => {
+          const timeout = setTimeout(res, ms);
+          bail = () => {
+            clearTimeout(timeout);
+            res();
+          };
+        });
+        return { bail, wait: () => waitPromise };
+      };
+      exports.bailableWait = bailableWait;
+      var flattenUint8Arrays = (arrs) => {
+        const length2 = arrs.reduce((acc, cur) => {
+          return acc + cur.length;
+        }, 0);
+        const flattened = new Uint8Array(length2);
+        let offset = 0;
+        arrs.forEach((arr) => {
+          flattened.set(arr, offset);
+          offset += arr.length;
+        });
+        return flattened;
+      };
+      exports.flattenUint8Arrays = flattenUint8Arrays;
+      var streamToBuffer = async (stream) => {
+        const arrays = [];
+        for await (const chunk of stream) {
+          arrays.push(chunk);
+        }
+        return (0, exports.flattenUint8Arrays)(arrays);
+      };
+      exports.streamToBuffer = streamToBuffer;
+      var S32_CHAR = "234567abcdefghijklmnopqrstuvwxyz";
+      var s32encode = (i) => {
+        let s = "";
+        while (i) {
+          const c = i % 32;
+          i = Math.floor(i / 32);
+          s = S32_CHAR.charAt(c) + s;
+        }
+        return s;
+      };
+      exports.s32encode = s32encode;
+      var s32decode = (s) => {
+        let i = 0;
+        for (const c of s) {
+          i = i * 32 + S32_CHAR.indexOf(c);
+        }
+        return i;
+      };
+      exports.s32decode = s32decode;
+      var asyncFilter = async (arr, fn) => {
+        const results = await Promise.all(arr.map((t) => fn(t)));
+        return arr.filter((_, i) => results[i]);
+      };
+      exports.asyncFilter = asyncFilter;
+      var isErrnoException = (err) => {
+        return !!err && err["code"];
+      };
+      exports.isErrnoException = isErrnoException;
+      var errHasMsg = (err, msg) => {
+        return !!err && typeof err === "object" && err["message"] === msg;
+      };
+      exports.errHasMsg = errHasMsg;
+      var chunkArray = (arr, chunkSize) => {
+        return arr.reduce((acc, cur, i) => {
+          const chunkI = Math.floor(i / chunkSize);
+          if (!acc[chunkI]) {
+            acc[chunkI] = [];
+          }
+          acc[chunkI].push(cur);
+          return acc;
+        }, []);
+      };
+      exports.chunkArray = chunkArray;
+      var range = (num) => {
+        const nums = [];
+        for (let i = 0; i < num; i++) {
+          nums.push(i);
+        }
+        return nums;
+      };
+      exports.range = range;
+      var dedupeStrs = (strs) => {
+        return [...new Set(strs)];
+      };
+      exports.dedupeStrs = dedupeStrs;
+      var parseIntWithFallback = (value, fallback) => {
+        const parsed = parseInt(value || "", 10);
+        return isNaN(parsed) ? fallback : parsed;
+      };
+      exports.parseIntWithFallback = parseIntWithFallback;
+    }
+  });
+
+  // node_modules/@atproto/common-web/dist/arrays.js
+  var require_arrays = __commonJS({
+    "node_modules/@atproto/common-web/dist/arrays.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.mapDefined = void 0;
+      exports.keyBy = keyBy;
+      function keyBy(arr, key) {
+        return arr.reduce((acc, cur) => {
+          acc.set(cur[key], cur);
+          return acc;
+        }, /* @__PURE__ */ new Map());
+      }
+      var mapDefined = (arr, fn) => {
+        const output = [];
+        for (const item of arr) {
+          const val = fn(item);
+          if (val !== void 0) {
+            output.push(val);
+          }
+        }
+        return output;
+      };
+      exports.mapDefined = mapDefined;
+    }
+  });
+
+  // node_modules/@atproto/common-web/dist/async.js
+  var require_async = __commonJS({
+    "node_modules/@atproto/common-web/dist/async.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.AsyncBufferFullError = exports.AsyncBuffer = exports.allComplete = exports.createDeferrables = exports.createDeferrable = exports.readFromGenerator = void 0;
+      exports.allFulfilled = allFulfilled;
+      exports.handleAllSettledErrors = handleAllSettledErrors;
+      exports.isRejectedResult = isRejectedResult;
+      exports.isFulfilledResult = isFulfilledResult;
+      var util_1 = require_util13();
+      var readFromGenerator = async (gen, isDone, waitFor = Promise.resolve(), maxLength = Number.MAX_SAFE_INTEGER) => {
+        const evts = [];
+        let bail;
+        let hasBroke = false;
+        const awaitDone = async () => {
+          if (await isDone(evts.at(-1))) {
+            return true;
+          }
+          const bailable = (0, util_1.bailableWait)(20);
+          await bailable.wait();
+          bail = bailable.bail;
+          if (hasBroke)
+            return false;
+          return await awaitDone();
+        };
+        const breakOn = new Promise((resolve) => {
+          waitFor.then(() => {
+            awaitDone().then(() => resolve());
+          });
+        });
+        try {
+          while (evts.length < maxLength) {
+            const maybeEvt = await Promise.race([gen.next(), breakOn]);
+            if (!maybeEvt)
+              break;
+            const evt = maybeEvt;
+            if (evt.done)
+              break;
+            evts.push(evt.value);
+          }
+        } finally {
+          hasBroke = true;
+          bail && bail();
+        }
+        return evts;
+      };
+      exports.readFromGenerator = readFromGenerator;
+      var createDeferrable = () => {
+        let resolve;
+        const promise = new Promise((res) => {
+          resolve = () => res();
+        });
+        return { resolve, complete: promise };
+      };
+      exports.createDeferrable = createDeferrable;
+      var createDeferrables = (count) => {
+        const list = [];
+        for (let i = 0; i < count; i++) {
+          list.push((0, exports.createDeferrable)());
+        }
+        return list;
+      };
+      exports.createDeferrables = createDeferrables;
+      var allComplete = async (deferrables) => {
+        await Promise.all(deferrables.map((d) => d.complete));
+      };
+      exports.allComplete = allComplete;
+      var AsyncBuffer = class {
+        constructor(maxSize) {
+          Object.defineProperty(this, "maxSize", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: maxSize
+          });
+          Object.defineProperty(this, "buffer", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: []
+          });
+          Object.defineProperty(this, "promise", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+          });
+          Object.defineProperty(this, "resolve", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+          });
+          Object.defineProperty(this, "closed", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: false
+          });
+          Object.defineProperty(this, "toThrow", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+          });
+          this.promise = Promise.resolve();
+          this.resolve = () => null;
+          this.resetPromise();
+        }
+        get curr() {
+          return this.buffer;
+        }
+        get size() {
+          return this.buffer.length;
+        }
+        get isClosed() {
+          return this.closed;
+        }
+        resetPromise() {
+          this.promise = new Promise((r) => this.resolve = r);
+        }
+        push(item) {
+          this.buffer.push(item);
+          this.resolve();
+        }
+        pushMany(items) {
+          items.forEach((i) => this.buffer.push(i));
+          this.resolve();
+        }
+        async *events() {
+          while (true) {
+            if (this.closed && this.buffer.length === 0) {
+              if (this.toThrow) {
+                throw this.toThrow;
+              } else {
+                return;
+              }
+            }
+            await this.promise;
+            if (this.toThrow) {
+              throw this.toThrow;
+            }
+            if (this.maxSize && this.size > this.maxSize) {
+              throw new AsyncBufferFullError(this.maxSize);
+            }
+            const [first, ...rest] = this.buffer;
+            if (first) {
+              this.buffer = rest;
+              yield first;
+            } else {
+              this.resetPromise();
+            }
+          }
+        }
+        throw(err) {
+          this.toThrow = err;
+          this.closed = true;
+          this.resolve();
+        }
+        close() {
+          this.closed = true;
+          this.resolve();
+        }
+      };
+      exports.AsyncBuffer = AsyncBuffer;
+      var AsyncBufferFullError = class extends Error {
+        constructor(maxSize) {
+          super(`ReachedMaxBufferSize: ${maxSize}`);
+        }
+      };
+      exports.AsyncBufferFullError = AsyncBufferFullError;
+      function allFulfilled(promises) {
+        return Promise.allSettled(promises).then(handleAllSettledErrors);
+      }
+      function handleAllSettledErrors(results) {
+        const errors = results.filter(isRejectedResult).map(extractReason);
+        if (errors.length === 0) {
+          return results.map(extractValue);
+        }
+        if (errors.length === 1) {
+          throw errors[0];
+        }
+        throw new AggregateError(errors, `Multiple errors: ${errors.map(stringifyReason).join("\n")}`);
+      }
+      function isRejectedResult(result) {
+        return result.status === "rejected";
+      }
+      function extractReason(result) {
+        return result.reason;
+      }
+      function isFulfilledResult(result) {
+        return result.status === "fulfilled";
+      }
+      function extractValue(result) {
+        return result.value;
+      }
+      function stringifyReason(reason) {
+        if (reason instanceof Error) {
+          return reason.message;
+        }
+        return String(reason);
+      }
+    }
+  });
+
+  // node_modules/@atproto/common-web/dist/tid.js
+  var require_tid2 = __commonJS({
+    "node_modules/@atproto/common-web/dist/tid.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.TID = void 0;
+      var util_1 = require_util13();
+      var TID_LEN = 13;
+      var lastTimestamp = 0;
+      var timestampCount = 0;
+      var clockid = null;
+      function dedash(str) {
+        return str.replaceAll("-", "");
+      }
+      var TID = class _TID {
+        constructor(str) {
+          Object.defineProperty(this, "str", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+          });
+          const noDashes = dedash(str);
+          if (noDashes.length !== TID_LEN) {
+            throw new Error(`Poorly formatted TID: ${noDashes.length} length`);
+          }
+          this.str = noDashes;
+        }
+        static next(prev) {
+          const time = Math.max(Date.now(), lastTimestamp);
+          if (time === lastTimestamp) {
+            timestampCount++;
+          }
+          lastTimestamp = time;
+          const timestamp = time * 1e3 + timestampCount;
+          if (clockid === null) {
+            clockid = Math.floor(Math.random() * 32);
+          }
+          const tid = _TID.fromTime(timestamp, clockid);
+          if (!prev || tid.newerThan(prev)) {
+            return tid;
+          }
+          return _TID.fromTime(prev.timestamp() + 1, clockid);
+        }
+        static nextStr(prev) {
+          return _TID.next(prev ? new _TID(prev) : void 0).toString();
+        }
+        static fromTime(timestamp, clockid2) {
+          const str = `${(0, util_1.s32encode)(timestamp)}${(0, util_1.s32encode)(clockid2).padStart(2, "2")}`;
+          return new _TID(str);
+        }
+        static fromStr(str) {
+          return new _TID(str);
+        }
+        static oldestFirst(a, b) {
+          return a.compareTo(b);
+        }
+        static newestFirst(a, b) {
+          return b.compareTo(a);
+        }
+        static is(str) {
+          return dedash(str).length === TID_LEN;
+        }
+        timestamp() {
+          return (0, util_1.s32decode)(this.str.slice(0, 11));
+        }
+        clockid() {
+          return (0, util_1.s32decode)(this.str.slice(11, 13));
+        }
+        formatted() {
+          const str = this.toString();
+          return `${str.slice(0, 4)}-${str.slice(4, 7)}-${str.slice(7, 11)}-${str.slice(11, 13)}`;
+        }
+        toString() {
+          return this.str;
+        }
+        // newer > older
+        compareTo(other) {
+          if (this.str > other.str)
+            return 1;
+          if (this.str < other.str)
+            return -1;
+          return 0;
+        }
+        equals(other) {
+          return this.str === other.str;
+        }
+        newerThan(other) {
+          return this.compareTo(other) > 0;
+        }
+        olderThan(other) {
+          return this.compareTo(other) < 0;
+        }
+      };
+      exports.TID = TID;
     }
   });
 
@@ -29803,9 +29818,9 @@ if (cid) {
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.BlobRef = exports.jsonBlobRef = exports.untypedJsonBlobRef = exports.typedJsonBlobRef = void 0;
-      var common_web_1 = require_dist16();
       var cid_1 = (init_cid(), __toCommonJS(cid_exports));
       var zod_1 = require_lib();
+      var common_web_1 = require_dist16();
       exports.typedJsonBlobRef = zod_1.z.object({
         $type: zod_1.z.literal("blob"),
         ref: common_web_1.schema.cid,
@@ -29961,9 +29976,9 @@ if (cid) {
       exports.recordKey = recordKey;
       var iso_datestring_validator_1 = require_dist17();
       var cid_1 = (init_cid(), __toCommonJS(cid_exports));
-      var types_1 = require_types4();
-      var syntax_1 = require_dist12();
       var common_web_1 = require_dist16();
+      var syntax_1 = require_dist12();
+      var types_1 = require_types4();
       function datetime(path, value) {
         try {
           if (!(0, iso_datestring_validator_1.isValidISODateString)(value)) {
@@ -30130,10 +30145,10 @@ if (cid) {
       exports.bytes = bytes;
       exports.cidLink = cidLink;
       exports.unknown = unknown;
-      var common_web_1 = require_dist16();
       var cid_1 = (init_cid(), __toCommonJS(cid_exports));
-      var formats = __importStar(require_formats());
+      var common_web_1 = require_dist16();
       var types_1 = require_types4();
+      var formats = __importStar(require_formats());
       function validate(lexicons, path, def, value) {
         switch (def.type) {
           case "boolean":
@@ -30623,8 +30638,8 @@ if (cid) {
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.params = params;
       var types_1 = require_types4();
-      var PrimitiveValidators = __importStar(require_primitives());
       var complex_1 = require_complex();
+      var PrimitiveValidators = __importStar(require_primitives());
       function params(lexicons, path, def, val) {
         const value = val && typeof val === "object" ? val : {};
         const requiredProps = new Set(def.required ?? []);
@@ -30740,8 +30755,8 @@ if (cid) {
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.Lexicons = void 0;
       var types_1 = require_types4();
-      var validation_1 = require_validation();
       var util_1 = require_util12();
+      var validation_1 = require_validation();
       var ComplexValidators = __importStar(require_complex());
       var Lexicons = class {
         constructor(docs) {
@@ -30947,8 +30962,8 @@ if (cid) {
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.jsonStringToLex = exports.jsonToLex = exports.stringifyLex = exports.lexToJson = exports.ipldToLex = exports.lexToIpld = void 0;
-      var common_web_1 = require_dist16();
       var cid_1 = (init_cid(), __toCommonJS(cid_exports));
+      var common_web_1 = require_dist16();
       var blob_refs_1 = require_blob_refs();
       var lexToIpld = (val) => {
         if (Array.isArray(val)) {
@@ -35278,7 +35293,8 @@ if (cid) {
                   "lex:app.bsky.actor.defs#mutedWordsPref",
                   "lex:app.bsky.actor.defs#hiddenPostsPref",
                   "lex:app.bsky.actor.defs#bskyAppStatePref",
-                  "lex:app.bsky.actor.defs#labelersPref"
+                  "lex:app.bsky.actor.defs#labelersPref",
+                  "lex:app.bsky.actor.defs#postInteractionSettingsPref"
                 ]
               }
             },
@@ -35596,6 +35612,36 @@ if (cid) {
                   type: "string",
                   format: "datetime",
                   description: "The date and time at which the NUX will expire and should be considered completed."
+                }
+              }
+            },
+            postInteractionSettingsPref: {
+              type: "object",
+              description: "Default post interaction settings for the account. These values should be applied as default values when creating new posts. These refs should mirror the threadgate and postgate records exactly.",
+              required: [],
+              properties: {
+                threadgateAllowRules: {
+                  description: "Matches threadgate record. List of rules defining who can reply to this users posts. If value is an empty array, no one can reply. If value is undefined, anyone can reply.",
+                  type: "array",
+                  maxLength: 5,
+                  items: {
+                    type: "union",
+                    refs: [
+                      "lex:app.bsky.feed.threadgate#mentionRule",
+                      "lex:app.bsky.feed.threadgate#followerRule",
+                      "lex:app.bsky.feed.threadgate#followingRule",
+                      "lex:app.bsky.feed.threadgate#listRule"
+                    ]
+                  }
+                },
+                postgateEmbeddingRules: {
+                  description: "Matches postgate record. List of rules defining who can embed this users posts. If value is an empty array or is undefined, no particular rules apply and anyone can embed.",
+                  type: "array",
+                  maxLength: 5,
+                  items: {
+                    type: "union",
+                    refs: ["lex:app.bsky.feed.postgate#disableRule"]
+                  }
                 }
               }
             }
@@ -36438,6 +36484,16 @@ if (cid) {
                 }
               }
             },
+            threadContext: {
+              type: "object",
+              description: "Metadata about this post within the context of the thread it is in.",
+              properties: {
+                rootAuthorLike: {
+                  type: "string",
+                  format: "at-uri"
+                }
+              }
+            },
             feedViewPost: {
               type: "object",
               required: ["post"],
@@ -36535,6 +36591,10 @@ if (cid) {
                       "lex:app.bsky.feed.defs#blockedPost"
                     ]
                   }
+                },
+                threadContext: {
+                  type: "ref",
+                  ref: "lex:app.bsky.feed.defs#threadContext"
                 }
               }
             },
@@ -37064,7 +37124,8 @@ if (cid) {
                       "posts_with_replies",
                       "posts_no_replies",
                       "posts_with_media",
-                      "posts_and_author_threads"
+                      "posts_and_author_threads",
+                      "posts_with_video"
                     ],
                     default: "posts_with_replies"
                   },
@@ -37927,6 +37988,7 @@ if (cid) {
                     description: "List of AT-URIs embedding this post that the author has detached from."
                   },
                   embeddingRules: {
+                    description: "List of rules defining who can embed this post. If value is an empty array or is undefined, no particular rules apply and anyone can embed.",
                     type: "array",
                     maxLength: 5,
                     items: {
@@ -38125,12 +38187,14 @@ if (cid) {
                     description: "Reference (AT-URI) to the post record."
                   },
                   allow: {
+                    description: "List of rules defining who can reply to this post. If value is an empty array, no one can reply. If value is undefined, anyone can reply.",
                     type: "array",
                     maxLength: 5,
                     items: {
                       type: "union",
                       refs: [
                         "lex:app.bsky.feed.threadgate#mentionRule",
+                        "lex:app.bsky.feed.threadgate#followerRule",
                         "lex:app.bsky.feed.threadgate#followingRule",
                         "lex:app.bsky.feed.threadgate#listRule"
                       ]
@@ -38155,6 +38219,11 @@ if (cid) {
             mentionRule: {
               type: "object",
               description: "Allow replies from actors mentioned in your post.",
+              properties: {}
+            },
+            followerRule: {
+              type: "object",
+              description: "Allow replies from actors who follow you.",
               properties: {}
             },
             followingRule: {
@@ -41857,7 +41926,8 @@ if (cid) {
                     "lex:tools.ozone.moderation.defs#modEventTag",
                     "lex:tools.ozone.moderation.defs#accountEvent",
                     "lex:tools.ozone.moderation.defs#identityEvent",
-                    "lex:tools.ozone.moderation.defs#recordEvent"
+                    "lex:tools.ozone.moderation.defs#recordEvent",
+                    "lex:tools.ozone.moderation.defs#modEventPriorityScore"
                   ]
                 },
                 subject: {
@@ -41924,7 +41994,8 @@ if (cid) {
                     "lex:tools.ozone.moderation.defs#modEventTag",
                     "lex:tools.ozone.moderation.defs#accountEvent",
                     "lex:tools.ozone.moderation.defs#identityEvent",
-                    "lex:tools.ozone.moderation.defs#recordEvent"
+                    "lex:tools.ozone.moderation.defs#recordEvent",
+                    "lex:tools.ozone.moderation.defs#modEventPriorityScore"
                   ]
                 },
                 subject: {
@@ -42001,6 +42072,12 @@ if (cid) {
                 comment: {
                   type: "string",
                   description: "Sticky comment on the subject."
+                },
+                priorityScore: {
+                  type: "integer",
+                  description: "Numeric value representing the level of priority. Higher score means higher priority.",
+                  minimum: 0,
+                  maximum: 100
                 },
                 muteUntil: {
                   type: "string",
@@ -42241,6 +42318,25 @@ if (cid) {
                   items: {
                     type: "string"
                   }
+                },
+                durationInHours: {
+                  type: "integer",
+                  description: "Indicates how long the label will remain on the subject. Only applies on labels that are being added."
+                }
+              }
+            },
+            modEventPriorityScore: {
+              type: "object",
+              description: "Set priority score of the subject. Higher score means higher priority.",
+              required: ["score"],
+              properties: {
+                comment: {
+                  type: "string"
+                },
+                score: {
+                  type: "integer",
+                  minimum: 0,
+                  maximum: 100
                 }
               }
             },
@@ -42857,7 +42953,8 @@ if (cid) {
                         "lex:tools.ozone.moderation.defs#modEventTag",
                         "lex:tools.ozone.moderation.defs#accountEvent",
                         "lex:tools.ozone.moderation.defs#identityEvent",
-                        "lex:tools.ozone.moderation.defs#recordEvent"
+                        "lex:tools.ozone.moderation.defs#recordEvent",
+                        "lex:tools.ozone.moderation.defs#modEventPriorityScore"
                       ]
                     },
                     subject: {
@@ -43331,7 +43428,8 @@ if (cid) {
                       "lastReviewedAt",
                       "lastReportedAt",
                       "reportedRecordsCount",
-                      "takendownRecordsCount"
+                      "takendownRecordsCount",
+                      "priorityScore"
                     ]
                   },
                   sortDirection: {
@@ -43395,6 +43493,12 @@ if (cid) {
                   minTakendownRecordsCount: {
                     type: "integer",
                     description: "If specified, only subjects that belong to an account that has at least this many taken down records will be returned."
+                  },
+                  minPriorityScore: {
+                    minimum: 0,
+                    maximum: 100,
+                    type: "integer",
+                    description: "If specified, only subjects that have priority score value above the given value will be returned."
                   }
                 }
               },
@@ -44690,9 +44794,6 @@ if (cid) {
   var require_util14 = __commonJS({
     "node_modules/@atproto/api/dist/util.js"(exports) {
       "use strict";
-      var __importDefault = exports && exports.__importDefault || function(mod) {
-        return mod && mod.__esModule ? mod : { "default": mod };
-      };
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.nuxSchema = exports.asDid = exports.isDid = void 0;
       exports.sanitizeMutedWordValue = sanitizeMutedWordValue;
@@ -44700,9 +44801,9 @@ if (cid) {
       exports.getSavedFeedType = getSavedFeedType;
       exports.validateSavedFeed = validateSavedFeed;
       exports.validateNux = validateNux;
-      var syntax_1 = require_dist12();
+      var zod_1 = require_lib();
       var common_web_1 = require_dist16();
-      var zod_1 = __importDefault(require_lib());
+      var syntax_1 = require_dist12();
       function sanitizeMutedWordValue(value) {
         return value.trim().replace(/^#(?!\ufe0f)/, "").replace(/[\r\n\u00AD\u2060\u200D\u200C\u200B]+/, "");
       }
@@ -44755,11 +44856,11 @@ if (cid) {
         throw new TypeError(`Invalid DID: ${value}`);
       };
       exports.asDid = asDid;
-      exports.nuxSchema = zod_1.default.object({
-        id: zod_1.default.string().max(64),
-        completed: zod_1.default.boolean(),
-        data: zod_1.default.string().max(300).optional(),
-        expiresAt: zod_1.default.string().datetime().optional()
+      exports.nuxSchema = zod_1.z.object({
+        id: zod_1.z.string().max(64),
+        completed: zod_1.z.boolean(),
+        data: zod_1.z.string().max(300).optional(),
+        expiresAt: zod_1.z.string().datetime().optional()
       }).strict();
       function validateNux(nux) {
         exports.nuxSchema.parse(nux);
@@ -45302,8 +45403,8 @@ if (cid) {
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.ServiceClient = exports.Client = void 0;
       var lexicon_1 = require_dist18();
-      var xrpc_client_1 = require_xrpc_client();
       var util_1 = require_util15();
+      var xrpc_client_1 = require_xrpc_client();
       var Client = class {
         constructor() {
           Object.defineProperty(this, "lex", {
@@ -47890,6 +47991,8 @@ if (cid) {
       exports.validateBskyAppProgressGuide = validateBskyAppProgressGuide;
       exports.isNux = isNux;
       exports.validateNux = validateNux;
+      exports.isPostInteractionSettingsPref = isPostInteractionSettingsPref;
+      exports.validatePostInteractionSettingsPref = validatePostInteractionSettingsPref;
       var util_1 = require_util16();
       var lexicons_1 = require_lexicons2();
       function isProfileViewBasic(v) {
@@ -48035,6 +48138,12 @@ if (cid) {
       }
       function validateNux(v) {
         return lexicons_1.lexicons.validate("app.bsky.actor.defs#nux", v);
+      }
+      function isPostInteractionSettingsPref(v) {
+        return (0, util_1.isObj)(v) && (0, util_1.hasProp)(v, "$type") && v.$type === "app.bsky.actor.defs#postInteractionSettingsPref";
+      }
+      function validatePostInteractionSettingsPref(v) {
+        return lexicons_1.lexicons.validate("app.bsky.actor.defs#postInteractionSettingsPref", v);
       }
     }
   });
@@ -48371,6 +48480,8 @@ if (cid) {
       exports.validatePostView = validatePostView;
       exports.isViewerState = isViewerState;
       exports.validateViewerState = validateViewerState;
+      exports.isThreadContext = isThreadContext;
+      exports.validateThreadContext = validateThreadContext;
       exports.isFeedViewPost = isFeedViewPost;
       exports.validateFeedViewPost = validateFeedViewPost;
       exports.isReplyRef = isReplyRef;
@@ -48414,6 +48525,12 @@ if (cid) {
       }
       function validateViewerState(v) {
         return lexicons_1.lexicons.validate("app.bsky.feed.defs#viewerState", v);
+      }
+      function isThreadContext(v) {
+        return (0, util_1.isObj)(v) && (0, util_1.hasProp)(v, "$type") && v.$type === "app.bsky.feed.defs#threadContext";
+      }
+      function validateThreadContext(v) {
+        return lexicons_1.lexicons.validate("app.bsky.feed.defs#threadContext", v);
       }
       function isFeedViewPost(v) {
         return (0, util_1.isObj)(v) && (0, util_1.hasProp)(v, "$type") && v.$type === "app.bsky.feed.defs#feedViewPost";
@@ -48813,6 +48930,8 @@ if (cid) {
       exports.validateRecord = validateRecord;
       exports.isMentionRule = isMentionRule;
       exports.validateMentionRule = validateMentionRule;
+      exports.isFollowerRule = isFollowerRule;
+      exports.validateFollowerRule = validateFollowerRule;
       exports.isFollowingRule = isFollowingRule;
       exports.validateFollowingRule = validateFollowingRule;
       exports.isListRule = isListRule;
@@ -48830,6 +48949,12 @@ if (cid) {
       }
       function validateMentionRule(v) {
         return lexicons_1.lexicons.validate("app.bsky.feed.threadgate#mentionRule", v);
+      }
+      function isFollowerRule(v) {
+        return (0, util_1.isObj)(v) && (0, util_1.hasProp)(v, "$type") && v.$type === "app.bsky.feed.threadgate#followerRule";
+      }
+      function validateFollowerRule(v) {
+        return lexicons_1.lexicons.validate("app.bsky.feed.threadgate#followerRule", v);
       }
       function isFollowingRule(v) {
         return (0, util_1.isObj)(v) && (0, util_1.hasProp)(v, "$type") && v.$type === "app.bsky.feed.threadgate#followingRule";
@@ -50058,6 +50183,8 @@ if (cid) {
       exports.validateModEventReport = validateModEventReport;
       exports.isModEventLabel = isModEventLabel;
       exports.validateModEventLabel = validateModEventLabel;
+      exports.isModEventPriorityScore = isModEventPriorityScore;
+      exports.validateModEventPriorityScore = validateModEventPriorityScore;
       exports.isModEventAcknowledge = isModEventAcknowledge;
       exports.validateModEventAcknowledge = validateModEventAcknowledge;
       exports.isModEventEscalate = isModEventEscalate;
@@ -50179,6 +50306,12 @@ if (cid) {
       }
       function validateModEventLabel(v) {
         return lexicons_1.lexicons.validate("tools.ozone.moderation.defs#modEventLabel", v);
+      }
+      function isModEventPriorityScore(v) {
+        return (0, util_1.isObj)(v) && (0, util_1.hasProp)(v, "$type") && v.$type === "tools.ozone.moderation.defs#modEventPriorityScore";
+      }
+      function validateModEventPriorityScore(v) {
+        return lexicons_1.lexicons.validate("tools.ozone.moderation.defs#modEventPriorityScore", v);
       }
       function isModEventAcknowledge(v) {
         return (0, util_1.isObj)(v) && (0, util_1.hasProp)(v, "$type") && v.$type === "tools.ozone.moderation.defs#modEventAcknowledge";
@@ -53008,95 +53141,6 @@ if (cid) {
     }
   });
 
-  // node_modules/@atproto/api/dist/rich-text/unicode.js
-  var require_unicode = __commonJS({
-    "node_modules/@atproto/api/dist/rich-text/unicode.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.UnicodeString = void 0;
-      var common_web_1 = require_dist16();
-      var encoder2 = new TextEncoder();
-      var decoder2 = new TextDecoder();
-      var UnicodeString = class {
-        constructor(utf16) {
-          Object.defineProperty(this, "utf16", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-          });
-          Object.defineProperty(this, "utf8", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-          });
-          Object.defineProperty(this, "_graphemeLen", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-          });
-          this.utf16 = utf16;
-          this.utf8 = encoder2.encode(utf16);
-        }
-        get length() {
-          return this.utf8.byteLength;
-        }
-        get graphemeLength() {
-          if (!this._graphemeLen) {
-            this._graphemeLen = (0, common_web_1.graphemeLen)(this.utf16);
-          }
-          return this._graphemeLen;
-        }
-        slice(start, end) {
-          return decoder2.decode(this.utf8.slice(start, end));
-        }
-        utf16IndexToUtf8Index(i) {
-          return encoder2.encode(this.utf16.slice(0, i)).byteLength;
-        }
-        toString() {
-          return this.utf16;
-        }
-      };
-      exports.UnicodeString = UnicodeString;
-    }
-  });
-
-  // node_modules/@atproto/api/dist/rich-text/sanitization.js
-  var require_sanitization = __commonJS({
-    "node_modules/@atproto/api/dist/rich-text/sanitization.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.sanitizeRichText = sanitizeRichText;
-      var unicode_1 = require_unicode();
-      var EXCESS_SPACE_RE = /[\r\n]([\u00AD\u2060\u200D\u200C\u200B\s]*[\r\n]){2,}/;
-      var REPLACEMENT_STR = "\n\n";
-      function sanitizeRichText(richText, opts) {
-        if (opts.cleanNewlines) {
-          richText = clean(richText, EXCESS_SPACE_RE, REPLACEMENT_STR);
-        }
-        return richText;
-      }
-      function clean(richText, targetRegexp, replacementString) {
-        richText = richText.clone();
-        let match = richText.unicodeText.utf16.match(targetRegexp);
-        while (match && typeof match.index !== "undefined") {
-          const oldText = richText.unicodeText;
-          const removeStartIndex = richText.unicodeText.utf16IndexToUtf8Index(match.index);
-          const removeEndIndex = removeStartIndex + new unicode_1.UnicodeString(match[0]).length;
-          richText.delete(removeStartIndex, removeEndIndex);
-          if (richText.unicodeText.utf16 === oldText.utf16) {
-            break;
-          }
-          richText.insert(removeStartIndex, replacementString);
-          match = richText.unicodeText.utf16.match(targetRegexp);
-        }
-        return richText;
-      }
-    }
-  });
-
   // node_modules/tlds/index.json
   var require_tlds = __commonJS({
     "node_modules/tlds/index.json"(exports, module) {
@@ -54675,6 +54719,95 @@ if (cid) {
     }
   });
 
+  // node_modules/@atproto/api/dist/rich-text/unicode.js
+  var require_unicode = __commonJS({
+    "node_modules/@atproto/api/dist/rich-text/unicode.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.UnicodeString = void 0;
+      var common_web_1 = require_dist16();
+      var encoder2 = new TextEncoder();
+      var decoder2 = new TextDecoder();
+      var UnicodeString = class {
+        constructor(utf16) {
+          Object.defineProperty(this, "utf16", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+          });
+          Object.defineProperty(this, "utf8", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+          });
+          Object.defineProperty(this, "_graphemeLen", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+          });
+          this.utf16 = utf16;
+          this.utf8 = encoder2.encode(utf16);
+        }
+        get length() {
+          return this.utf8.byteLength;
+        }
+        get graphemeLength() {
+          if (!this._graphemeLen) {
+            this._graphemeLen = (0, common_web_1.graphemeLen)(this.utf16);
+          }
+          return this._graphemeLen;
+        }
+        slice(start, end) {
+          return decoder2.decode(this.utf8.slice(start, end));
+        }
+        utf16IndexToUtf8Index(i) {
+          return encoder2.encode(this.utf16.slice(0, i)).byteLength;
+        }
+        toString() {
+          return this.utf16;
+        }
+      };
+      exports.UnicodeString = UnicodeString;
+    }
+  });
+
+  // node_modules/@atproto/api/dist/rich-text/sanitization.js
+  var require_sanitization = __commonJS({
+    "node_modules/@atproto/api/dist/rich-text/sanitization.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.sanitizeRichText = sanitizeRichText;
+      var unicode_1 = require_unicode();
+      var EXCESS_SPACE_RE = /[\r\n]([\u00AD\u2060\u200D\u200C\u200B\s]*[\r\n]){2,}/;
+      var REPLACEMENT_STR = "\n\n";
+      function sanitizeRichText(richText, opts) {
+        if (opts.cleanNewlines) {
+          richText = clean(richText, EXCESS_SPACE_RE, REPLACEMENT_STR);
+        }
+        return richText;
+      }
+      function clean(richText, targetRegexp, replacementString) {
+        richText = richText.clone();
+        let match = richText.unicodeText.utf16.match(targetRegexp);
+        while (match && typeof match.index !== "undefined") {
+          const oldText = richText.unicodeText;
+          const removeStartIndex = richText.unicodeText.utf16IndexToUtf8Index(match.index);
+          const removeEndIndex = removeStartIndex + new unicode_1.UnicodeString(match[0]).length;
+          richText.delete(removeStartIndex, removeEndIndex);
+          if (richText.unicodeText.utf16 === oldText.utf16) {
+            break;
+          }
+          richText.insert(removeStartIndex, replacementString);
+          match = richText.unicodeText.utf16.match(targetRegexp);
+        }
+        return richText;
+      }
+    }
+  });
+
   // node_modules/@atproto/api/dist/rich-text/rich-text.js
   var require_rich_text = __commonJS({
     "node_modules/@atproto/api/dist/rich-text/rich-text.js"(exports) {
@@ -54682,9 +54815,9 @@ if (cid) {
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.RichText = exports.RichTextSegment = void 0;
       var client_1 = require_client2();
-      var unicode_1 = require_unicode();
-      var sanitization_1 = require_sanitization();
       var detection_1 = require_detection();
+      var sanitization_1 = require_sanitization();
+      var unicode_1 = require_unicode();
       var RichTextSegment = class {
         constructor(text, facet) {
           Object.defineProperty(this, "text", {
@@ -54925,95 +55058,6 @@ if (cid) {
     }
   });
 
-  // node_modules/@atproto/api/dist/moderation/types.js
-  var require_types8 = __commonJS({
-    "node_modules/@atproto/api/dist/moderation/types.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.NOOP_BEHAVIOR = exports.HIDE_BEHAVIOR = exports.MUTEWORD_BEHAVIOR = exports.MUTE_BEHAVIOR = exports.BLOCK_BEHAVIOR = exports.CUSTOM_LABEL_VALUE_RE = void 0;
-      exports.CUSTOM_LABEL_VALUE_RE = /^[a-z-]+$/;
-      exports.BLOCK_BEHAVIOR = {
-        profileList: "blur",
-        profileView: "alert",
-        avatar: "blur",
-        banner: "blur",
-        contentList: "blur",
-        contentView: "blur"
-      };
-      exports.MUTE_BEHAVIOR = {
-        profileList: "inform",
-        profileView: "alert",
-        contentList: "blur",
-        contentView: "inform"
-      };
-      exports.MUTEWORD_BEHAVIOR = {
-        contentList: "blur",
-        contentView: "blur"
-      };
-      exports.HIDE_BEHAVIOR = {
-        contentList: "blur",
-        contentView: "blur"
-      };
-      exports.NOOP_BEHAVIOR = {};
-    }
-  });
-
-  // node_modules/@atproto/api/dist/moderation/ui.js
-  var require_ui = __commonJS({
-    "node_modules/@atproto/api/dist/moderation/ui.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.ModerationUI = void 0;
-      var ModerationUI = class {
-        constructor() {
-          Object.defineProperty(this, "noOverride", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: false
-          });
-          Object.defineProperty(this, "filters", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-          });
-          Object.defineProperty(this, "blurs", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-          });
-          Object.defineProperty(this, "alerts", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-          });
-          Object.defineProperty(this, "informs", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: []
-          });
-        }
-        get filter() {
-          return this.filters.length !== 0;
-        }
-        get blur() {
-          return this.blurs.length !== 0;
-        }
-        get alert() {
-          return this.alerts.length !== 0;
-        }
-        get inform() {
-          return this.informs.length !== 0;
-        }
-      };
-      exports.ModerationUI = ModerationUI;
-    }
-  });
-
   // node_modules/@atproto/api/dist/moderation/const/labels.js
   var require_labels = __commonJS({
     "node_modules/@atproto/api/dist/moderation/const/labels.js"(exports) {
@@ -55228,15 +55272,104 @@ if (cid) {
     }
   });
 
+  // node_modules/@atproto/api/dist/moderation/types.js
+  var require_types8 = __commonJS({
+    "node_modules/@atproto/api/dist/moderation/types.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.NOOP_BEHAVIOR = exports.HIDE_BEHAVIOR = exports.MUTEWORD_BEHAVIOR = exports.MUTE_BEHAVIOR = exports.BLOCK_BEHAVIOR = exports.CUSTOM_LABEL_VALUE_RE = void 0;
+      exports.CUSTOM_LABEL_VALUE_RE = /^[a-z-]+$/;
+      exports.BLOCK_BEHAVIOR = {
+        profileList: "blur",
+        profileView: "alert",
+        avatar: "blur",
+        banner: "blur",
+        contentList: "blur",
+        contentView: "blur"
+      };
+      exports.MUTE_BEHAVIOR = {
+        profileList: "inform",
+        profileView: "alert",
+        contentList: "blur",
+        contentView: "inform"
+      };
+      exports.MUTEWORD_BEHAVIOR = {
+        contentList: "blur",
+        contentView: "blur"
+      };
+      exports.HIDE_BEHAVIOR = {
+        contentList: "blur",
+        contentView: "blur"
+      };
+      exports.NOOP_BEHAVIOR = {};
+    }
+  });
+
+  // node_modules/@atproto/api/dist/moderation/ui.js
+  var require_ui = __commonJS({
+    "node_modules/@atproto/api/dist/moderation/ui.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.ModerationUI = void 0;
+      var ModerationUI = class {
+        constructor() {
+          Object.defineProperty(this, "noOverride", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: false
+          });
+          Object.defineProperty(this, "filters", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: []
+          });
+          Object.defineProperty(this, "blurs", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: []
+          });
+          Object.defineProperty(this, "alerts", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: []
+          });
+          Object.defineProperty(this, "informs", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: []
+          });
+        }
+        get filter() {
+          return this.filters.length !== 0;
+        }
+        get blur() {
+          return this.blurs.length !== 0;
+        }
+        get alert() {
+          return this.alerts.length !== 0;
+        }
+        get inform() {
+          return this.informs.length !== 0;
+        }
+      };
+      exports.ModerationUI = ModerationUI;
+    }
+  });
+
   // node_modules/@atproto/api/dist/moderation/decision.js
   var require_decision = __commonJS({
     "node_modules/@atproto/api/dist/moderation/decision.js"(exports) {
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.ModerationDecision = void 0;
+      var labels_1 = require_labels();
       var types_1 = require_types8();
       var ui_1 = require_ui();
-      var labels_1 = require_labels();
       var ModerationBehaviorSeverity;
       (function(ModerationBehaviorSeverity2) {
         ModerationBehaviorSeverity2[ModerationBehaviorSeverity2["High"] = 0] = "High";
@@ -55613,6 +55746,29 @@ if (cid) {
     }
   });
 
+  // node_modules/@atproto/api/dist/moderation/subjects/feed-generator.js
+  var require_feed_generator = __commonJS({
+    "node_modules/@atproto/api/dist/moderation/subjects/feed-generator.js"(exports) {
+      "use strict";
+      Object.defineProperty(exports, "__esModule", { value: true });
+      exports.decideFeedGenerator = decideFeedGenerator;
+      var decision_1 = require_decision();
+      var account_1 = require_account();
+      var profile_1 = require_profile2();
+      function decideFeedGenerator(subject, opts) {
+        const acc = new decision_1.ModerationDecision();
+        acc.setDid(subject.creator.did);
+        acc.setIsMe(subject.creator.did === opts.userDid);
+        if (subject.labels?.length) {
+          for (const label of subject.labels) {
+            acc.addLabel("content", label, opts);
+          }
+        }
+        return decision_1.ModerationDecision.merge(acc, (0, account_1.decideAccount)(subject.creator, opts), (0, profile_1.decideProfile)(subject.creator, opts));
+      }
+    }
+  });
+
   // node_modules/@atproto/api/dist/moderation/subjects/notification.js
   var require_notification = __commonJS({
     "node_modules/@atproto/api/dist/moderation/subjects/notification.js"(exports) {
@@ -55718,8 +55874,8 @@ if (cid) {
       "use strict";
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.decidePost = decidePost;
-      var decision_1 = require_decision();
       var client_1 = require_client2();
+      var decision_1 = require_decision();
       var mutewords_1 = require_mutewords();
       var account_1 = require_account();
       var profile_1 = require_profile2();
@@ -55947,29 +56103,6 @@ if (cid) {
     }
   });
 
-  // node_modules/@atproto/api/dist/moderation/subjects/feed-generator.js
-  var require_feed_generator = __commonJS({
-    "node_modules/@atproto/api/dist/moderation/subjects/feed-generator.js"(exports) {
-      "use strict";
-      Object.defineProperty(exports, "__esModule", { value: true });
-      exports.decideFeedGenerator = decideFeedGenerator;
-      var decision_1 = require_decision();
-      var account_1 = require_account();
-      var profile_1 = require_profile2();
-      function decideFeedGenerator(subject, opts) {
-        const acc = new decision_1.ModerationDecision();
-        acc.setDid(subject.creator.did);
-        acc.setIsMe(subject.creator.did === opts.userDid);
-        if (subject.labels?.length) {
-          for (const label of subject.labels) {
-            acc.addLabel("content", label, opts);
-          }
-        }
-        return decision_1.ModerationDecision.merge(acc, (0, account_1.decideAccount)(subject.creator, opts), (0, profile_1.decideProfile)(subject.creator, opts));
-      }
-    }
-  });
-
   // node_modules/@atproto/api/dist/moderation/subjects/user-list.js
   var require_user_list = __commonJS({
     "node_modules/@atproto/api/dist/moderation/subjects/user-list.js"(exports) {
@@ -56095,13 +56228,13 @@ if (cid) {
       exports.moderateNotification = moderateNotification;
       exports.moderateFeedGenerator = moderateFeedGenerator;
       exports.moderateUserList = moderateUserList;
+      var decision_1 = require_decision();
       var account_1 = require_account();
-      var profile_1 = require_profile2();
+      var feed_generator_1 = require_feed_generator();
       var notification_1 = require_notification();
       var post_1 = require_post2();
-      var feed_generator_1 = require_feed_generator();
+      var profile_1 = require_profile2();
       var user_list_1 = require_user_list();
-      var decision_1 = require_decision();
       var ui_1 = require_ui();
       Object.defineProperty(exports, "ModerationUI", { enumerable: true, get: function() {
         return ui_1.ModerationUI;
@@ -56379,10 +56512,10 @@ if (cid) {
       var _Agent_prefsLock;
       Object.defineProperty(exports, "__esModule", { value: true });
       exports.Agent = void 0;
+      var await_lock_1 = __importDefault(require_AwaitLock());
       var common_web_1 = require_dist16();
       var syntax_1 = require_dist12();
       var xrpc_1 = require_dist19();
-      var await_lock_1 = __importDefault(require_AwaitLock());
       var index_1 = require_client2();
       var lexicons_1 = require_lexicons2();
       var const_1 = require_const();
@@ -56873,6 +57006,10 @@ if (cid) {
               queuedNudges: [],
               activeProgressGuide: void 0,
               nuxs: []
+            },
+            postInteractionSettings: {
+              threadgateAllowRules: void 0,
+              postgateEmbeddingRules: void 0
             }
           };
           const res = await this.app.bsky.actor.getPreferences({});
@@ -56923,6 +57060,9 @@ if (cid) {
               prefs.bskyAppState.queuedNudges = v.queuedNudges || [];
               prefs.bskyAppState.activeProgressGuide = v.activeProgressGuide;
               prefs.bskyAppState.nuxs = v.nuxs || [];
+            } else if (index_1.AppBskyActorDefs.isPostInteractionSettingsPref(pref) && index_1.AppBskyActorDefs.validatePostInteractionSettingsPref(pref).success) {
+              prefs.postInteractionSettings.threadgateAllowRules = pref.threadgateAllowRules;
+              prefs.postInteractionSettings.postgateEmbeddingRules = pref.postgateEmbeddingRules;
             }
           }
           if (prefs.savedFeeds == null) {
@@ -57416,6 +57556,31 @@ if (cid) {
             ]);
           });
         }
+        async setPostInteractionSettings(settings) {
+          if (!index_1.AppBskyActorDefs.validatePostInteractionSettingsPref(settings).success) {
+            throw new Error("Invalid post interaction settings");
+          }
+          await this.updatePreferences((prefs) => {
+            let prev = prefs.findLast((pref) => index_1.AppBskyActorDefs.isPostInteractionSettingsPref(pref) && index_1.AppBskyActorDefs.validatePostInteractionSettingsPref(pref).success);
+            if (!prev) {
+              prev = {
+                /**
+                 * Matches handling of `threadgate.allow` where `undefined` means "everyone"
+                 */
+                threadgateAllowRules: void 0,
+                postgateEmbeddingRules: void 0
+              };
+            }
+            prev.threadgateAllowRules = settings.threadgateAllowRules;
+            prev.postgateEmbeddingRules = settings.postgateEmbeddingRules;
+            return prefs.filter((p) => !index_1.AppBskyActorDefs.isPostInteractionSettingsPref(p)).concat([
+              {
+                ...prev,
+                $type: "app.bsky.actor.defs#postInteractionSettingsPref"
+              }
+            ]);
+          });
+        }
         /**
          * This function updates the preferences of a user and allows for a callback function to be executed
          * before the update.
@@ -57798,7 +57963,8 @@ if (cid) {
             const res = await this.server.createSession({
               identifier: opts.identifier,
               password: opts.password,
-              authFactorToken: opts.authFactorToken
+              authFactorToken: opts.authFactorToken,
+              allowTakendown: opts.allowTakendown
             });
             this.session = {
               accessJwt: res.data.accessJwt,
@@ -58008,7 +58174,7 @@ if (cid) {
         for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports2, p)) __createBinding(exports2, m, p);
       };
       Object.defineProperty(exports, "__esModule", { value: true });
-      exports.lexicons = exports.default = exports.BskyAgent = exports.CredentialSession = exports.AtpAgent = exports.Agent = exports.DEFAULT_LABEL_SETTINGS = exports.LABELS = exports.schemas = exports.parseLanguage = exports.jsonStringToLex = exports.jsonToLex = exports.stringifyLex = exports.lexToJson = exports.BlobRef = exports.AtUri = void 0;
+      exports.lexicons = exports.default = exports.BskyAgent = exports.CredentialSession = exports.AtpAgent = exports.Agent = exports.LABELS = exports.DEFAULT_LABEL_SETTINGS = exports.schemas = exports.parseLanguage = exports.stringifyLex = exports.lexToJson = exports.jsonToLex = exports.jsonStringToLex = exports.BlobRef = exports.AtUri = void 0;
       var lexicon_1 = require_dist18();
       var lexicons_1 = require_lexicons2();
       var syntax_1 = require_dist12();
@@ -58019,17 +58185,17 @@ if (cid) {
       Object.defineProperty(exports, "BlobRef", { enumerable: true, get: function() {
         return lexicon_2.BlobRef;
       } });
+      Object.defineProperty(exports, "jsonStringToLex", { enumerable: true, get: function() {
+        return lexicon_2.jsonStringToLex;
+      } });
+      Object.defineProperty(exports, "jsonToLex", { enumerable: true, get: function() {
+        return lexicon_2.jsonToLex;
+      } });
       Object.defineProperty(exports, "lexToJson", { enumerable: true, get: function() {
         return lexicon_2.lexToJson;
       } });
       Object.defineProperty(exports, "stringifyLex", { enumerable: true, get: function() {
         return lexicon_2.stringifyLex;
-      } });
-      Object.defineProperty(exports, "jsonToLex", { enumerable: true, get: function() {
-        return lexicon_2.jsonToLex;
-      } });
-      Object.defineProperty(exports, "jsonStringToLex", { enumerable: true, get: function() {
-        return lexicon_2.jsonStringToLex;
       } });
       var common_web_1 = require_dist16();
       Object.defineProperty(exports, "parseLanguage", { enumerable: true, get: function() {
@@ -58051,11 +58217,11 @@ if (cid) {
       __exportStar(require_types8(), exports);
       __exportStar(require_mocker(), exports);
       var labels_1 = require_labels();
-      Object.defineProperty(exports, "LABELS", { enumerable: true, get: function() {
-        return labels_1.LABELS;
-      } });
       Object.defineProperty(exports, "DEFAULT_LABEL_SETTINGS", { enumerable: true, get: function() {
         return labels_1.DEFAULT_LABEL_SETTINGS;
+      } });
+      Object.defineProperty(exports, "LABELS", { enumerable: true, get: function() {
+        return labels_1.LABELS;
       } });
       var agent_1 = require_agent();
       Object.defineProperty(exports, "Agent", { enumerable: true, get: function() {
@@ -59266,6 +59432,9 @@ if (cid) {
     const SearchingLensIcon = "data:image/svg+xml;base64,PCFET0NUWVBFIHN2ZyBQVUJMSUMgIi0vL1czQy8vRFREIFNWRyAxLjEvL0VOIiAiaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkIj4KDTwhLS0gVXBsb2FkZWQgdG86IFNWRyBSZXBvLCB3d3cuc3ZncmVwby5jb20sIFRyYW5zZm9ybWVkIGJ5OiBTVkcgUmVwbyBNaXhlciBUb29scyAtLT4KPHN2ZyBmaWxsPSIjZmZmZmZmIiB2ZXJzaW9uPSIxLjEiIGlkPSJDYXBhXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSI2NHB4IiBoZWlnaHQ9IjY0cHgiIHZpZXdCb3g9IjAgMCA0NS45MjMgNDUuOTIzIiB4bWw6c3BhY2U9InByZXNlcnZlIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMC4wMDA0NTkyMzAwMDAwMDAwMDAwMyI+Cg08ZyBpZD0iU1ZHUmVwb19iZ0NhcnJpZXIiIHN0cm9rZS13aWR0aD0iMCIvPgoNPGcgaWQ9IlNWR1JlcG9fdHJhY2VyQ2FycmllciIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cg08ZyBpZD0iU1ZHUmVwb19pY29uQ2FycmllciI+IDxnPiA8cGF0aCBkPSJNNDUuNDk0LDQ0LjQ0M2MtMC4wMDQsMC4zODctMC4wMjUsMC42MTEtMC4wMjUsMC42MTFsLTAuODM4LDAuODM4YzAsMC0wLjIyNSwwLjAyMS0wLjYxMiwwLjAyNSBjLTAuMiwwLjAxLTAuNDMsMC4wMDItMC42OTYtMC4wMWMtMC4yNjYtMC4wMTMtMC41ODQtMC4wMTMtMC44OTgtMC4wNTdjLTAuNjUtMC4wNjQtMS40MzgtMC4xNDYtMi4yNDItMC4zMzggYy0wLjgxNi0wLjE4LTEuNjk5LTAuNDIxLTIuNTgyLTAuNzY0Yy0wLjg5MS0wLjMzNi0xLjgwMi0wLjc1Mi0yLjY4OC0xLjI3MWMtMC44OTEtMC41MTUtMS43NjQtMS4xMjMtMi41MDItMS45MTcgYy0wLjc0OC0wLjc4NC0xLjM0OC0xLjc3LTEuOTI4LTIuNzk3Yy0wLjU4LTEuMDMtMS4xNzctMi4wNjctMS44NjEtMy4wMTljLTAuOTYxLTEuMzI5LTEuODkxLTIuNjY0LTIuNzg3LTMuOTg4IGMyLjI2Ni0xLjM2Miw0LjIyMi0zLjE4NCw1LjcyMS01LjM1MmMxLjI1MiwwLjg1MywyLjUxMiwxLjczMSwzLjc2OCwyLjY0YzAuOTUxLDAuNjg0LDEuOTg4LDEuMjgsMy4wMTksMS44NiBjMS4wMjgsMC41ODIsMi4wMTIsMS4xODEsMi43OTcsMS45MjhjMC43OTQsMC43MzgsMS40MDEsMS42MTEsMS45MTcsMi41MDJjMC41MiwwLjg4NiwwLjkzNiwxLjc5NywxLjI3MSwyLjY4OCBjMC4zNDMsMC44ODMsMC41ODQsMS43NjYsMC43NjQsMi41ODJjMC4xOTEsMC44MDUsMC4yNzMsMS41OTIsMC4zMzgsMi4yNDJjMC4wNDQsMC4zMTQsMC4wNDQsMC42MzMsMC4wNTcsMC44OTggQzQ1LjQ5Niw0NC4wMTMsNDUuNTA0LDQ0LjI0LDQ1LjQ5NCw0NC40NDN6IE0yNC40MjksMjkuNjUyYy0yLjM2OSwxLjM5Ny01LjEyMiwyLjIxMy04LjA3MiwyLjIxMyBjLTguOCwwLTE1LjkzMy03LjEzMy0xNS45MzMtMTUuOTMzQzAuNDI0LDcuMTM0LDcuNTU4LDAsMTYuMzU3LDBzMTUuOTMyLDcuMTM0LDE1LjkzMiwxNS45MzNjMCwzLjM2OS0xLjA1MSw2LjQ5LTIuODM2LDkuMDYzIEMyOC4xMzksMjYuODkxLDI2LjQyMSwyOC40NzgsMjQuNDI5LDI5LjY1MnogTTIwLjU3MSwyMy40MjdjMS4wMzItMC41ODEsMS45MjctMS4zNzEsMi42MzgtMi4zMSBjMS4wOTMtMS40NDIsMS43NDktMy4yMzQsMS43NDktNS4xODNjMC00Ljc1LTMuODUtOC42MDEtOC42LTguNjAxcy04LjYwMSwzLjg1MS04LjYwMSw4LjYwMXMzLjg1MSw4LjYwMiw4LjYwMSw4LjYwMiBDMTcuODg5LDI0LjUzMywxOS4zMjUsMjQuMTI5LDIwLjU3MSwyMy40Mjd6Ii8+IDwvZz4gPC9nPgoNPC9zdmc+";
     let agent;
     const mime = new Mime_default();
+    const parseHandle = (handle) => {
+      return handle.replace("@", "");
+    };
     async function URLAsDataURI(URL2) {
       const response = await Scratch2.fetch(URL2);
       const blob = await response.blob();
@@ -59638,7 +59807,7 @@ if (cid) {
         this.lastBlockedUserURI = null;
         this.showExtras = false;
       }
-      //@ts-ignore
+      //@ts-expect-error
       getInfo() {
         return {
           id: "HamBskyAPI",
@@ -59662,8 +59831,13 @@ if (cid) {
             },
             {
               blockType: Scratch2.BlockType.COMMAND,
+              opcode: "bskyInitOAuthClient",
+              text: "initialize OAuth session"
+            },
+            {
+              blockType: Scratch2.BlockType.COMMAND,
               opcode: "bskyLogin",
-              text: "login to bluesky API OAuth with handle: [HANDLE]",
+              text: "login to bluesky API with OAuth using handle: [HANDLE]",
               arguments: {
                 HANDLE: {
                   type: Scratch2.ArgumentType.STRING,
@@ -60622,18 +60796,22 @@ if (cid) {
           this.OAuthClient = new import_oauth_client_browser.BrowserOAuthClient({
             clientMetadata: this.clientMetadata,
             handleResolver: this.handleResolver,
-            responseMode: "query",
-            fetch: Scratch2.fetch
+            responseMode: "query"
           });
         } else {
           this.OAuthClient = await import_oauth_client_browser.BrowserOAuthClient.load({
             clientId: this.clientID,
             handleResolver: this.handleResolver,
-            responseMode: "query",
-            fetch: Scratch2.fetch
+            responseMode: "query"
           });
         }
         console.log(this.OAuthClient);
+        console.log("Loaded OAuth Client");
+      }
+      async bskyLoadOAuthClient() {
+        await this.LoadOAuthClient();
+      }
+      async bskyInitOAuthClient() {
         const result = await this.OAuthClient.init();
         console.log(result ?? "No Result");
         if (result) {
@@ -60645,17 +60823,12 @@ if (cid) {
             console.log(`${session.sub}'s session was restored`);
           }
         }
-        console.log("Loaded OAuth Client");
         this.session = result?.session;
-      }
-      async bskyLoadOAuthClient() {
-        await this.LoadOAuthClient();
       }
       async bskyLogin(args) {
         if (!this.session) {
-          const handle = args.HANDLE;
-          if (!handle)
-            throw new Error("Authentication process canceled by the user");
+          const handle = parseHandle(args.HANDLE);
+          if (!handle) throw new Error("No Handle Found");
           this.session = await this.OAuthClient.signIn(handle, {
             scope: "atproto transition:generic",
             display: "popup",
@@ -60860,7 +61033,7 @@ if (cid) {
       // Getting an User's Posts
       async bskyGetAuthorFeed(args) {
         const { data } = await agent.getAuthorFeed({
-          actor: args.URI,
+          actor: parseHandle(args.URI),
           filter: args.FILTER,
           cursor: args.CURSOR,
           limit: args.LIMIT ?? 50
@@ -60869,7 +61042,7 @@ if (cid) {
       }
       async bskyGetAuthorFeedSep(args) {
         const { data } = await agent.getAuthorFeed({
-          actor: args.URI,
+          actor: parseHandle(args.URI),
           filter: args.FILTER,
           cursor: this.cursor ?? "",
           limit: this.limit ?? 50
@@ -60880,8 +61053,8 @@ if (cid) {
         const { data } = await agent.getAuthorFeed({
           actor: args.URI,
           filter: args.FILTER,
-          cursor: this.cursor ?? "",
-          limit: this.limit ?? 50
+          cursor: "",
+          limit: 1
         });
         const recentPost = data.feed[0];
         return JSON.stringify(recentPost);
@@ -60908,7 +61081,7 @@ if (cid) {
       async bskyGetPost(args) {
         const res = await agent.getPostThread({
           uri: args.URI,
-          depth: args.DEPTH,
+          depth: 1,
           parentHeight: 1
         });
         const { thread } = res.data;
@@ -60923,7 +61096,7 @@ if (cid) {
         console.info(`Reposted Post: ${JSON.stringify(uri)}`);
       }
       async bskyFollow(args) {
-        const { uri } = await agent.follow(args.DID);
+        const { uri } = await agent.follow(parseHandle(args.DID));
         console.info(`Followed User: ${JSON.stringify(uri)}`);
       }
       async bskyUnLike(args) {
@@ -60935,11 +61108,11 @@ if (cid) {
         console.info(`Unreposted Post: ${JSON.stringify(uri)}`);
       }
       async bskyUnFollow(args) {
-        const response = await agent.follow(args.DID);
+        const response = await agent.follow(parseHandle(args.DID));
         console.info(`Unfollowed User: ${JSON.stringify(response)}`);
       }
       async bskyViewProfile(args) {
-        const { data } = await agent.getProfile({ actor: args.URI });
+        const { data } = await agent.getProfile({ actor: parseHandle(args.URI) });
         return JSON.stringify(data);
       }
       async bskyViewProfiles(args) {
@@ -60956,7 +61129,7 @@ if (cid) {
       }
       async bskyBlockUser(args) {
         const { uri } = await BlockUser(
-          args.DID,
+          parseHandle(args.DID),
           this.session,
           this.useCurrentDate,
           this.date
@@ -60970,14 +61143,14 @@ if (cid) {
         await UnblockUser(args.URI);
       }
       async bskyMuteUser(args) {
-        const response = await agent.mute(args.DID);
+        const response = await agent.mute(parseHandle(args.DID));
         console.info(
           `Muted User: ${await atUriConversions.atUritoProfileLink(`at://${args.DID}`)}`
         );
         console.log(response);
       }
       async bskyUnmuteUser(args) {
-        const response = await agent.unmute(args.DID);
+        const response = await agent.unmute(parseHandle(args.DID));
         console.info(
           `Unmuted User: ${await atUriConversions.atUritoProfileLink(`at://${args.DID}`)}`
         );
@@ -61107,7 +61280,7 @@ if (cid) {
       }
       // Utilities
       getCurrentMutation(args, util) {
-        return args.mutation || util.target.blocks.getBlock(util.thread.peekStack())?.mutation || Scratch2.vm.runtime.flyoutBlocks.getBlock(util.thread.peekStack())?.mutation;
+        return args.mutation || util.target.blocks.getBlock(util.thread.peekStack())?.mutation || runtime.flyoutBlocks.getBlock(util.thread.peekStack())?.mutation;
       }
     }
     document.addEventListener("bskyLogin", () => {
