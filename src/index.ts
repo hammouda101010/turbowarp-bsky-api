@@ -465,12 +465,11 @@ import { Mime } from "mime"
   /**Blocks an User on BlueSky using it's DID */
   async function BlockUser(
     blockingUserDid: string,
-    session: OAuthSession,
     useCurrentDate: boolean,
     date: string
   ) {
     const data = await agent.app.bsky.graph.block.create(
-      { repo: session.did },
+      { repo: agent.assertDid },
       {
         subject: blockingUserDid,
         createdAt: useCurrentDate
@@ -485,11 +484,11 @@ import { Mime } from "mime"
   }
 
   /**Unblocks an User on BlueSky using a block record DID */
-  async function UnblockUser(blockedUserAtUri: string, session: OAuthSession) {
+  async function UnblockUser(blockedUserAtUri: string) {
     const { rkey } = new AtUri(blockedUserAtUri)
 
     await agent.app.bsky.graph.block.delete({
-      repo: session.did,
+      repo: agent.assertDid,
       rkey
     })
     console.info(`Unblocked User With at:// URI: ${blockedUserAtUri}`)
@@ -539,7 +538,7 @@ import { Mime } from "mime"
 
   /**Gets a List and It's Members.
    *
-   * @param {boolean} fullListView: If enabled, paginates trough the entire list
+   * @param {boolean} fullListView: If enabled, paginates trough the list's members
    */
   async function GetBskyList(
     uri,
@@ -550,19 +549,17 @@ import { Mime } from "mime"
     let response: unknown
 
     if (!fullListView) {
-      // Get List, as Normal
+      // Get List Posts
       response = await agent.app.bsky.graph.getList({
         list: uri,
         limit: limit,
         cursor: cursorArg
       })
     } else {
-      // Use the Cursor argument
       let cursor: string | undefined = cursorArg
-      // setup a members list
       let members: AppBskyGraphDefs.ListItemView[] = []
 
-      // View the entire list
+      // View all list members
       do {
         const res = await agent.app.bsky.graph.getList({
           list: uri,
@@ -2046,11 +2043,10 @@ import { Mime } from "mime"
     }
 
     async bskyUnRepost(args) {
-      try{
+      try {
+        const uri = await agent.deleteRepost(args.URI)
 
-      const uri = await agent.deleteRepost(args.URI)
-
-      console.info(`Unreposted Post: ${JSON.stringify(uri)}`)
+        console.info(`Unreposted Post: ${JSON.stringify(uri)}`)
       } catch {
         console.error("Error: Couldn't find Repost URI")
       }
@@ -2085,7 +2081,6 @@ import { Mime } from "mime"
     async bskyBlockUser(args) {
       const { uri } = await BlockUser(
         parseHandle(args.DID),
-        this.session,
         this.useCurrentDate,
         this.date
       )
@@ -2095,7 +2090,7 @@ import { Mime } from "mime"
       return this.lastBlockedUserURI ?? "no data found"
     }
     async bskyUnblockUser(args) {
-      await UnblockUser(args.URI, this.session)
+      await UnblockUser(args.URI)
     }
 
     async bskyMuteUser(args) {
@@ -2179,10 +2174,10 @@ import { Mime } from "mime"
     }
 
     async bskyLexicon(args) {
-      await agent.call(args.LEXICON, args.INPUTS)
+      await agent.call(args.LEXICON, JSON.parse(args.INPUTS))
     }
     async bskyLexiconReporter(args) {
-      const response = await agent.call(args.LEXICON, args.INPUTS)
+      const response = await agent.call(args.LEXICON, JSON.parse(args.INPUTS))
 
       return JSON.stringify(response)
     }
@@ -2192,7 +2187,7 @@ import { Mime } from "mime"
       const params: object = {}
       for (let i = 0; prefix + i in args; i++) {
         const arg: object = JSON.parse(`{${args[prefix + i]}}`)
-        if (Object.keys(arg).length > 1){
+        if (Object.keys(arg).length > 1) {
           throw new Error("Can't have more than 1 key for each argument")
         }
         Object.assign(params, arg)
