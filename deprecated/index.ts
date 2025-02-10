@@ -1,12 +1,12 @@
-// This is The New OAuth Rewrite. It may be unstable
+/*
+ * @deprecated This extension is deprecated and will be removed in the future because
+ * app passwords will be deprecated in the future.
+ * 
+ * Please use the new `index.ts` extension with the OAuth system instead.
+ */
+
 // Required Modules
-import {
-  BrowserOAuthClient,
-  OAuthClientMetadataInput,
-  OAuthSession
-} from "@atproto/oauth-client-browser"
-import { AppBskyGraphDefs, Agent } from "@atproto/api"
-// import { moderatePost } from "@atproto/api"
+import { AtpAgent } from "@atproto/api"
 import { RichText } from "@atproto/api"
 import { AtUri } from "@atproto/api"
 import { Mime } from "mime"
@@ -14,13 +14,11 @@ import { Mime } from "mime"
   if (Scratch.extensions.unsandboxed === false) {
     throw new Error("TurboButterfly Extension Must Be Run Unsandboxed.")
   }
-  // The extension's code
+  // The extension"s code
   // Scratch's Stuff
   const vm = Scratch.vm
   const runtime = vm.runtime
   const Cast = Scratch.Cast
-
-  const exId = "HamBskyAPI"
 
   // Patches
 
@@ -64,7 +62,9 @@ import { Mime } from "mime"
   // "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNS44OTMiIGhlaWdodD0iMTUuODkzIiB2aWV3Qm94PSIwIDAgMTUuODkzIDE1Ljg5MyI+PHBhdGggZD0iTTkuMDIxIDEyLjI5NHYtMi4xMDdsLTYuODM5LS45MDVDMS4zOTggOS4xODQuODQ2IDguNDg2Ljk2MiA3LjcyN2MuMDktLjYxMi42MDMtMS4wOSAxLjIyLTEuMTY0bDYuODM5LS45MDVWMy42YzAtLjU4Ni43MzItLjg2OSAxLjE1Ni0uNDY0bDQuNTc2IDQuMzQ1YS42NDMuNjQzIDAgMCAxIDAgLjkxOGwtNC41NzYgNC4zNmMtLjQyNC40MDQtMS4xNTYuMTEtMS4xNTYtLjQ2NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9Ii4xNSIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjEuNzUiLz48cGF0aCBkPSJNOS4wMjEgMTIuMjk0di0yLjEwN2wtNi44MzktLjkwNUMxLjM5OCA5LjE4NC44NDYgOC40ODYuOTYyIDcuNzI3Yy4wOS0uNjEyLjYwMy0xLjA5IDEuMjItMS4xNjRsNi44MzktLjkwNVYzLjZjMC0uNTg2LjczMi0uODY5IDEuMTU2LS40NjRsNC41NzYgNC4zNDVhLjY0My42NDMgMCAwIDEgMCAuOTE4bC00LjU3NiA0LjM2Yy0uNDI0LjQwNC0xLjE1Ni4xMS0xLjE1Ni0uNDY1IiBmaWxsPSIjZmZmIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz48cGF0aCBkPSJNMCAxNS44OTJWMGgxNS44OTJ2MTUuODkyeiIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==";
 
   // Objects
-  let agent: Agent
+  const agent = new AtpAgent({
+    service: "https://bsky.social"
+  })
   const mime = new Mime()
 
   /**Search Result Data */
@@ -84,15 +84,6 @@ import { Mime } from "mime"
 
   // Special Functions
 
-  /**
-   * Parses the handle to be usable by the API
-   * @param {string} handle - The handle to parse
-   * @returns the handle without the @ symbol
-   */
-  const parseHandle = (handle: string): string => {
-    return handle.replace("@", "")
-  }
-
   /** Converts an image/video URL into a readable DataURI
    * @param {string} URL - The URL of the image/video
    */
@@ -108,7 +99,7 @@ import { Mime } from "mime"
   }
 
   /** Converts a DataURI into an Unit8Array
-   * @param {string} dataURI - The DataURI of the image/video
+   * @param {any} dataURI - The DataURI of the image/video
    */
   async function convertDataURIToUint8Array(dataURI: string) {
     let URI = dataURI
@@ -269,6 +260,32 @@ import { Mime } from "mime"
 
   // Utility Functions
 
+  /**
+   * Logs the user in the API with their BlueSky account credentrials
+   */
+  async function Login(handle: string, password: string) {
+    const response = await agent.login({
+      identifier: handle,
+      password: password
+    })
+
+    console.info(`Logged In as: ${handle}`)
+    console.info(response)
+
+    document.dispatchEvent(BskyLoginEvent)
+  } // This will also create a session
+
+  /**
+   * Logs the user out from the API when their done with it.
+   */
+  async function Logout() {
+    await agent.logout()
+
+    console.info(`Logged Out from API.`)
+
+    document.dispatchEvent(BskyLogoutEvent)
+  }
+
   // Posting, Repling
 
   /** For posting on BlueSky */
@@ -392,38 +409,14 @@ import { Mime } from "mime"
     return blob
   }
 
-  /**Finds hashtags inside text. (search params, post text, etc) */
-  const FindTags = async (txt: string) => {
-    const rt = new RichText({ text: txt })
-    const tags: string[] = []
-    await rt.detectFacets(agent)
-
-    for (const segment of rt.segments()) {
-      if (segment.isTag()) {
-        tags.push(segment.tag?.tag)
-      }
-    }
-
-    return tags
-  }
-
-  /** Cluster of functions to search posts and actors */
+  /** Search Posts on BlueSky Using a Search Term */
 
   const BskySearchFuncs = {
-    SearchPosts: async (
-      searchTerm: string,
-      sortBy: "top" | "latest",
-      cursor: string,
-      limit: number,
-      miscOptions: object = {}
-    ) => {
+    SearchPosts: async (searchTerm: string, cursor: string, limit: number) => {
       const response = await agent.app.bsky.feed.searchPosts({
         q: searchTerm,
         cursor: cursor,
-        sort: sortBy,
-        limit: limit,
-        tag: await FindTags(searchTerm),
-        ...miscOptions
+        limit: limit
       })
       return response
     },
@@ -435,18 +428,8 @@ import { Mime } from "mime"
       })
       return response
     },
-    Search: async (
-      searchTerm: string,
-      sortBy: "top" | "latest",
-      cursor: string,
-      limit: number
-    ) => {
-      const posts = await BskySearchFuncs.SearchPosts(
-        searchTerm,
-        sortBy,
-        cursor,
-        limit
-      )
+    Search: async (searchTerm: string, cursor: string, limit: number) => {
+      const posts = await BskySearchFuncs.SearchPosts(searchTerm, cursor, limit)
       const actors = await BskySearchFuncs.SearchActors(
         searchTerm,
         cursor,
@@ -467,12 +450,11 @@ import { Mime } from "mime"
   /**Blocks an User on BlueSky using it's DID */
   async function BlockUser(
     blockingUserDid: string,
-    session: OAuthSession,
     useCurrentDate: boolean,
     date: string
   ) {
     const data = await agent.app.bsky.graph.block.create(
-      { repo: session.did },
+      { repo: agent.session.did },
       {
         subject: blockingUserDid,
         createdAt: useCurrentDate
@@ -487,11 +469,11 @@ import { Mime } from "mime"
   }
 
   /**Unblocks an User on BlueSky using a block record DID */
-  async function UnblockUser(blockedUserAtUri: string, session: OAuthSession) {
+  async function UnblockUser(blockedUserAtUri: string) {
     const { rkey } = new AtUri(blockedUserAtUri)
 
     await agent.app.bsky.graph.block.delete({
-      repo: session.did,
+      repo: agent.session.did,
       rkey
     })
     console.info(`Unblocked User With at:// URI: ${blockedUserAtUri}`)
@@ -541,44 +523,8 @@ import { Mime } from "mime"
 
   /**Gets a List and It's Members.
    *
-   * @param {boolean} fullListView: If enabled, paginates trough the entire list
+   * @param fullListView: If enabled, paginates trough the entire list
    */
-  async function GetBskyList(
-    uri,
-    cursorArg: string = "",
-    limit: number = 6,
-    fullListView?: boolean
-  ) {
-    let response: unknown
-
-    if (!fullListView) {
-      // Get List, as Normal
-      response = await agent.app.bsky.graph.getList({
-        list: uri,
-        limit: limit,
-        cursor: cursorArg
-      })
-    } else {
-      // Use the Cursor argument
-      let cursor: string | undefined = cursorArg
-      // setup a members list
-      let members: AppBskyGraphDefs.ListItemView[] = []
-
-      // View the entire list
-      do {
-        const res = await agent.app.bsky.graph.getList({
-          list: uri,
-          limit: limit,
-          cursor
-        })
-        cursor = res.data.cursor
-        members = members.concat(res.data.items)
-      } while (cursor)
-      response = members
-    }
-
-    return response
-  }
 
   class HamBskyAPI implements Scratch.Extension {
     runtime: VM.Runtime
@@ -590,15 +536,8 @@ import { Mime } from "mime"
     limit: number
     sepCursorLimit: boolean
 
-    OAuthClient: BrowserOAuthClient
-    session: OAuthSession | null
-    clientID: string
-    injectMetadata: boolean
-    clientMetadata: OAuthClientMetadataInput
-    handleResolver: string
-
+    sessionDID: string | null
     searchResult: SearchResult
-    sortSearch: "top" | "latest"
     lastBlockedUserURI: string | null
 
     showExtras: boolean
@@ -612,38 +551,14 @@ import { Mime } from "mime"
       this.cursor = null
       this.limit = null
       this.sepCursorLimit = true
-      this.clientID =
-        "https://hammouda101010.github.io/turbowarp-bsky-api/static/client-metadata.json"
-      this.handleResolver = "https://bsky.social/"
-      this.injectMetadata = true
-      this.clientMetadata = {
-        client_id:
-          "https://hammouda101010.github.io/turbowarp-bsky-api/static/client-metadata.json",
-        client_name: "TurboWarp/Penguinmod",
-        client_uri: "https://hammouda101010.github.io/turbowarp-bsky-api",
-        logo_uri:
-          "https://hammouda101010.github.io/turbowarp-bsky-api/static/icons/favicon.ico",
-        tos_uri: "https://scratch.mit.edu/terms_of_use",
-        policy_uri: "https://turbowarp.org/privacy.html",
-        redirect_uris: [
-          "https://hammouda101010.github.io/turbowarp-bsky-api/redirect.html"
-        ],
-        scope: "atproto transition:generic",
-        grant_types: ["authorization_code", "refresh_token"],
-        response_types: ["code"],
-        token_endpoint_auth_method: "none",
-        application_type: "web",
-        dpop_bound_access_tokens: true
-      }
 
       this.searchResult = "no search result yet"
-      this.sortSearch = "top"
-      this.session = null
+      this.sessionDID = null
       this.lastBlockedUserURI = null
 
       this.showExtras = false
     }
-    //@ts-expect-error
+    //@ts-expect-error ignore
     getInfo() {
       return {
         id: "HamBskyAPI",
@@ -661,35 +576,16 @@ import { Mime } from "mime"
           },
           {
             blockType: Scratch.BlockType.COMMAND,
-            opcode: "bskyLoadOAuthClient",
-            text: "load OAuth client"
-          },
-          {
-            blockType: Scratch.BlockType.COMMAND,
-            opcode: "bskyInitOAuthClient",
-            text: "initialize OAuth session"
-          },
-          "---",
-          {
-            blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyLogin",
-            text: "login to bluesky API with OAuth using handle: [HANDLE]",
+            text: "login to bluesky API with handle: [HANDLE] and password: [PASSWORD]",
             arguments: {
               HANDLE: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: "@example.bsky.social"
-              }
-            }
-          },
-          "---",
-          {
-            blockType: Scratch.BlockType.COMMAND,
-            opcode: "bskyOAuthCallback",
-            text: "callback this url query: [QUERY]",
-            arguments: {
-              QUERY: {
+              },
+              PASSWORD: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: "?iss=&state=&code="
+                defaultValue: "example"
               }
             }
           },
@@ -1372,28 +1268,6 @@ import { Mime } from "mime"
             disableMonitor: false
           },
           {
-            blockType: Scratch.BlockType.COMMAND,
-            opcode: "bskySearchSort",
-            text: "sort post search results by [POST_SORT]",
-            hideFromPalette: !this.sepCursorLimit,
-            blockIconURI: SearchingLensIcon,
-            arguments: {
-              POST_SORT: {
-                type: Scratch.ArgumentType.STRING,
-                menu: "bskySEARCH_SORT_BY"
-              }
-            }
-          },
-          {
-            blockType: Scratch.BlockType.LABEL,
-            text: "OAuth Configuration"
-          },
-          {
-            blockType: Scratch.BlockType.COMMAND,
-            opcode: "bskySetOAuthMetadata",
-            text: "set [KEY] OAuth metadata to [VALUE]"
-          },
-          {
             blockType: Scratch.BlockType.LABEL,
             text: "Extras"
           },
@@ -1524,57 +1398,6 @@ import { Mime } from "mime"
           },
           "---",
           {
-            blockType: Scratch.BlockType.LABEL,
-            text: "Advanced",
-            hideFromPalette: !this.showExtras
-          },
-          {
-            blockType: Scratch.BlockType.COMMAND,
-            opcode: "bskyLexicon",
-            text: "use bluesky lexicon [LEXICON] with inputs [INPUTS]",
-            arguments: {
-              LEXICON: {
-                type: Scratch.ArgumentType.STRING,
-                defaultValue: "app.bsky.feed"
-              },
-              INPUTS: {
-                type: null
-              }
-            },
-            hideFromPalette: !this.showExtras,
-
-            outputShape: 3
-          },
-          {
-            blockType: Scratch.BlockType.REPORTER,
-            opcode: "bskyLexiconReporter",
-            text: "use bluesky lexicon [LEXICON] with inputs [INPUTS]",
-            arguments: {
-              LEXICON: {
-                type: Scratch.ArgumentType.STRING,
-                defaultValue: "app.bsky.feed"
-              },
-              INPUTS: {
-                type: null
-              }
-            },
-            hideFromPalette: !this.showExtras
-          },
-          {
-            blockType: Scratch.BlockType.REPORTER,
-            opcode: "bskyLexiconInputs",
-            text: "lexicon inputs",
-            arguments: {},
-            hideFromPalette: !this.showExtras,
-            disableMonitor: true,
-
-            mutator: "cst_extendable",
-            extensions: ["cst_extendable_string"],
-
-            outputShape: 3
-          },
-          "---",
-          {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyOptions",
             text: "set [OPTION] to [ONOFF]",
@@ -1610,13 +1433,7 @@ import { Mime } from "mime"
               { text: "off", value: "false" }
             ]
           },
-          bskySEARCH_SORT_BY: {
-            acceptReporters: false,
-            items: [
-              { text: Scratch.translate("top posts"), value: "top" },
-              { text: Scratch.translate("latest posts"), value: "latest" }
-            ]
-          },
+
           bskyENCODING: {
             acceptReporters: true,
             items: [
@@ -1661,7 +1478,9 @@ import { Mime } from "mime"
     /* ---- BUTTONS----*/
     bskyDisclaimer() {
       alert(
-        `DISCLAIMER:
+        `DEPRECATED: This extension version is deprecated and won't get any updates any more. use the OAuth Rewrite instead.
+         DISCLAIMER:
+          When using the "Login" block, NEVER use your REAL password. Use an app password instead.
 
           Rules to Follow:
           1. Follow BlueSky's Terms of Service: https://bsky.social/about/support/tos
@@ -1682,89 +1501,19 @@ import { Mime } from "mime"
     }
     /* ---- BUTTONS----*/
 
-    async LoadOAuthClient() {
-      if (this.injectMetadata) {
-        // Hardcode the metadata if this.injectMetadata is true
-        this.OAuthClient = new BrowserOAuthClient({
-          clientMetadata: this.clientMetadata,
-          handleResolver: this.handleResolver,
-          responseMode: "query"
-        })
-      } else {
-        // Otherwise load it from static file hosting
-        this.OAuthClient = await BrowserOAuthClient.load({
-          clientId: this.clientID,
-          handleResolver: this.handleResolver,
-          responseMode: "query"
-        })
-      }
+    async bskyLogin(args): Promise<void> {
+      await Login(args.HANDLE, args.PASSWORD)
 
-      console.log(this.OAuthClient)
-
-      console.log("Loaded OAuth Client")
+      this.sessionDID = agent.session.did
     }
-
-    async bskyLoadOAuthClient() {
-      await this.LoadOAuthClient()
-    }
-
-    async bskyInitOAuthClient() {
-      const result = await this.OAuthClient.init()
-
-      console.log(result ?? "No Result")
-
-      if (result) {
-        //@ts-expect-error
-        const { session, state } = result
-
-        this.session = session
-
-        if (state !== null) {
-          console.log(`Logged in With DID: ${session.sub} (state: ${state})`)
-        } else {
-          console.log(`${session.sub}'s session was restored`)
-        }
-      }
-      this.session = result?.session
-    }
-
-    async bskyLogin(args) {
-      if (!this.session) {
-        const handle = parseHandle(args.HANDLE)
-        if (!handle) throw new Error("No Handle Found")
-        this.session = await this.OAuthClient.signIn(handle, {
-          scope: "atproto transition:generic",
-          display: "popup",
-          ui_locales: "fr-CA fr en",
-          signal: new AbortController().signal
-        })
-
-        agent = new Agent(this.session)
-        document.dispatchEvent(BskyLoginEvent)
-      } else {
-        agent = new Agent(this.session)
-        document.dispatchEvent(BskyLoginEvent)
-      }
-    }
-    async bskyOAuthCallback(args) {
-      const result = await this.OAuthClient.callback(
-        new URLSearchParams(args.QUERY)
-      )
-
-      this.session = result.session
-    }
-
     async bskyLogout(): Promise<void> {
-      await this.session.signOut()
+      await Logout()
 
-      console.info(`Logged Out from API.`)
-
-      document.dispatchEvent(BskyLogoutEvent)
+      this.sessionDID = null
     }
     bskyLoggedIn() {
-      return Cast.toBoolean(this.session)
+      return this.sessionDID !== null
     }
-
     async bskyPost(args): Promise<void> {
       if (!this.richText) {
         const rt = new RichText({ text: args.POST })
@@ -1868,7 +1617,7 @@ import { Mime } from "mime"
     bskyImgEmbed(args) {
       return JSON.stringify({
         $type: "app.bsky.embed.images",
-        images: Array.isArray(args.IMAGES) // The list of images
+        images: Array.isArray(args.IMAGES)
           ? JSON.parse(args.IMAGES)
           : [JSON.parse(args.IMAGES)]
       })
@@ -1960,7 +1709,7 @@ import { Mime } from "mime"
     // Getting an User's Posts
     async bskyGetAuthorFeed(args) {
       const { data } = await agent.getAuthorFeed({
-        actor: parseHandle(args.URI),
+        actor: args.URI,
         filter: args.FILTER,
         cursor: args.CURSOR,
         limit: args.LIMIT ?? 50
@@ -1970,7 +1719,7 @@ import { Mime } from "mime"
     }
     async bskyGetAuthorFeedSep(args) {
       const { data } = await agent.getAuthorFeed({
-        actor: parseHandle(args.URI),
+        actor: args.URI,
         filter: args.FILTER,
         cursor: this.cursor ?? "",
         limit: this.limit ?? 50
@@ -1982,8 +1731,8 @@ import { Mime } from "mime"
       const { data } = await agent.getAuthorFeed({
         actor: args.URI,
         filter: args.FILTER,
-        cursor: "",
-        limit: 1
+        cursor: this.cursor ?? "",
+        limit: this.limit ?? 50
       })
 
       const recentPost = data.feed[0]
@@ -2017,7 +1766,7 @@ import { Mime } from "mime"
     async bskyGetPost(args) {
       const res = await agent.getPostThread({
         uri: args.URI,
-        depth: 1,
+        depth: args.DEPTH,
         parentHeight: 1
       })
       const { thread } = res.data
@@ -2036,7 +1785,7 @@ import { Mime } from "mime"
       console.info(`Reposted Post: ${JSON.stringify(uri)}`)
     }
     async bskyFollow(args) {
-      const { uri } = await agent.follow(parseHandle(args.DID))
+      const { uri } = await agent.follow(args.DID)
 
       console.info(`Followed User: ${JSON.stringify(uri)}`)
     }
@@ -2054,13 +1803,13 @@ import { Mime } from "mime"
     }
 
     async bskyUnFollow(args) {
-      const response = await agent.follow(parseHandle(args.DID))
+      const response = await agent.follow(args.DID)
 
       console.info(`Unfollowed User: ${JSON.stringify(response)}`)
     }
 
     async bskyViewProfile(args) {
-      const { data } = await agent.getProfile({ actor: parseHandle(args.URI) })
+      const { data } = await agent.getProfile({ actor: args.URI })
 
       return JSON.stringify(data)
     }
@@ -2080,23 +1829,18 @@ import { Mime } from "mime"
     }
 
     async bskyBlockUser(args) {
-      const { uri } = await BlockUser(
-        parseHandle(args.DID),
-        this.session,
-        this.useCurrentDate,
-        this.date
-      )
+      const { uri } = await BlockUser(args.DID, this.useCurrentDate, this.date)
       this.lastBlockedUserURI = Cast.toString(uri)
     }
     bskyLastBlockedUser() {
       return this.lastBlockedUserURI ?? "no data found"
     }
     async bskyUnblockUser(args) {
-      await UnblockUser(args.URI, this.session)
+      await UnblockUser(args.URI)
     }
 
     async bskyMuteUser(args) {
-      const response = await agent.mute(parseHandle(args.DID))
+      const response = await agent.mute(args.DID)
 
       console.info(
         `Muted User: ${await atUriConversions.atUritoProfileLink(`at://${args.DID}`)}`
@@ -2104,7 +1848,7 @@ import { Mime } from "mime"
       console.log(response)
     }
     async bskyUnmuteUser(args) {
-      const response = await agent.unmute(parseHandle(args.DID))
+      const response = await agent.unmute(args.DID)
 
       console.info(
         `Unmuted User: ${await atUriConversions.atUritoProfileLink(`at://${args.DID}`)}`
@@ -2115,7 +1859,6 @@ import { Mime } from "mime"
     async bskySearch(args) {
       const response = await BskySearchFuncs.Search(
         args.TERM,
-        this.sortSearch,
         args.CURSOR,
         args.LIMIT
       )
@@ -2125,14 +1868,10 @@ import { Mime } from "mime"
       this.searchResult =
         posts.length !== 0 && actors.length !== 0 ? response : "found nothing"
     }
-    bskySearchSort(args) {
-      this.sortSearch = args.POST_SORT
-    }
 
     async bskySearchSep(args) {
       const response = await BskySearchFuncs.Search(
         args.TERM,
-        this.sortSearch,
         this.cursor ?? "",
         this.limit ?? 50
       )
@@ -2175,83 +1914,6 @@ import { Mime } from "mime"
       return JSON.stringify(await atUriConversions.URLtoBlobRef(args.URL))
     }
 
-    async bskyLexicon(args) {
-      const keys: string[] = args.LEXICON.split(".") // Split the path into keys
-      try {
-        let currentKey: object = agent
-
-        // Traverse the object using the keys
-        for (const key of keys) {
-          if (currentKey.hasOwnProperty(key)) {
-            currentKey = currentKey[key]
-          } else {
-            console.error(
-              `Lexicon function "${key}" isn't found in "${args.LEXICON}".`
-            )
-            return
-          }
-        }
-
-        const lexiconArgs = JSON.parse(args.INPUTS)
-
-        // Check if the final property is a function and execute it
-        if (typeof currentKey === "function") {
-          currentKey(...lexiconArgs).constructor.name === "AsyncFunction"
-            ? await currentKey(...lexiconArgs)
-            : currentKey(...lexiconArgs) // Call the lexicon
-        } else {
-          console.error(`This property "${args.LEXICON}" is not a function.`)
-        }
-      } catch {
-        throw new Error("Must have an active OAuth session to use this block.")
-      }
-    }
-    async bskyLexiconReporter(args) {
-      const keys: string[] = args.LEXICON.split(".") // Split the path into keys
-      try {
-        let currentKey: object = agent
-
-        // Traverse the object using the keys
-        for (const key of keys) {
-          if (currentKey.hasOwnProperty(key)) {
-            currentKey = currentKey[key]
-          } else {
-            throw new Error(
-              `Lexicon function "${key}" isn't found in "${args.LEXICON}".`
-            )
-          }
-        }
-
-        const lexiconArgs = JSON.parse(args.INPUTS)
-
-        // Check if the final property is a function and execute it
-        if (typeof currentKey === "function") {
-          const response =
-            currentKey().constructor.name === "AsyncFunction"
-              ? await currentKey(...lexiconArgs)
-              : currentKey(...lexiconArgs) // Call the lexicon
-          return JSON.stringify(response)
-        } else {
-          throw new Error(`This property "${args.LEXICON}" is not a function.`)
-        }
-      } catch {
-        throw new Error("Must have an active OAuth session to use this block.")
-      }
-    }
-
-    bskyLexiconInputs(args) {
-      const prefix = "ARG"
-      const array: string[] = []
-      for (let i = 0; prefix + i in args; i++) {
-        array.push(
-          args[prefix + i].startsWith("{") && args[prefix + i].endsWith("}")
-            ? JSON.parse(args[prefix + i])
-            : args[prefix + i]
-        )
-      }
-      return JSON.stringify(array)
-    }
-
     bskyOptions(args) {
       switch (args.OPTION) {
         case "richText":
@@ -2269,17 +1931,7 @@ import { Mime } from "mime"
           throw new Error("Error: This option doesn't exist. at all")
       }
     }
-    // Utilities
-    getCurrentMutation(args, util) {
-      return (
-        args.mutation ||
-        util.target.blocks.getBlock(util.thread.peekStack())?.mutation ||
-        runtime.flyoutBlocks.getBlock(util.thread.peekStack())?.mutation
-      )
-    }
   }
-
-  // Event Blocks
   document.addEventListener("bskyLogin", () => {
     runtime.startHats("HamBskyAPI_bskyWhenLoggedIn")
   })
@@ -2287,754 +1939,6 @@ import { Mime } from "mime"
     runtime.startHats("HamBskyAPI_bskyWhenLoggedOut")
   })
 
-  // Extendable Blocks Patch (Credits to CST1229)
-
-  /* eslint-disable */
-
-  // @ts-expect-error
-  const cbfsb = runtime._convertBlockForScratchBlocks.bind(runtime)
-  // @ts-expect-error
-  runtime._convertBlockForScratchBlocks = function (blockInfo, categoryInfo) {
-    const res = cbfsb(blockInfo, categoryInfo)
-    if (blockInfo.mutator) {
-      res.json.mutator = blockInfo.mutator
-    }
-    return res
-  }
-
-  function patchSB() {
-    // @ts-expect-error
-    const ScratchBlocks = window?.ScratchBlocks
-    if (!ScratchBlocks) return
-
-    Scratch.vm.removeListener("EXTENSION_ADDED", patchSB)
-    Scratch.vm.removeListener("BLOCKSINFO_UPDATE", patchSB)
-
-    const leftArrowIcon = `data:image/svg+xml;base64,PHN2ZyBkYXRhLW5hbWU9IkxheWVyIDEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDEwIDEzIiB0cmFuc2Zvcm09InNjYWxlKC0xLCAxKSI+PHBhdGggZD0iTTMuNjUuMTQ1YTIuNDEgMi40MSAwIDAgMSAxLjcyLjcxbDMuOTIgMy45MmEyLjQ1IDIuNDUgMCAwIDEgMCAzLjQ1bC0zLjkyIDMuOTFhMi40MiAyLjQyIDAgMCAxLTEuNzIuNzIgMi40OCAyLjQ4IDAgMCAxLTEuNzMtLjcxYy0uMjQtLjI5LS43MS0uNzItLjcxLTUuNjUgMC00LjkzLjQ2LTUuMzkuNzEtNS42NGEyLjQ0IDIuNDQgMCAwIDEgMS43My0uNzF6IiBmaWxsPSIjMjMxZjIwIiBvcGFjaXR5PSIuMSIvPjxwYXRoIGQ9Ik04Ljk4NSA2LjUxYTEuNDMgMS40MyAwIDAgMS0uNDIgMWwtMy45MiAzLjk0YTEuNDQgMS40NCAwIDAgMS0yIDBjLS41Ni0uNTYtLjU2LTkuMzEgMC05Ljg3YTEuNDQgMS40NCAwIDAgMSAyIDBsMy45MiAzLjkyYTEuNDMgMS40MyAwIDAgMSAuNDIgMS4wMXoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=`
-    const rightArrowIcon = `data:image/svg+xml;base64,PHN2ZyBkYXRhLW5hbWU9IkxheWVyIDEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDEwIDEzIj48cGF0aCBkPSJNMy42NS4xNDVhMi40MSAyLjQxIDAgMCAxIDEuNzIuNzFsMy45MiAzLjkyYTIuNDUgMi40NSAwIDAgMSAwIDMuNDVsLTMuOTIgMy45MWEyLjQyIDIuNDIgMCAwIDEtMS43Mi43MiAyLjQ4IDIuNDggMCAwIDEtMS43My0uNzFjLS4yNC0uMjktLjcxLS43Mi0uNzEtNS42NSAwLTQuOTMuNDYtNS4zOS43MS01LjY0YTIuNDQgMi40NCAwIDAgMSAxLjczLS43MXoiIGZpbGw9IiMyMzFmMjAiIG9wYWNpdHk9Ii4xIi8+PHBhdGggZD0iTTguOTg1IDYuNTFhMS40MyAxLjQzIDAgMCAxLS40MiAxbC0zLjkyIDMuOTRhMS40NCAxLjQ0IDAgMCAxLTIgMGMtLjU2LS41Ni0uNTYtOS4zMSAwLTkuODdhMS40NCAxLjQ0IDAgMCAxIDIgMGwzLjkyIDMuOTJhMS40MyAxLjQzIDAgMCAxIC40MiAxLjAxeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==`
-    const arrowWidth = 16
-    const arrowHeight = 32
-
-    class FieldImageButton extends ScratchBlocks.FieldImage {
-      constructor(src, width, height, callback, opt_alt, flip_rtl, noPadding) {
-        super(src, width, height, opt_alt, flip_rtl)
-        this._callback = callback.bind(this)
-        this.noPadding = noPadding
-      }
-      init() {
-        if (this.fieldGroup_) {
-          // Image has already been initialized once.
-          return
-        }
-        super.init()
-        this.mouseDownWrapper_ = ScratchBlocks.bindEventWithChecks_(
-          this.getSvgRoot(),
-          "mousedown",
-          this,
-          this.onMouseDown_
-        )
-        this.getSvgRoot().style.cursor = "pointer"
-      }
-      showEditor_() {
-        if (this._callback) {
-          this._callback()
-        }
-      }
-      getSize() {
-        if (!this.size_.width) {
-          this.render_()
-        }
-        if (!this.noPadding) return this.size_
-        return new this.size_.constructor(
-          Math.max(1, this.size_.width - ScratchBlocks.BlockSvg.SEP_SPACE_X),
-          this.size_.height
-        )
-      }
-      EDITABLE = true
-    }
-
-    // heavily based on scratch-blocks' procedures code
-    // https://github.com/TurboWarp/scratch-blocks
-    ScratchBlocks.Extensions.registerMutator(
-      "cst_extendable",
-      {
-        domToMutation(xmlElement) {
-          this.inputCount = Math.floor(
-            Number(xmlElement.getAttribute("inputcount"))
-          )
-          this.inputCount = Math.min(
-            Math.max(this.minInputs, this.inputCount),
-            this.maxInputs
-          )
-          if (isNaN(this.inputCount) || !Number.isFinite(this.inputCount))
-            this.inputCount = this.minInputs
-          this.prevInputCount = this.inputCount
-          // HACK: fixes alt+drag duplicate not adding blocks inside
-          this.updateDisplay_(true)
-        },
-        mutationToDom() {
-          const container = document.createElement("mutation")
-          container.setAttribute("inputcount", this.inputCount.toString())
-          return container
-        },
-
-        isExtendableInput(input) {
-          return (
-            input.name.startsWith("ARROW_") ||
-            this.extendableDefs.some(def => input.name.startsWith(def.id)) ||
-            this.extendableDefsStart.some(def =>
-              input.name.startsWith(def.id)
-            ) ||
-            this.extendableDefsEnd.some(def => input.name.startsWith(def.id))
-          )
-        },
-
-        // Disconnects all blocks in extendable inputs and returns them.
-        disconnectOldBlocks_() {
-          const connectionMap = {}
-          const hasEndBlocks = this.extendableDefsEnd.length > 0
-          const hasStartBlocks = this.extendableDefsStart.length > 0
-          const prevEndIndex =
-            this.prevInputCount + (this.extendableDefsStart.length > 0)
-
-          // Reattach end blocks when inputs are added/removed
-          const reattachMap = Object.create(null)
-          if (hasEndBlocks) {
-            for (const def of this.extendableDefsEnd) {
-              const input = this.getInput(
-                this.getExtendableInput(def.id, prevEndIndex)
-              )
-              if (input && input.connection) {
-                reattachMap[input.name] = def.id
-              }
-            }
-          }
-
-          for (const input of this.inputList) {
-            if (input.connection && this.isExtendableInput(input)) {
-              const target = input.connection.targetBlock()
-              const saveInfo = {
-                shadow: input.connection.getShadowDom(),
-                block: target
-              }
-
-              let name = input.name
-              if (reattachMap[name]) {
-                name = this.getExtendableInput(
-                  reattachMap[name],
-                  this.inputCount + hasStartBlocks
-                )
-                if (connectionMap[name]) {
-                  connectionMap["$UNUSED" + name] = connectionMap[name]
-                  delete connectionMap[name]
-                }
-              }
-
-              if (connectionMap[name]) {
-                connectionMap["$UNUSED" + name] = saveInfo
-              } else {
-                connectionMap[name] = saveInfo
-              }
-
-              // Remove the shadow DOM, then disconnect the block.	Otherwise a shadow
-              // block will respawn instantly, and we'd have to remove it when we remove
-              // the input.
-              input.connection.setShadowDom(null)
-              if (target) {
-                input.connection.disconnect()
-              }
-            }
-          }
-          return connectionMap
-        },
-
-        removeAllInputs_() {
-          this.inputList = this.inputList.filter(input => {
-            if (
-              this.isExtendableInput(input) ||
-              (input.type === ScratchBlocks.DUMMY_INPUT && this.clearLabels)
-            ) {
-              input.dispose()
-              return false
-            }
-            return true
-          })
-        },
-
-        // Creates a shadow input for an extendable definition.
-        attachShadow_(input, def) {
-          if (!def.shadowType) return
-          ScratchBlocks.Events.disable()
-          let newBlock
-          try {
-            newBlock = this.workspace.newBlock(def.shadowType)
-            newBlock.setFieldValue(def.shadowDefault, def.shadowField)
-            newBlock.setShadow(true)
-            if (!this.isInsertionMarker()) {
-              newBlock.initSvg()
-              newBlock.render(false)
-            }
-          } finally {
-            ScratchBlocks.Events.enable()
-          }
-          if (ScratchBlocks.Events.isEnabled()) {
-            ScratchBlocks.Events.fire(
-              new ScratchBlocks.Events.BlockCreate(newBlock)
-            )
-          }
-          if (newBlock.outputConnection)
-            newBlock.outputConnection.connect(input.connection)
-          else newBlock.previousConnection.connect(input.connection)
-        },
-        buildShadowDom_(def) {
-          const shadowDom = document.createElement("shadow")
-          shadowDom.setAttribute("type", def.shadowType)
-          const fieldDom = document.createElement("field", null)
-          fieldDom.setAttribute("name", def.shadowField)
-          shadowDom.appendChild(fieldDom)
-          return shadowDom
-        },
-
-        // Populates an argument.
-        // Puts existing blocks back in or creates new ones.
-        populateArgument_(connectionMap, id, input, def) {
-          let oldBlock = null
-          let oldShadow = null
-
-          if (connectionMap && id in connectionMap) {
-            const saveInfo = connectionMap[id]
-            oldBlock = saveInfo["block"]
-            oldShadow = saveInfo["shadow"]
-          }
-
-          if (connectionMap && oldBlock) {
-            // Reattach the old block and shadow DOM.
-            connectionMap[id] = null
-            if (oldBlock.outputConnection)
-              oldBlock.outputConnection.connect(input.connection)
-            else oldBlock.previousConnection.connect(input.connection)
-            if (def.shadowType) {
-              const shadowDom = oldShadow || this.buildShadowDom_(def)
-              input.connection.setShadowDom(shadowDom)
-            }
-          } else {
-            this.attachShadow_(input, def)
-          }
-        },
-
-        // Removes unused inputs from the VM
-        cleanInputs() {
-          const target = Scratch.vm.editingTarget
-          if (!target) return
-          const blocks = this.isInFlyout
-            ? Scratch.vm.runtime.flyoutBlocks
-            : target.blocks
-          const vmBlock = blocks.getBlock(this.id)
-          if (!vmBlock) return
-
-          const usedInputs = new Set(this.inputList.map(i => i?.name))
-
-          const inputs = vmBlock.inputs
-          for (const name of Object.keys(inputs)) {
-            const input = inputs[name]
-            if (!usedInputs.has(name)) {
-              // @ts-expect-error
-              blocks.deleteBlock(input.block)
-              // @ts-expect-error
-              blocks.deleteBlock(input.shadow)
-              delete inputs[name]
-            }
-          }
-        },
-
-        // Gets an argument name for a prefix + index.
-        getExtendableInput(prefix, index) {
-          let id = prefix
-          // Special handling for substacks,
-          // as their names matter for execution
-          if (prefix === "SUBSTACK") {
-            index += 1
-            if (index > 1) id += index
-          } else {
-            id += index
-          }
-          return id
-        },
-
-        // The internal create input function.
-        addInput_(def, i, connectionMap = null) {
-          const id = this.getExtendableInput(def.id, i)
-          const input = this.appendInput_(def.type, id)
-          if (def.type === ScratchBlocks.DUMMY_INPUT) {
-            input.appendField(def.check)
-          } else {
-            if (def.check) {
-              input.setCheck(def.check)
-            }
-            this.populateArgument_(connectionMap, id, input, def)
-          }
-        },
-
-        // The "user create input" function.
-        insertInput() {
-          ScratchBlocks.Events.setGroup(true)
-          const oldMutation = ScratchBlocks.Xml.domToText(this.mutationToDom())
-          this.inputCount++
-
-          this.updateDisplay_()
-
-          // i have no idea if this is the correct way or not
-          const newMutation = ScratchBlocks.Xml.domToText(this.mutationToDom())
-          const ev = new ScratchBlocks.Events.BlockChange(
-            this,
-            "mutation",
-            null,
-            oldMutation,
-            newMutation
-          )
-          ScratchBlocks.Events.fire(ev)
-          ScratchBlocks.Events.setGroup(false)
-        },
-        // The "user delete input" function.
-        deleteInput() {
-          ScratchBlocks.Events.setGroup(true)
-          const oldMutation = ScratchBlocks.Xml.domToText(this.mutationToDom())
-          this.inputCount--
-          const plusInputs = this.extendableDefsStart.length > 0 ? 1 : 0
-
-          for (const def of this.extendableDefs) {
-            this.removeInput(
-              this.getExtendableInput(def.id, this.inputCount + plusInputs)
-            )
-          }
-          this.updateDisplay_()
-
-          const newMutation = ScratchBlocks.Xml.domToText(this.mutationToDom())
-          const ev = new ScratchBlocks.Events.BlockChange(
-            this,
-            "mutation",
-            null,
-            oldMutation,
-            newMutation
-          )
-          ScratchBlocks.Events.fire(ev)
-          ScratchBlocks.Events.setGroup(false)
-
-          this.cleanInputs()
-        },
-
-        createAllInputs_(connectionMap) {
-          let index = 0
-          if (this.extendableDefsStart.length > 0) {
-            for (const def of this.extendableDefsStart)
-              this.addInput_(def, index, connectionMap)
-            index++
-          }
-          for (let i = 0; i < this.inputCount; i++) {
-            for (const def of this.extendableDefs)
-              this.addInput_(def, index, connectionMap)
-            index++
-          }
-          return index
-        },
-
-        addArrowButtons_() {
-          if (this.inputCount > this.minInputs) {
-            const leftInput = this.appendDummyInput("ARROW_LEFT")
-            const leftArrow = new FieldImageButton(
-              leftArrowIcon,
-              arrowWidth,
-              arrowHeight,
-              function () {
-                this.sourceBlock_.deleteInput()
-              },
-              Scratch.translate({
-                default: "Remove input",
-                description:
-                  "Alt text for the button that removes an input on blocks"
-              }),
-              true,
-              this.inputCount < this.maxInputs
-            )
-            leftInput.appendField(leftArrow)
-          }
-          if (this.inputCount < this.maxInputs) {
-            const rightInput = this.appendDummyInput("ARROW_RIGHT")
-            const rightArrow = new FieldImageButton(
-              rightArrowIcon,
-              arrowWidth,
-              arrowHeight,
-              function () {
-                this.sourceBlock_.insertInput()
-              },
-              Scratch.translate({
-                default: "Add input",
-                description:
-                  "Alt text for the button that adds an input on blocks"
-              }),
-              true,
-              false
-            )
-            rightInput.appendField(rightArrow)
-          }
-        },
-
-        // Updates this block's inputs.
-        updateDisplay_(force) {
-          // HACK: prevent weird stray inputs from appearing in the top left corner
-          if (
-            !this.isInsertionMarker() &&
-            !force &&
-            this.workspace?.currentGesture_?.isDraggingBlock_ &&
-            this.workspace?.currentGesture_?.targetBlock_.type === this.type
-          )
-            return
-
-          const wasRendered = this.rendered
-          if (this.isInFlyout) {
-            ScratchBlocks.Events.disable()
-          }
-
-          this.rendered = false
-          this.extendableUpdatedDisplay = true
-
-          // First, disconnect any old blocks and save them for later
-          const connectionMap = this.disconnectOldBlocks_()
-          // Remove all extendable inputs
-          this.removeAllInputs_()
-
-          // Recreate all the inputs, and if any inputs were there before, put them back in
-          let index = this.createAllInputs_(connectionMap)
-          this.addArrowButtons_()
-          // Add the ending inputs
-          for (const def of this.extendableDefsEnd)
-            this.addInput_(def, index, connectionMap)
-          // Delete any unused blocks
-          ScratchBlocks.ScratchBlocks.ProcedureUtils.deleteShadows_.call(
-            this,
-            connectionMap
-          )
-          this.prevInputCount = this.inputCount
-
-          this.rendered = wasRendered
-          if (wasRendered) {
-            this.initSvg()
-            this.render()
-          }
-
-          if (this.isInFlyout) {
-            ScratchBlocks.Events.enable()
-          }
-        }
-      },
-      function () {
-        // An array of extendable input definitions;
-        // for each click of the right arrow button,
-        // all of these inputs will be added
-        this.extendableDefs = []
-        // Inputs to put before any extendable inputs.
-        // If non-empty, also increases the maximum index by one
-        this.extendableDefsStart = []
-        // Inputs to put after the extendable inputs (after the arrow buttons).
-        // If non-empty, also increases the maximum index by one
-        this.extendableDefsEnd = []
-        // The default number of inputs.
-        this.inputCount = 2
-        // The minimum number of inputs.
-        this.minInputs = 1
-        // The maximum number of inputs.
-        this.maxInputs = Infinity
-        // If true, clears all blockInfo labels.
-        this.clearLabels = false
-
-        // Internal.
-        this.prevInputCount = this.inputCount
-      }
-    )
-
-    const createInput = (
-      type, // ScratchBlocks.INPUT_VALUE, NEXT_STATEMENT or DUMMY_INPUT
-      id, // The argument ID (a number will be appended to this)
-      check = null, // null or "Boolean" (or the label text for DUMMY_INPUTs)
-      shadowType = undefined, // The type of shadow block (or falsy for none)
-      shadowField = undefined, // The field to use in the shadow block
-      shadowDefault = undefined // The default shadow block value
-    ) => ({ type, id, check, shadowType, shadowField, shadowDefault })
-
-    // Configuration extensions
-    ScratchBlocks.Extensions.register("cst_extendable_clear", function () {
-      this.clearLabels = true
-    })
-    ScratchBlocks.Extensions.register("cst_extendable_string", function () {
-      this.extendableDefs = [
-        createInput(ScratchBlocks.INPUT_VALUE, "ARG", null, "text", "TEXT", "")
-      ]
-      const ops = {
-        [exId + "_extendLess"]: "<",
-        [exId + "_extendEqual"]: "=",
-        [exId + "_extendGreater"]: ">"
-      }
-      if (this.type in ops) {
-        const op = ops[this.type]
-        this.extendableDefsStart = [
-          createInput(
-            ScratchBlocks.INPUT_VALUE,
-            "ARG",
-            null,
-            "text",
-            "TEXT",
-            ""
-          )
-        ]
-        this.extendableDefs.unshift(
-          createInput(ScratchBlocks.DUMMY_INPUT, "WORD", op)
-        )
-        this.inputCount = 1
-      }
-    })
-    ScratchBlocks.Extensions.register("cst_extendable_number", function () {
-      const defaultValue = [
-        exId + "_extendProduct",
-        exId + "_extendDivide"
-      ].includes(this.type)
-        ? "1"
-        : "0"
-
-      this.extendableDefs = [
-        createInput(
-          ScratchBlocks.INPUT_VALUE,
-          "ARG",
-          null,
-          "math_number",
-          "NUM",
-          defaultValue
-        )
-      ]
-      this.minInputs = 1
-
-      const ops = {
-        [exId + "_extendSum"]: "+",
-        [exId + "_extendMinus"]: "-",
-        [exId + "_extendProduct"]: "*",
-        [exId + "_extendDivide"]: "/"
-      }
-      if (ops[this.type]) {
-        this.extendableDefsStart = [
-          createInput(
-            ScratchBlocks.INPUT_VALUE,
-            "ARG",
-            null,
-            "math_number",
-            "NUM",
-            defaultValue
-          )
-        ]
-        this.extendableDefs.unshift(
-          createInput(ScratchBlocks.DUMMY_INPUT, "WORD", ops[this.type])
-        )
-        this.inputCount = 1
-      }
-    })
-    ScratchBlocks.Extensions.register("cst_extendable_boolean", function () {
-      this.extendableDefs = [
-        createInput(ScratchBlocks.INPUT_VALUE, "ARG", "Boolean")
-      ]
-      if (
-        this.type === exId + "_extendAnd" ||
-        this.type === exId + "_extendOr"
-      ) {
-        this.extendableDefsStart = [
-          createInput(ScratchBlocks.INPUT_VALUE, "ARG", "Boolean")
-        ]
-        this.extendableDefs.unshift(
-          createInput(
-            ScratchBlocks.DUMMY_INPUT,
-            "WORD",
-            this.type === exId + "_extendAnd"
-              ? Scratch.translate({
-                  default: "and",
-                  description:
-                    'Text inserted between inputs on the extendable "and" block. Ideally should match vanilla Scratch\'s strings'
-                })
-              : Scratch.translate({
-                  default: "or",
-                  description:
-                    'Text inserted between inputs on the extendable "or" block. Ideally should match vanilla Scratch\'s strings'
-                })
-          )
-        )
-        this.inputCount = 1
-      }
-    })
-    ScratchBlocks.Extensions.register("cst_extendable_branch", function () {
-      this.extendableDefs = [
-        createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null)
-      ]
-      this.inputCount = 1
-    })
-    ScratchBlocks.Extensions.register("cst_extendable_if", function () {
-      this.extendableDefsStart = [
-        createInput(ScratchBlocks.INPUT_VALUE, "CONDITION", "Boolean"),
-        createInput(ScratchBlocks.DUMMY_INPUT, "THEN_WORD", "then"),
-        createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null)
-      ]
-      this.extendableDefs = [
-        createInput(
-          ScratchBlocks.DUMMY_INPUT,
-          "ELSE_WORD",
-          Scratch.translate({
-            default: "else if",
-            description:
-              "Text inserted after a C input and before a boolean input on the extendable if blocks."
-          })
-        ),
-        createInput(ScratchBlocks.INPUT_VALUE, "CONDITION", "Boolean"),
-        createInput(
-          ScratchBlocks.DUMMY_INPUT,
-          "THEN_WORD",
-          Scratch.translate({
-            default: "then",
-            description:
-              "Text inserted before a C input on the extendable if blocks. Ideally should match vanilla Scratch's strings"
-          })
-        ),
-        createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null)
-      ]
-      this.inputCount = 0
-      this.minInputs = 0
-    })
-    ScratchBlocks.Extensions.register("cst_extendable_if_else", function () {
-      this.extendableDefsStart = [
-        createInput(ScratchBlocks.INPUT_VALUE, "CONDITION", "Boolean"),
-        createInput(
-          ScratchBlocks.DUMMY_INPUT,
-          "THEN_WORD",
-          Scratch.translate({
-            default: "then",
-            description:
-              "Text inserted before a C input on the extendable if blocks. Ideally should match vanilla Scratch's strings"
-          })
-        ),
-        createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null),
-        createInput(
-          ScratchBlocks.DUMMY_INPUT,
-          "ELSE_WORD",
-          Scratch.translate({
-            default: "else",
-            description:
-              "Text inserted before the last C input on the extendable if-else block. Ideally should match vanilla Scratch's strings"
-          })
-        )
-      ]
-      this.extendableDefs = [
-        createInput(ScratchBlocks.DUMMY_INPUT, "IF_WORD", "if"),
-        createInput(ScratchBlocks.INPUT_VALUE, "CONDITION", "Boolean"),
-        createInput(
-          ScratchBlocks.DUMMY_INPUT,
-          "THEN_WORD",
-          Scratch.translate({
-            default: "then",
-            description:
-              "Text inserted before a C input on the extendable if blocks. Ideally should match vanilla Scratch's strings"
-          })
-        ),
-        createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null),
-        createInput(
-          ScratchBlocks.DUMMY_INPUT,
-          "ELSE_WORD",
-          Scratch.translate({
-            default: "else",
-            description:
-              "Text inserted before the last C input on the extendable if-else block. Ideally should match vanilla Scratch's strings"
-          })
-        )
-      ]
-      this.extendableDefsEnd = [
-        createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null)
-      ]
-      this.inputCount = 0
-      this.minInputs = 0
-    })
-    ScratchBlocks.Extensions.register("cst_extendable_switch", function () {
-      this.extendableDefs = [
-        createInput(
-          ScratchBlocks.DUMMY_INPUT,
-          "CASE_WORD",
-          Scratch.translate({
-            default: "case",
-            description:
-              "Text inserted between C and text inputs on the extendable switch block"
-          })
-        ),
-        createInput(
-          ScratchBlocks.INPUT_VALUE,
-          "CASE_VALUE",
-          null,
-          "text",
-          "TEXT",
-          ""
-        ),
-        createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null)
-      ]
-      this.extendableDefsEnd = [
-        createInput(
-          ScratchBlocks.DUMMY_INPUT,
-          "DEFAULT_WORD",
-          Scratch.translate({
-            default: "default",
-            description:
-              "Text inserted before the last C input on the extendable switch block"
-          })
-        ),
-        createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null)
-      ]
-      this.inputCount = 1
-      this.minInputs = 0
-    })
-    ScratchBlocks.Extensions.register("cst_extendable_joinwith", function () {
-      this.extendableDefs = [
-        createInput(
-          ScratchBlocks.INPUT_VALUE,
-          "ARG",
-          null,
-          "text",
-          "TEXT",
-          "word"
-        )
-      ]
-      this.extendableDefsEnd = [
-        createInput(
-          ScratchBlocks.DUMMY_INPUT,
-          "WORD_WORD",
-          Scratch.translate({
-            default: "with",
-            description:
-              "Text inserted before the last input on the 'join (...) with []' block"
-          })
-        ),
-        createInput(ScratchBlocks.INPUT_VALUE, "ARG", null, "text", "TEXT", "_")
-      ]
-      this.inputCount = 2
-      this.minInputs = 0
-    })
-
-    // HACK: fixes the flyout, also with dynamic enable/disable addons
-    const ogInitSvg = ScratchBlocks.BlockSvg.prototype.initSvg
-    ScratchBlocks.BlockSvg.prototype.initSvg = function () {
-      if (this.getExtendableInput && !this.extendableUpdatedDisplay) {
-        this.updateDisplay_()
-      }
-      return ogInitSvg.call(this)
-    }
-  }
-
-  // https://github.com/LilyMakesThings/extensions/blob/5b9ce572683e403933cab3b23c4a9bbb2a08ecf9/extensions/Lily/Dictionaries.js#L37C1-L45
-  if (!("scaffolding" in window)) {
-    Scratch.vm.on("EXTENSION_ADDED", patchSB)
-    Scratch.vm.on("BLOCKSINFO_UPDATE", patchSB)
-  }
-  /* eslint-enable */
-
-  // @ts-expect-error
+  // @ts-expect-error ignore
   Scratch.extensions.register(new HamBskyAPI(Scratch.runtime))
 })(Scratch)
