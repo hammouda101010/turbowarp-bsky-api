@@ -14,21 +14,22 @@ This is the unofficial extension for the BlueSky API!
   - Block and mute annoying users
   - Search posts and profiles
   - ...and more!
-
+### Things It Can't Do:
+- Steal Your Credit Card Information 
 ## Release Plan:
 ~~v1.0 pre-alpha: first version~~
 
 ~~v1.0 alpha: Created testing bot and more API interactions. major bug fixes. do not use.~~
 
-**v1.0 beta: current. unstable and unfinished. major bug fixes.**
+**v1.0 beta: current. unstable and unfinished. major improvements.**
 
 _v1.0-release-candidate: Extension complete. Meets standards of full release with minimal issues. During this release period, preparations for full release include gallery thumbnail, sample project, documentation, etc._
 
 ## Active Development
 ### v1.0-beta:
 - Complete the rest of the API (thread gates, user lists, post filters, languages list, etc.)
-- Bug-fixes
-- More error-handling
+- Bug-fixes (if there are any bugs)
+- More error-handling (or maybe not)
 - video embeds
 - ~~(if required) future rewrite in favor of Bluesky's OAuth login method~~
 
@@ -63,11 +64,11 @@ Check for eslint: `npm run lint` (Fix: `npm run fix`)
 
 ### 📦🔨🦋 Building
 
-Build: `npm run build` (OAuth Ver: `npm run build-OAuth`)
+Build: `npm run build`
 
-Build for Turbowarp (format to match its prettier): `npm run build:turbowarp` (OAuth Ver: `npm run build-OAuth:turbowarp`)
+Build for Turbowarp (format to match its prettier): `npm run build:turbowarp`
 
-Development server: `npm run start` (Extension: <http://localhost:8000/index.global.js>) (OAuth Ver: `npm run start-OAuth`)
+Development server: `npm run start` (Extension: <http://localhost:8000/index.global.js>)
 
 ## 📑🦋💙🦋🦋 Credits/Aknowlegments 🦋🦋💙🦋📑
 

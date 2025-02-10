@@ -9,11 +9,8 @@
     "lint:type": "tsc --noEmit -p ./tsconfig.json",
     "fix": "eslint ./src --fix",
     "start": "tsup src/index.ts && http-server ./dist -p 8000 --cors",
-    "start-OAuth": "tsup src/index-WithOAuth.ts && http-server ./dist -p 8000 --cors",
     "build": "tsup src/index.ts",
-    "build-OAuth": "tsup src/index-WithOAuth.ts",
     "build:turbowarp": "tsup src/index.ts && (npx prettier --config turbowarp/.prettierrc --parser acorn < dist/extension/index.global.js) > dist/extension/index.global.formatted.js && rimraf dist/extension/index.global.js",
-    "build-OAuth:turbowarp": "tsup src/index-WithOAuth.ts && (npx prettier --config turbowarp/.prettierrc --parser acorn < dist/extension/index-WithOAuth.global.js) > dist/extension/index-WithOAuth.global.formatted.js && rimraf dist/extension/index-WithOAuth.global.js",
     "format": "prettier ./src -c -w",
     "lint:format": "prettier ./src -c"
   },

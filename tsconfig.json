@@ -51,6 +51,7 @@
     "types/universal.d.ts",
     "types/turbowarp.d.ts",
     "src/**/*",
+    "deprecated/**/*",
     "tsup.config.ts",
     "package.json"]
 }
