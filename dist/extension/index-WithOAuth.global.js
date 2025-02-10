@@ -59654,12 +59654,26 @@ if (cid) {
       console.info(`Uploaded Blob: ${JSON.stringify(blob)}`);
       return blob;
     }
+    const FindTags = async (txt) => {
+      const rt = new import_api2.RichText({ text: txt });
+      const tags = [];
+      await rt.detectFacets(agent);
+      for (const segment of rt.segments()) {
+        if (segment.isTag()) {
+          tags.push(segment.tag?.tag);
+        }
+      }
+      return tags;
+    };
     const BskySearchFuncs = {
-      SearchPosts: async (searchTerm, cursor, limit) => {
+      SearchPosts: async (searchTerm, sortBy, cursor, limit, miscOptions = {}) => {
         const response = await agent.app.bsky.feed.searchPosts({
           q: searchTerm,
           cursor,
-          limit
+          sort: sortBy,
+          limit,
+          tag: await FindTags(searchTerm),
+          ...miscOptions
         });
         return response;
       },
@@ -59671,8 +59685,13 @@ if (cid) {
         });
         return response;
       },
-      Search: async (searchTerm, cursor, limit) => {
-        const posts = await BskySearchFuncs.SearchPosts(searchTerm, cursor, limit);
+      Search: async (searchTerm, sortBy, cursor, limit) => {
+        const posts = await BskySearchFuncs.SearchPosts(
+          searchTerm,
+          sortBy,
+          cursor,
+          limit
+        );
         const actors = await BskySearchFuncs.SearchActors(
           searchTerm,
           cursor,
@@ -59699,10 +59718,10 @@ if (cid) {
       console.info(data);
       return data;
     }
-    async function UnblockUser(blockedUserAtUri) {
+    async function UnblockUser(blockedUserAtUri, session) {
       const { rkey } = new import_api3.AtUri(blockedUserAtUri);
       await agent.app.bsky.graph.block.delete({
-        repo: this.session.did,
+        repo: session.did,
         rkey
       });
       console.info(`Unblocked User With at:// URI: ${blockedUserAtUri}`);
@@ -59772,6 +59791,7 @@ if (cid) {
       clientMetadata;
       handleResolver;
       searchResult;
+      sortSearch;
       lastBlockedUserURI;
       showExtras;
       constructor(runtime2) {
@@ -59803,6 +59823,7 @@ if (cid) {
           dpop_bound_access_tokens: true
         };
         this.searchResult = "no search result yet";
+        this.sortSearch = "top";
         this.session = null;
         this.lastBlockedUserURI = null;
         this.showExtras = false;
@@ -59834,6 +59855,7 @@ if (cid) {
               opcode: "bskyInitOAuthClient",
               text: "initialize OAuth session"
             },
+            "---",
             {
               blockType: Scratch2.BlockType.COMMAND,
               opcode: "bskyLogin",
@@ -59845,10 +59867,11 @@ if (cid) {
                 }
               }
             },
+            "---",
             {
               blockType: Scratch2.BlockType.COMMAND,
               opcode: "bskyOAuthCallback",
-              text: "callback url query [QUERY]",
+              text: "callback this url query: [QUERY]",
               arguments: {
                 QUERY: {
                   type: Scratch2.ArgumentType.STRING,
@@ -60518,6 +60541,28 @@ if (cid) {
               disableMonitor: false
             },
             {
+              blockType: Scratch2.BlockType.COMMAND,
+              opcode: "bskySearchSort",
+              text: "sort post search results by [POST_SORT]",
+              hideFromPalette: !this.sepCursorLimit,
+              blockIconURI: SearchingLensIcon,
+              arguments: {
+                POST_SORT: {
+                  type: Scratch2.ArgumentType.STRING,
+                  menu: "bskySEARCH_SORT_BY"
+                }
+              }
+            },
+            {
+              blockType: Scratch2.BlockType.LABEL,
+              text: "OAuth Configuration"
+            },
+            {
+              blockType: Scratch2.BlockType.COMMAND,
+              opcode: "bskySetOAuthMetadata",
+              text: "set [KEY] OAuth metadata to [VALUE]"
+            },
+            {
               blockType: Scratch2.BlockType.LABEL,
               text: "Extras"
             },
@@ -60671,7 +60716,7 @@ if (cid) {
               text: "use bluesky lexicon [LEXICON] with inputs [INPUTS]",
               arguments: {
                 LEXICON: {
-                  type: null,
+                  type: Scratch2.ArgumentType.STRING,
                   defaultValue: "app.bsky.feed"
                 },
                 INPUTS: {
@@ -60726,6 +60771,13 @@ if (cid) {
               items: [
                 { text: "on", value: "true" },
                 { text: "off", value: "false" }
+              ]
+            },
+            bskySEARCH_SORT_BY: {
+              acceptReporters: false,
+              items: [
+                { text: Scratch2.translate("top posts"), value: "top" },
+                { text: Scratch2.translate("latest posts"), value: "latest" }
               ]
             },
             bskyENCODING: {
@@ -61140,7 +61192,7 @@ if (cid) {
         return this.lastBlockedUserURI ?? "no data found";
       }
       async bskyUnblockUser(args) {
-        await UnblockUser(args.URI);
+        await UnblockUser(args.URI, this.session);
       }
       async bskyMuteUser(args) {
         const response = await agent.mute(parseHandle(args.DID));
@@ -61159,6 +61211,7 @@ if (cid) {
       async bskySearch(args) {
         const response = await BskySearchFuncs.Search(
           args.TERM,
+          this.sortSearch,
           args.CURSOR,
           args.LIMIT
         );
@@ -61166,9 +61219,13 @@ if (cid) {
         const actors = response.actors;
         this.searchResult = posts.length !== 0 && actors.length !== 0 ? response : "found nothing";
       }
+      bskySearchSort(args) {
+        this.sortSearch = args.POST_SORT;
+      }
       async bskySearchSep(args) {
         const response = await BskySearchFuncs.Search(
           args.TERM,
+          this.sortSearch,
           this.cursor ?? "",
           this.limit ?? 50
         );
@@ -61253,7 +61310,7 @@ if (cid) {
       }
       bskyLexiconInputs(args) {
         const prefix = "ARG";
-        let array = [];
+        const array = [];
         for (let i = 0; prefix + i in args; i++) {
           array.push(
             args[prefix + i].startsWith("{") && args[prefix + i].endsWith("}") ? JSON.parse(args[prefix + i]) : args[prefix + i]
