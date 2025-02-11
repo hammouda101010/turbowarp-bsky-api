@@ -538,18 +538,18 @@ import { Mime } from "mime"
 
   /**Gets a List and It's Members.
    *
-   * @param {boolean} fullListView: If enabled, paginates trough the list's members
+   * @param {boolean} pagination - If enabled, goes trough the entire list by using pagination.
    */
   async function GetBskyList(
     uri: string,
     cursorArg: string = "",
     limit: number = 6,
-    fullListView?: boolean
+    pagination?: boolean
   ) {
     let response: unknown
 
-    if (!fullListView) {
-      // Get List Posts
+    if (!pagination) {
+      // Get list
       response = await agent.app.bsky.graph.getList({
         list: uri,
         limit: limit,
@@ -559,7 +559,7 @@ import { Mime } from "mime"
       let cursor: string | undefined = cursorArg
       let members: AppBskyGraphDefs.ListItemView[] = []
 
-      // View all list members
+      // View entire list by using pagination
       do {
         const res = await agent.app.bsky.graph.getList({
           list: uri,
@@ -1385,7 +1385,16 @@ import { Mime } from "mime"
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskySetOAuthMetadata",
-            text: "set [KEY] OAuth metadata to [VALUE]"
+            text: "set [KEY] OAuth metadata to [VALUE]",
+            arguments: {
+              KEY: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "bskyCLIENT_METADATA_VALUES"
+              },
+              VALUE: {
+                type: Scratch.ArgumentType.STRING
+              }
+            }
           },
           {
             blockType: Scratch.BlockType.LABEL,
@@ -1589,10 +1598,13 @@ import { Mime } from "mime"
           bskyOPTIONS: {
             acceptReporters: true,
             items: [
-              { text: "rich text", value: "richText" },
-              { text: "use current date", value: "useCurrentDate" },
+              { text: Scratch.translate("rich text"), value: "richText" },
               {
-                text: "cursor and limit as seperate blocks",
+                text: Scratch.translate("use current date"),
+                value: "useCurrentDate"
+              },
+              {
+                text: Scratch.translate("cursor and limit as seperate blocks"),
                 value: "sepCursorLimit"
               }
             ]
@@ -1626,12 +1638,25 @@ import { Mime } from "mime"
           bskyAUTHOR_FEED_FILTERS: {
             acceptReporters: true,
             items: [
-              { text: "posts and replies", value: "posts_with_replies" },
-              { text: "posts only", value: "posts_no_replies" },
-              { text: "posts with media", value: "posts_with_media" },
               {
-                text: "posts and author threads",
+                text: Scratch.translate("posts and replies"),
+                value: "posts_with_replies"
+              },
+              {
+                text: Scratch.translate("posts only"),
+                value: "posts_no_replies"
+              },
+              {
+                text: Scratch.translate("media/images only"),
+                value: "posts_with_media"
+              },
+              {
+                text: Scratch.translate("posts and author threads"),
                 value: "posts_and_author_threads"
+              },
+              {
+                text: Scratch.translate("videos only"),
+                value: "posts_with_video"
               }
             ]
           },
@@ -1645,7 +1670,27 @@ import { Mime } from "mime"
               "avatar",
               "banner",
               { text: "embed thumbnail", value: "feed_thumbnail" },
-              { text: "fullsize image", value: "feed_fullsize" }
+              { text: "fullsized image", value: "feed_fullsize" }
+            ]
+          },
+          bskyCLIENT_METADATA_VALUES: {
+            acceptReporters: true,
+            items: [
+              { text: "client ID", value: "client_id" },
+              { text: "client name", value: "client_name" },
+              { text: "client URI", value: "client_uri" },
+              { text: "logo URI", value: "logo_uri" },
+              { text: "TOS URI", value: "tos_uri" },
+              { text: "privacy policy URI", value: "policy_uri" },
+              { text: "redirect URIs", value: "redirect_uris" },
+              { text: "scopes", value: "scope" },
+              { text: "grant types", value: "grant_types" },
+              { text: "response types", value: "response_types" },
+              {
+                text: "token endpoint auth method",
+                value: "token_endpoint_auth_method"
+              },
+              { text: "application type", value: "application_type" }
             ]
           }
         }
@@ -1654,6 +1699,8 @@ import { Mime } from "mime"
 
     /* ---- BUTTONS----*/
     bskyDisclaimer() {
+      this.clientMetadata
+
       alert(
         `DISCLAIMER:
 
@@ -1663,7 +1710,7 @@ import { Mime } from "mime"
           3. Respect Community Guidelines: https://bsky.social/about/support/community-guidelines
           4. Do Not Use This Extension for Malicious Purposes, such as Spam Bots, Scams, or Hacking other Accounts.
           
-          Note: This Extension Pairs Well With JSON Extensions.`
+          Note: This Extension Pairs Well With JSON Extensions, But Doesn't Work In Desktop.`
       )
     }
     bskyShowExtras() {
@@ -1708,7 +1755,7 @@ import { Mime } from "mime"
       console.log(result ?? "No Result")
 
       if (result) {
-        //@ts-expect-error
+        //@ts-expect-error included in result.
         const { session, state } = result
 
         this.session = session
@@ -1725,7 +1772,9 @@ import { Mime } from "mime"
     async bskyLogin(args) {
       if (!this.session) {
         const handle = parseHandle(args.HANDLE)
+
         if (!handle) throw new Error("No Handle Found")
+
         this.session = await this.OAuthClient.signIn(handle, {
           scope: "atproto transition:generic",
           display: "popup",
@@ -1750,6 +1799,7 @@ import { Mime } from "mime"
 
     async bskyLogout(): Promise<void> {
       await this.session.signOut()
+      agent = undefined
 
       console.info(`Logged Out from API.`)
 
