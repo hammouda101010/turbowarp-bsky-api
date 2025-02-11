@@ -62,7 +62,7 @@ import { Mime } from "mime"
   // "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNS44OTMiIGhlaWdodD0iMTUuODkzIiB2aWV3Qm94PSIwIDAgMTUuODkzIDE1Ljg5MyI+PHBhdGggZD0iTTkuMDIxIDEyLjI5NHYtMi4xMDdsLTYuODM5LS45MDVDMS4zOTggOS4xODQuODQ2IDguNDg2Ljk2MiA3LjcyN2MuMDktLjYxMi42MDMtMS4wOSAxLjIyLTEuMTY0bDYuODM5LS45MDVWMy42YzAtLjU4Ni43MzItLjg2OSAxLjE1Ni0uNDY0bDQuNTc2IDQuMzQ1YS42NDMuNjQzIDAgMCAxIDAgLjkxOGwtNC41NzYgNC4zNmMtLjQyNC40MDQtMS4xNTYuMTEtMS4xNTYtLjQ2NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9Ii4xNSIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjEuNzUiLz48cGF0aCBkPSJNOS4wMjEgMTIuMjk0di0yLjEwN2wtNi44MzktLjkwNUMxLjM5OCA5LjE4NC44NDYgOC40ODYuOTYyIDcuNzI3Yy4wOS0uNjEyLjYwMy0xLjA5IDEuMjItMS4xNjRsNi44MzktLjkwNVYzLjZjMC0uNTg2LjczMi0uODY5IDEuMTU2LS40NjRsNC41NzYgNC4zNDVhLjY0My42NDMgMCAwIDEgMCAuOTE4bC00LjU3NiA0LjM2Yy0uNDI0LjQwNC0xLjE1Ni4xMS0xLjE1Ni0uNDY1IiBmaWxsPSIjZmZmIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz48cGF0aCBkPSJNMCAxNS44OTJWMGgxNS44OTJ2MTUuODkyeiIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==";
 
   // Objects
-  let agent: Agent
+  let agent: Agent = undefined
   const mime = new Mime()
 
   /**Search Result Data */
@@ -541,7 +541,7 @@ import { Mime } from "mime"
    * @param {boolean} fullListView: If enabled, paginates trough the list's members
    */
   async function GetBskyList(
-    uri,
+    uri: string,
     cursorArg: string = "",
     limit: number = 6,
     fullListView?: boolean
@@ -612,8 +612,7 @@ import { Mime } from "mime"
       this.handleResolver = "https://bsky.social/"
       this.injectMetadata = true
       this.clientMetadata = {
-        client_id:
-          "https://hammouda101010.github.io/turbowarp-bsky-api/static/client-metadata.json",
+        client_id: this.clientID,
         client_name: "TurboWarp/Penguinmod",
         client_uri: "https://hammouda101010.github.io/turbowarp-bsky-api",
         logo_uri:
@@ -638,7 +637,7 @@ import { Mime } from "mime"
 
       this.showExtras = false
     }
-    //@ts-expect-error
+    //@ts-expect-error ignore this error
     getInfo() {
       return {
         id: "HamBskyAPI",
@@ -1526,7 +1525,7 @@ import { Mime } from "mime"
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyLexicon",
-            text: "use bluesky lexicon [LEXICON] with inputs [INPUTS]",
+            text: "call bluesky lexicon [LEXICON] with parameters [INPUTS]",
             arguments: {
               LEXICON: {
                 type: Scratch.ArgumentType.STRING,
@@ -1543,7 +1542,7 @@ import { Mime } from "mime"
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: "bskyLexiconReporter",
-            text: "use bluesky lexicon [LEXICON] with inputs [INPUTS]",
+            text: "call bluesky lexicon [LEXICON] with parameters [INPUTS] and return value",
             arguments: {
               LEXICON: {
                 type: Scratch.ArgumentType.STRING,
