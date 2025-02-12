@@ -1,16 +1,16 @@
 // This is The New OAuth Rewrite. It may be unstable
 // Required Modules
-import {
-  BrowserOAuthClient,
-  OAuthClientMetadataInput,
-  OAuthSession
-} from "@atproto/oauth-client-browser"
-import { AppBskyGraphDefs, Agent } from "@atproto/api"
-// import { moderatePost } from "@atproto/api"
-import { RichText } from "@atproto/api"
-import { AtUri } from "@atproto/api"
-import { Mime } from "mime"
-;(function (Scratch) {
+import { BrowserOAuthClient, OAuthClientMetadataInput, OAuthSession } from "@atproto/oauth-client-browser";
+import { AppBskyGraphDefs, Agent } from "@atproto/api";
+import { moderatePost } from "@atproto/api"
+import { PostView } from "@atproto/api/src/client/types/app/bsky/feed/defs"
+import { RichText } from "@atproto/api";
+import { AtUri } from "@atproto/api";
+import { Mime } from "mime";
+import { FFmpeg, FileData } from '@ffmpeg/ffmpeg';
+
+;
+(function (Scratch) {
   if (Scratch.extensions.unsandboxed === false) {
     throw new Error("TurboButterfly Extension Must Be Run Unsandboxed.")
   }
@@ -64,7 +64,9 @@ import { Mime } from "mime"
   // Objects
   let agent: Agent = undefined
   const mime = new Mime()
+  const ffmpeg = new FFmpeg()
 
+  // Types and Interfaces
   /**Search Result Data */
   interface SearchResultData {
     posts: object[]
@@ -81,11 +83,65 @@ import { Mime } from "mime"
   type ImageType = "avatar" | "banner" | "feed_thumbnail" | "feed_fullsize"
 
   // Special Functions
+  
+  /**Gets the video of a BlueSky post using {@link https://github.com/ffmpegwasm/ffmpeg.wasm}. 
+   * 
+   * Might be slow.
+   * @param {PostView} post - The post with the video.
+   */
+  async function GetVideo(post: PostView): Promise<{
+    alt: string, 
+    cid: string, 
+    data: string | URL, 
+    name: string, 
+    thumbnail: string | URL
+  }>{
+    let video
+    try {
+      video = {
+        //@ts-expect-error ignore
+        mimeType: post.record.embed.video.mimeType,
+        //@ts-expect-error ignore
+        name: post.record.text.replace(/ /g,"_"),
+        alt: post.embed.alt
+      }
+    } catch {
+      throw new Error("This post doesn't contain any video.")
+    }
+    await ffmpeg.load()
+    const output: string = `${video.name}.${mime.getExtension(video.mimeType)}`
+    await ffmpeg.exec(["-i", Cast.toString(post.embed.playlist), "-c", "copy", output ]);
+    const uint8Array: FileData | Uint8Array = await ffmpeg.readFile(output)
+
+    // convert the video to a data URI
+    const blob = new Blob([uint8Array], { type: video.mimeType })
+    const objectURL = URL.createObjectURL(blob);
+    
+    const reader = new FileReader();
+    let url
+    reader.onloadend = async () => {
+        const dataURI = Cast.toString(reader.result);
+
+        URL.revokeObjectURL(objectURL);
+        url = await Scratch.fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(dataURI)}`)
+        url = await url.text()
+    };
+    reader.readAsDataURL(blob)
+    
+
+    return {
+      name: output,
+      cid: Cast.toString(post.embed.cid),
+      thumbnail: Cast.toString(post.embed.thumbnail),
+      alt: Cast.toString(post.embed.alt),
+      data: url
+    }
+  }
 
   /**
    * Parses the handle to be usable by the API
    * @param {string} handle - The handle to parse
-   * @returns the handle without the @ symbol
+   * @returns - the handle without the @ symbol
    */
   const parseHandle = (handle: string): string => {
     return handle.replace("@", "")
@@ -2130,6 +2186,10 @@ import { Mime } from "mime"
       const { data } = await agent.getProfiles({ actors: JSON.parse(args.URI) })
 
       return JSON.stringify(data)
+    }
+
+    async bskyGetVideo(args) {
+      return JSON.stringify(await GetVideo(JSON.parse(args.POST)))
     }
 
     async bskyEditProfile(args) {
