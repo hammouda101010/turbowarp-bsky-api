@@ -9,6 +9,7 @@ import { AtUri } from "@atproto/api";
 import { Mime } from "mime";
 import { FFmpeg, FileData } from '@ffmpeg/ffmpeg';
 
+
 ;
 (function (Scratch) {
   if (Scratch.extensions.unsandboxed === false) {
@@ -83,8 +84,8 @@ import { FFmpeg, FileData } from '@ffmpeg/ffmpeg';
   type ImageType = "avatar" | "banner" | "feed_thumbnail" | "feed_fullsize"
 
   // Special Functions
-  
-  /**Gets the video of a BlueSky post using {@link https://github.com/ffmpegwasm/ffmpeg.wasm}. 
+
+  /**Gets the video of a BlueSky post using {@link [ffmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm)} as a `data:` URI. 
    * 
    * Might be slow.
    * @param {PostView} post - The post with the video.
@@ -96,46 +97,43 @@ import { FFmpeg, FileData } from '@ffmpeg/ffmpeg';
     name: string, 
     thumbnail: string | URL
   }>{
-    let video
-    try {
-      video = {
+    const video = {
         //@ts-expect-error ignore
-        mimeType: post.record.embed.video.mimeType,
+        mimeType: Cast.toString(post.record.embed.video.mimeType),
         //@ts-expect-error ignore
         name: post.record.text.replace(/ /g,"_"),
-        alt: post.embed.alt
-      }
-    } catch {
-      throw new Error("This post doesn't contain any video.")
+        alt: Cast.toString(post.embed.alt)
     }
-    await ffmpeg.load()
-    const output: string = `${video.name}.${mime.getExtension(video.mimeType)}`
-    await ffmpeg.exec(["-i", Cast.toString(post.embed.playlist), "-c", "copy", output ]);
-    const uint8Array: FileData | Uint8Array = await ffmpeg.readFile(output)
-
-    // convert the video to a data URI
-    const blob = new Blob([uint8Array], { type: video.mimeType })
-    const objectURL = URL.createObjectURL(blob);
     
-    const reader = new FileReader();
-    let url
-    reader.onloadend = async () => {
+    await ffmpeg.load()
+    const outputName: string = `${video.name}.${mime.getExtension(video.mimeType)}`
+    const videoFile: string = Cast.toString(post.embed.playlist)
+
+    await ffmpeg.exec(["-i", videoFile.replace("playlist", "video"), "-c", "copy", outputName ]);
+
+    const uint8Array: FileData | Uint8Array = await ffmpeg.readFile(outputName)
+
+    const blob = new Blob([uint8Array], { type: video.mimeType })
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      let url: string | Response
+      reader.onloadend = async () => {
         const dataURI = Cast.toString(reader.result);
 
-        URL.revokeObjectURL(objectURL);
         url = await Scratch.fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(dataURI)}`)
         url = await url.text()
-    };
-    reader.readAsDataURL(blob)
-    
-
-    return {
-      name: output,
-      cid: Cast.toString(post.embed.cid),
-      thumbnail: Cast.toString(post.embed.thumbnail),
-      alt: Cast.toString(post.embed.alt),
-      data: url
-    }
+        resolve({
+          name: outputName,
+          cid: Cast.toString(post.embed.cid),
+          thumbnail: Cast.toString(post.embed.thumbnail),
+          alt: Cast.toString(post.embed.alt),
+          data: Cast.toString(url)
+        })
+      };
+      reader.onerror = reject
+      reader.readAsDataURL(blob)
+    })
   }
 
   /**
@@ -1769,18 +1767,15 @@ import { FFmpeg, FileData } from '@ffmpeg/ffmpeg';
 
     /* ---- BUTTONS----*/
     bskyDisclaimer() {
-      this.clientMetadata
-
       alert(
         `DISCLAIMER:
-
-          Rules to Follow:
-          1. Follow BlueSky's Terms of Service: https://bsky.social/about/support/tos
-          2. Avoid Copyright Infringements: https://bsky.social/about/support/copyright
-          3. Respect Community Guidelines: https://bsky.social/about/support/community-guidelines
-          4. Do Not Use This Extension for Malicious Purposes, such as Spam Bots, Scams, or Hacking other Accounts.
+          Do not use this extension for malicious purposes, such as spam bots, scams, or hacking other accounts.
+          Also don't abuse the moderation tools to falsey ban other people.
           
-          Note: This Extension Pairs Well With JSON Extensions, But Doesn't Work In Desktop.`
+          This extension might not work well In Desktop.
+
+          Note: This extension pairs well with JSON extensions. 
+        `
       )
     }
     bskyShowExtras() {
