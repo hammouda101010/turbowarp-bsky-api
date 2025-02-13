@@ -24,11 +24,11 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      - name: Validate Lint
-        run: npm run lint
-        continue-on-error: true
       - name: Validate Lint Type
         run: npm run lint:type
+        continue-on-error: true
+      - name: Validate Lint
+        run: npm run lint
 
   format:
     runs-on: ubuntu-latest
