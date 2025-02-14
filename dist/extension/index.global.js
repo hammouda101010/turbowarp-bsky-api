@@ -59751,40 +59751,37 @@ if (cid) {
     const mime = new Mime_default();
     const ffmpeg = new FFmpeg();
     async function GetVideo(post) {
-      let video;
-      try {
-        video = {
-          //@ts-expect-error ignore
-          mimeType: post.record.embed.video.mimeType,
-          //@ts-expect-error ignore
-          name: post.record.text.replace(/ /g, "_"),
-          alt: post.embed.alt
-        };
-      } catch {
-        throw new Error("This post doesn't contain any video.");
-      }
+      const video = {
+        //@ts-expect-error ignore
+        mimeType: Cast.toString(post.record.embed.video.mimeType),
+        //@ts-expect-error ignore
+        name: post.record.text.replace(/ /g, "_"),
+        alt: Cast.toString(post.embed.alt)
+      };
       await ffmpeg.load();
-      const output = `${video.name}.${mime.getExtension(video.mimeType)}`;
-      await ffmpeg.exec(["-i", Cast.toString(post.embed.playlist), "-c", "copy", output]);
-      const uint8Array = await ffmpeg.readFile(output);
+      const outputName = `${video.name}.${mime.getExtension(video.mimeType)}`;
+      const videoFile = Cast.toString(post.embed.playlist);
+      await ffmpeg.exec(["-i", videoFile.replace("playlist", "video"), "-c", "copy", outputName]);
+      const uint8Array = await ffmpeg.readFile(outputName);
       const blob = new Blob([uint8Array], { type: video.mimeType });
-      const objectURL = URL.createObjectURL(blob);
-      const reader = new FileReader();
-      let url;
-      reader.onloadend = async () => {
-        const dataURI = Cast.toString(reader.result);
-        URL.revokeObjectURL(objectURL);
-        url = await Scratch2.fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(dataURI)}`);
-        url = await url.text();
-      };
-      reader.readAsDataURL(blob);
-      return {
-        name: output,
-        cid: Cast.toString(post.embed.cid),
-        thumbnail: Cast.toString(post.embed.thumbnail),
-        alt: Cast.toString(post.embed.alt),
-        data: url
-      };
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        let url;
+        reader.onloadend = async () => {
+          const dataURI = Cast.toString(reader.result);
+          url = await Scratch2.fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(dataURI)}`);
+          url = await url.text();
+          resolve({
+            name: outputName,
+            cid: Cast.toString(post.embed.cid),
+            thumbnail: Cast.toString(post.embed.thumbnail),
+            alt: Cast.toString(post.embed.alt),
+            data: Cast.toString(url)
+          });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
     }
     const parseHandle = (handle) => {
       return handle.replace("@", "");
@@ -61235,17 +61232,15 @@ if (cid) {
       }
       /* ---- BUTTONS----*/
       bskyDisclaimer() {
-        this.clientMetadata;
         alert(
           `DISCLAIMER:
-
-          Rules to Follow:
-          1. Follow BlueSky's Terms of Service: https://bsky.social/about/support/tos
-          2. Avoid Copyright Infringements: https://bsky.social/about/support/copyright
-          3. Respect Community Guidelines: https://bsky.social/about/support/community-guidelines
-          4. Do Not Use This Extension for Malicious Purposes, such as Spam Bots, Scams, or Hacking other Accounts.
+          Do not use this extension for malicious purposes, such as spam bots, scams, or hacking other accounts.
+          Also don't abuse the moderation tools to falsey ban other people.
           
-          Note: This Extension Pairs Well With JSON Extensions, But Doesn't Work In Desktop.`
+          This extension might not work well In Desktop.
+
+          Note: This extension pairs well with JSON extensions. 
+        `
         );
       }
       bskyShowExtras() {
