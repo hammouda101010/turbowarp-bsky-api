@@ -1,18 +1,14 @@
 // This is The New OAuth Rewrite. It may be unstable
 // Required Modules
-import { BrowserOAuthClient, OAuthClientMetadataInput, OAuthSession } from "@atproto/oauth-client-browser";
-import { AppBskyGraphDefs, Agent } from "@atproto/api";
+import { BrowserOAuthClient, OAuthClientMetadataInput, OAuthSession } from "@atproto/oauth-client-browser"
+import { AppBskyGraphDefs, Agent } from "@atproto/api"
 import { moderatePost } from "@atproto/api"
-import { PostView } from "@atproto/api/src/client/types/app/bsky/feed/defs"
-import { RichText } from "@atproto/api";
-import { AtUri } from "@atproto/api";
-import { Mime } from "mime";
-import { FFmpeg, FileData } from '@ffmpeg/ffmpeg';
-import { toBlobURL } from "@ffmpeg/util";
+import { RichText } from "@atproto/api"
+import { AtUri } from "@atproto/api"
+import { Mime } from "mime"
 
 
-;
-(function (Scratch) {
+;(function (Scratch) {
   if (Scratch.extensions.unsandboxed === false) {
     throw new Error("TurboButterfly Extension Must Be Run Unsandboxed.")
   }
@@ -66,7 +62,6 @@ import { toBlobURL } from "@ffmpeg/util";
   // Objects
   let agent: Agent = undefined
   const mime = new Mime()
-  const ffmpeg = new FFmpeg()
 
   // Types and Interfaces
   /**Search Result Data */
@@ -85,73 +80,6 @@ import { toBlobURL } from "@ffmpeg/util";
   type ImageType = "avatar" | "banner" | "feed_thumbnail" | "feed_fullsize"
 
   // Special Functions
-
-  /**Gets the video of a BlueSky post using {@link [ffmpeg.wasm](https://github.com/ffmpegwasm/ffmpeg.wasm)} as a `data:` URI. 
-   * 
-   * Might be slow.
-   * @param {PostView} post - The post with the video.
-   */
-  async function GetVideo(post: PostView): Promise<{
-    alt: string, 
-    cid: string, 
-    data: string | URL, 
-    name: string, 
-    thumbnail: string | URL
-  }>{
-    const video = {
-        //@ts-expect-error ignore
-        mimeType: Cast.toString(post.record.embed.video.mimeType),
-        //@ts-expect-error ignore
-        name: post.record.text.replace(/ /g,"_"),
-        alt: Cast.toString(post.embed.alt)
-    }
-    
-    await ffmpeg.load({
-    classWorkerURL: await toBlobURL("https://unpkg.com/@ffmpeg/ffmpeg@latest/dist/esm/worker.js",
-      "text/javascript"),
-    coreURL: await toBlobURL("https://unpkg.com/@ffmpeg/core@latest/dist/esm/ffmpeg-core.js",
-      "text/javascript"),
-    wasmURL: await toBlobURL("https://unpkg.com/@ffmpeg/core@latest/dist/esm/ffmpeg-core.wasm", 
-      "application/wasm")
-    })
-
-    const outputName: string = `${video.name}.${mime.getExtension(video.mimeType)}`
-    const videoFile: string = Cast.toString(post.embed.playlist)
-
-    console.log("Converting video...")
-    await ffmpeg.exec(["-i", videoFile.replace("playlist", "360/video"), "-c", "copy", outputName ]);
-
-    console.log("Reading file") 
-    const uint8Array: FileData | Uint8Array = await ffmpeg.readFile(outputName)
-    console.log(uint8Array)
-
-    const blob = new Blob([uint8Array], { type: video.mimeType })
-    console.log(blob)
-
-
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      let url: string | Response
-      reader.onloadend = async () => {
-        console.log("Read file")
-        const dataURI = Cast.toString(reader.result);
-
-        url = await Scratch.fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(dataURI)}`)
-        url = await url.text()
-        ffmpeg
-        resolve({
-          name: outputName,
-          cid: Cast.toString(post.embed.cid),
-          thumbnail: Cast.toString(post.embed.thumbnail),
-          alt: Cast.toString(post.embed.alt),
-          data: Cast.toString(url)
-        })
-      };
-      reader.onerror = reject
-      console.log("Reading file...")
-      reader.readAsDataURL(blob)
-    })
-  }
 
   /**
    * Parses the handle to be usable by the API
@@ -1318,7 +1246,7 @@ import { toBlobURL } from "@ffmpeg/util";
             text: Scratch.translate("get video in post [POST]"),
             arguments: {
               POST: {
-                type: Scratch.ArgumentType.STRING,
+                type: Scratch.ArgumentType.STRING
               }
             }
           },
@@ -1856,7 +1784,7 @@ import { toBlobURL } from "@ffmpeg/util";
         const handle = parseHandle(args.HANDLE)
 
         if (!handle) throw new Error("No Handle Found")
-
+      
         this.session = await this.OAuthClient.signIn(handle, {
           scope: "atproto transition:generic",
           display: "popup",
@@ -2201,7 +2129,24 @@ import { toBlobURL } from "@ffmpeg/util";
     }
 
     async bskyGetVideo(args) {
-      return JSON.stringify(await GetVideo(JSON.parse(args.POST)))
+      // return JSON.stringify(await GetVideo(JSON.parse(args.POST)))
+      const post = JSON.parse(args.POST)
+
+      const video = {
+        mimeType: Cast.toString(post.record.embed.video.mimeType),
+        name: post.record.text.replace(/ /g, "_"),
+        alt: Cast.toString(post.embed.alt)
+      }
+      let url = await (await Scratch.fetch(post.embed.playlist)).text()
+      url = post.embed.playlist.replace("playlist.m3u8", url.split("\n")[5])
+
+      return JSON.stringify({
+        name: `${video.name}.${mime.getExtension(video.mimeType)}`,
+        cid: Cast.toString(post.embed.cid),
+        thumbnail: Cast.toString(post.embed.thumbnail),
+        alt: Cast.toString(post.embed.alt),
+        url: url
+      })
     }
 
     async bskyEditProfile(args) {
@@ -3110,6 +3055,7 @@ import { toBlobURL } from "@ffmpeg/util";
     Scratch.vm.on("EXTENSION_ADDED", patchSB)
     Scratch.vm.on("BLOCKSINFO_UPDATE", patchSB)
   }
+
   /* eslint-enable */
 
   // @ts-expect-error
