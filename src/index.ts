@@ -8,6 +8,7 @@ import { RichText } from "@atproto/api";
 import { AtUri } from "@atproto/api";
 import { Mime } from "mime";
 import { FFmpeg, FileData } from '@ffmpeg/ffmpeg';
+import { toBlobURL } from "@ffmpeg/util";
 
 
 ;
@@ -105,24 +106,39 @@ import { FFmpeg, FileData } from '@ffmpeg/ffmpeg';
         alt: Cast.toString(post.embed.alt)
     }
     
-    await ffmpeg.load()
+    await ffmpeg.load({
+    classWorkerURL: await toBlobURL("https://unpkg.com/@ffmpeg/ffmpeg@latest/dist/esm/worker.js",
+      "text/javascript"),
+    coreURL: await toBlobURL("https://unpkg.com/@ffmpeg/core@latest/dist/esm/ffmpeg-core.js",
+      "text/javascript"),
+    wasmURL: await toBlobURL("https://unpkg.com/@ffmpeg/core@latest/dist/esm/ffmpeg-core.wasm", 
+      "application/wasm")
+    })
+
     const outputName: string = `${video.name}.${mime.getExtension(video.mimeType)}`
     const videoFile: string = Cast.toString(post.embed.playlist)
 
-    await ffmpeg.exec(["-i", videoFile.replace("playlist", "video"), "-c", "copy", outputName ]);
+    console.log("Converting video...")
+    await ffmpeg.exec(["-i", videoFile.replace("playlist", "360/video"), "-c", "copy", outputName ]);
 
+    console.log("Reading file") 
     const uint8Array: FileData | Uint8Array = await ffmpeg.readFile(outputName)
+    console.log(uint8Array)
 
     const blob = new Blob([uint8Array], { type: video.mimeType })
+    console.log(blob)
+
 
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       let url: string | Response
       reader.onloadend = async () => {
+        console.log("Read file")
         const dataURI = Cast.toString(reader.result);
 
         url = await Scratch.fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(dataURI)}`)
         url = await url.text()
+        ffmpeg
         resolve({
           name: outputName,
           cid: Cast.toString(post.embed.cid),
@@ -132,6 +148,7 @@ import { FFmpeg, FileData } from '@ffmpeg/ffmpeg';
         })
       };
       reader.onerror = reject
+      console.log("Reading file...")
       reader.readAsDataURL(blob)
     })
   }
@@ -1293,12 +1310,12 @@ import { FFmpeg, FileData } from '@ffmpeg/ffmpeg';
           },
           {
             blockType: Scratch.BlockType.LABEL,
-            text: "Media and Videos"
+            text: Scratch.translate("Media and Videos")
           },
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: "bskyGetVideo",
-            text: "get video url in post [POST]",
+            text: Scratch.translate("get video in post [POST]"),
             arguments: {
               POST: {
                 type: Scratch.ArgumentType.STRING,
@@ -2013,8 +2030,8 @@ import { FFmpeg, FileData } from '@ffmpeg/ffmpeg';
           cid: args.POST_CID
         },
         postReplyingto: {
-          uri: args.POST_URI,
-          cid: args.POST_CID
+          uri: args.URI,
+          cid: args.CID
         }
       })
     }
