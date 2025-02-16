@@ -2,8 +2,8 @@
 // ID: HamBskyAPI
 // Description: Interact with the BlueSky API! Unofficial.
 // By: Hammouda101010 <https://scratch.mit.edu/users/hammouda101010/>
-// Original: BlueSky <https://bsky.app>
-// License: MIT
+// Original: BlueSky <https://bsky.social/>
+// License: MIT & MPL-2.0
 
 (() => {
   var __create = Object.create;
@@ -59720,6 +59720,63 @@ if (cid) {
     FFFSType2["PROXYFS"] = "PROXYFS";
   })(FFFSType || (FFFSType = {}));
 
+  // node_modules/@ffmpeg/util/dist/esm/errors.js
+  var ERROR_RESPONSE_BODY_READER = new Error("failed to get response body reader");
+  var ERROR_INCOMPLETED_DOWNLOAD = new Error("failed to complete download");
+
+  // node_modules/@ffmpeg/util/dist/esm/const.js
+  var HeaderContentLength = "Content-Length";
+
+  // node_modules/@ffmpeg/util/dist/esm/index.js
+  var downloadWithProgress = async (url, cb) => {
+    const resp = await fetch(url);
+    let buf;
+    try {
+      const total = parseInt(resp.headers.get(HeaderContentLength) || "-1");
+      const reader = resp.body?.getReader();
+      if (!reader)
+        throw ERROR_RESPONSE_BODY_READER;
+      const chunks = [];
+      let received = 0;
+      for (; ; ) {
+        const { done, value } = await reader.read();
+        const delta = value ? value.length : 0;
+        if (done) {
+          if (total != -1 && total !== received)
+            throw ERROR_INCOMPLETED_DOWNLOAD;
+          cb && cb({ url, total, received, delta, done });
+          break;
+        }
+        chunks.push(value);
+        received += delta;
+        cb && cb({ url, total, received, delta, done });
+      }
+      const data = new Uint8Array(received);
+      let position = 0;
+      for (const chunk of chunks) {
+        data.set(chunk, position);
+        position += chunk.length;
+      }
+      buf = data.buffer;
+    } catch (e) {
+      console.log(`failed to send download progress event: `, e);
+      buf = await resp.arrayBuffer();
+      cb && cb({
+        url,
+        total: buf.byteLength,
+        received: buf.byteLength,
+        delta: 0,
+        done: true
+      });
+    }
+    return buf;
+  };
+  var toBlobURL = async (url, mimeType, progress = false, cb) => {
+    const buf = progress ? await downloadWithProgress(url, cb) : await (await fetch(url)).arrayBuffer();
+    const blob = new Blob([buf], { type: mimeType });
+    return URL.createObjectURL(blob);
+  };
+
   // src/index.ts
   (function(Scratch2) {
     if (Scratch2.extensions.unsandboxed === false) {
@@ -59758,19 +59815,38 @@ if (cid) {
         name: post.record.text.replace(/ /g, "_"),
         alt: Cast.toString(post.embed.alt)
       };
-      await ffmpeg.load();
+      await ffmpeg.load({
+        classWorkerURL: await toBlobURL(
+          "https://unpkg.com/@ffmpeg/ffmpeg@latest/dist/esm/worker.js",
+          "text/javascript"
+        ),
+        coreURL: await toBlobURL(
+          "https://unpkg.com/@ffmpeg/core@latest/dist/esm/ffmpeg-core.js",
+          "text/javascript"
+        ),
+        wasmURL: await toBlobURL(
+          "https://unpkg.com/@ffmpeg/core@latest/dist/esm/ffmpeg-core.wasm",
+          "application/wasm"
+        )
+      });
       const outputName = `${video.name}.${mime.getExtension(video.mimeType)}`;
       const videoFile = Cast.toString(post.embed.playlist);
-      await ffmpeg.exec(["-i", videoFile.replace("playlist", "video"), "-c", "copy", outputName]);
+      console.log("Converting video...");
+      await ffmpeg.exec(["-i", videoFile.replace("playlist", "360/video"), "-c", "copy", outputName]);
+      console.log("Reading file");
       const uint8Array = await ffmpeg.readFile(outputName);
+      console.log(uint8Array);
       const blob = new Blob([uint8Array], { type: video.mimeType });
+      console.log(blob);
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         let url;
         reader.onloadend = async () => {
+          console.log("Read file");
           const dataURI = Cast.toString(reader.result);
           url = await Scratch2.fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(dataURI)}`);
           url = await url.text();
+          ffmpeg;
           resolve({
             name: outputName,
             cid: Cast.toString(post.embed.cid),
@@ -59780,6 +59856,7 @@ if (cid) {
           });
         };
         reader.onerror = reject;
+        console.log("Reading file...");
         reader.readAsDataURL(blob);
       });
     }
@@ -60765,12 +60842,12 @@ if (cid) {
             },
             {
               blockType: Scratch2.BlockType.LABEL,
-              text: "Media and Videos"
+              text: Scratch2.translate("Media and Videos")
             },
             {
               blockType: Scratch2.BlockType.REPORTER,
               opcode: "bskyGetVideo",
-              text: "get video url in post [POST]",
+              text: Scratch2.translate("get video in post [POST]"),
               arguments: {
                 POST: {
                   type: Scratch2.ArgumentType.STRING
@@ -61448,8 +61525,8 @@ if (cid) {
             cid: args.POST_CID
           },
           postReplyingto: {
-            uri: args.POST_URI,
-            cid: args.POST_CID
+            uri: args.URI,
+            cid: args.CID
           }
         });
       }
