@@ -59815,7 +59815,6 @@ if (cid) {
         name: post.record.text.replace(/ /g, "_"),
         alt: Cast.toString(post.embed.alt)
       };
-      console.log("Loading FFmpeg.wasm...");
       await ffmpeg.load({
         classWorkerURL: await toBlobURL(
           "https://unpkg.com/@ffmpeg/ffmpeg@latest/dist/esm/worker.js",
@@ -59833,13 +59832,7 @@ if (cid) {
       const outputName = `${video.name}.${mime.getExtension(video.mimeType)}`;
       const videoFile = Cast.toString(post.embed.playlist);
       console.log("Converting video...");
-      await ffmpeg.exec([
-        "-i",
-        videoFile.replace("playlist", "360p/video"),
-        "-c",
-        "copy",
-        outputName
-      ]);
+      await ffmpeg.exec(["-i", videoFile.replace("playlist", "360/video"), "-c", "copy", outputName]);
       console.log("Reading file");
       const uint8Array = await ffmpeg.readFile(outputName);
       console.log(uint8Array);
