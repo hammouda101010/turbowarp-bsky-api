@@ -26,7 +26,7 @@
     "globals": "^15.14.0",
     "http-server": "^14.1.1",
     "prettier": "^3.4.2",
-    "tsup": "^8.3.6",
+    "tsup": "^2.0.3",
     "typescript": "^5.7.2"
   },
   "dependencies": {
