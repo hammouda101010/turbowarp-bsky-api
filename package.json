@@ -1,6 +1,6 @@
 {
   "name": "twblueskyapi",
-  "version": "1.0.0",
+  "version": "0.7.0",
   "description": "Interact with the BlueSky API!",
   "main": "dist/extension/index.js",
   "scripts": {
