@@ -59930,6 +59930,21 @@ if (cid) {
             },
             {
               blockType: Scratch2.BlockType.COMMAND,
+              opcode: "bskyDeletePost",
+              text: "delete post [POST_ICON][POST] from bluesky",
+              arguments: {
+                POST_ICON: {
+                  type: Scratch2.ArgumentType.IMAGE,
+                  dataURI: speechBubbleIcon
+                },
+                POST: {
+                  type: Scratch2.ArgumentType.STRING,
+                  defaultValue: "at://dic:plc:foo"
+                }
+              }
+            },
+            {
+              blockType: Scratch2.BlockType.COMMAND,
               opcode: "bskyReply",
               text: "reply [POST_ICON][REPLY] to post with info:[INFO] embed: [EMBED]",
               arguments: {
@@ -60208,7 +60223,7 @@ if (cid) {
             {
               blockType: Scratch2.BlockType.REPORTER,
               opcode: "bskyGetAuthorFeedSep",
-              text: "get the author [URI]'s feed with filter [FILTER]",
+              text: "get the author [URI]'s feed with [FILTER]",
               hideFromPalette: !this.sepCursorLimit,
               outputShape: 3,
               arguments: {
@@ -60225,7 +60240,7 @@ if (cid) {
             {
               blockType: Scratch2.BlockType.REPORTER,
               opcode: "bskyGetAuthorFeed",
-              text: "get the author [URI]'s feed with filter [FILTER] cursor [CURSOR] and limit [LIMIT]",
+              text: "get the author [URI]'s feed with [FILTER] cursor [CURSOR] and limit [LIMIT]",
               hideFromPalette: this.sepCursorLimit,
               outputShape: 3,
               arguments: {
@@ -60720,13 +60735,19 @@ if (cid) {
             {
               blockType: Scratch2.BlockType.COMMAND,
               opcode: "bskyLexicon",
-              text: "call bluesky lexicon [LEXICON] with parameters [INPUTS]",
+              text: "call bluesky lexicon [LEXICON] with parameters [INPUTS] data [DATA] and options [OPTIONS]",
               arguments: {
                 LEXICON: {
                   type: Scratch2.ArgumentType.STRING,
                   defaultValue: "app.bsky.feed"
                 },
                 INPUTS: {
+                  type: null
+                },
+                DATA: {
+                  type: null
+                },
+                OPTIONS: {
                   type: null
                 }
               },
@@ -60736,13 +60757,19 @@ if (cid) {
             {
               blockType: Scratch2.BlockType.REPORTER,
               opcode: "bskyLexiconReporter",
-              text: "call bluesky lexicon [LEXICON] with parameters [INPUTS] and return value",
+              text: "call bluesky lexicon [LEXICON] with parameters [INPUTS] data [DATA] and options [OPTIONS]",
               arguments: {
                 LEXICON: {
                   type: Scratch2.ArgumentType.STRING,
                   defaultValue: "app.bsky.feed"
                 },
                 INPUTS: {
+                  type: null
+                },
+                DATA: {
+                  type: null
+                },
+                OPTIONS: {
                   type: null
                 }
               },
@@ -60965,7 +60992,7 @@ if (cid) {
         document.dispatchEvent(BskyLogoutEvent);
       }
       bskyLoggedIn() {
-        return Cast.toBoolean(this.session);
+        return Cast.toBoolean(agent.did);
       }
       async bskyPost(args) {
         if (!this.richText) {
@@ -60988,6 +61015,9 @@ if (cid) {
             await Post(args.POST, this.useCurrentDate, this.date);
           }
         }
+      }
+      async bskyDeletePost(args) {
+        await agent.deletePost(args.POST);
       }
       async bskyReply(args) {
         const replyData = JSON.parse(args.INFO);
@@ -61340,21 +61370,41 @@ if (cid) {
         return JSON.stringify(await atUriConversions.URLtoBlobRef(args.URL));
       }
       async bskyLexicon(args) {
-        await agent.call(args.LEXICON, JSON.parse(args.INPUTS));
+        await agent.call(
+          args.LEXICON,
+          JSON.parse(args.INPUTS),
+          JSON.parse(args.DATA) ?? void 0,
+          JSON.parse(args.OPTIONS) ?? void 0
+        );
       }
       async bskyLexiconReporter(args) {
-        const response = await agent.call(args.LEXICON, JSON.parse(args.INPUTS));
+        const response = await agent.call(
+          args.LEXICON,
+          JSON.parse(args.INPUTS),
+          JSON.parse(args.DATA) ?? void 0,
+          JSON.parse(args.OPTIONS) ?? void 0
+        );
         return JSON.stringify(response);
       }
       bskyLexiconInputs(args) {
         const prefix = "ARG";
         const params = {};
         for (let i = 0; prefix + i in args; i++) {
-          const arg = JSON.parse(`{${args[prefix + i]}}`);
-          if (Object.keys(arg).length > 1) {
-            throw new Error("Can't have more than 1 key for each argument");
+          try {
+            const isObjectKey = (str2) => {
+              return Cast.toBoolean(/["'].+["']:(.*)?/.test(str2));
+            };
+            const arg = isObjectKey(args[prefix + i]) ? args[prefix + i] : this.convertToObjectKey(args[prefix + i]);
+            const str = `{${arg}}`.replace("'", '"');
+            console.log(Cast.toString(args[prefix + i]), str);
+            const obj = JSON.parse(str);
+            if (Object.keys(obj).length > 1) {
+              throw new Error("Can't have more than 1 key for each argument");
+            }
+            Object.assign(params, obj);
+          } catch (e) {
+            return `Error Parsing Inputs: ${e}`;
           }
-          Object.assign(params, arg);
         }
         return JSON.stringify(params);
       }
@@ -61378,6 +61428,10 @@ if (cid) {
       // Utilities
       getCurrentMutation(args, util) {
         return args.mutation || util.target.blocks.getBlock(util.thread.peekStack())?.mutation || runtime.flyoutBlocks.getBlock(util.thread.peekStack())?.mutation;
+      }
+      convertToObjectKey(str) {
+        const data = str.split(":");
+        return `"${data[0]}":${data[1]}`;
       }
     }
     document.addEventListener("bskyLogin", () => {

@@ -1,13 +1,15 @@
 // This is The New OAuth Rewrite. It may be unstable
 // Required Modules
-import { BrowserOAuthClient, OAuthClientMetadataInput, OAuthSession } from "@atproto/oauth-client-browser"
+import {
+  BrowserOAuthClient,
+  OAuthClientMetadataInput,
+  OAuthSession
+} from "@atproto/oauth-client-browser"
 import { AppBskyGraphDefs, Agent } from "@atproto/api"
 import { moderatePost } from "@atproto/api"
 import { RichText } from "@atproto/api"
 import { AtUri } from "@atproto/api"
 import { Mime } from "mime"
-
-
 ;(function (Scratch) {
   if (Scratch.extensions.unsandboxed === false) {
     throw new Error("TurboButterfly Extension Must Be Run Unsandboxed.")
@@ -716,7 +718,6 @@ import { Mime } from "mime"
             blockType: Scratch.BlockType.LABEL,
             text: "Creating Posts"
           },
-
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyPost",
@@ -733,6 +734,21 @@ import { Mime } from "mime"
               EMBED: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: ""
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: "bskyDeletePost",
+            text: "delete post [POST_ICON][POST] from bluesky",
+            arguments: {
+              POST_ICON: {
+                type: Scratch.ArgumentType.IMAGE,
+                dataURI: speechBubbleIcon
+              },
+              POST: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "at://dic:plc:foo"
               }
             }
           },
@@ -1031,7 +1047,7 @@ import { Mime } from "mime"
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: "bskyGetAuthorFeedSep",
-            text: "get the author [URI]'s feed with filter [FILTER]",
+            text: "get the author [URI]'s feed with [FILTER]",
             hideFromPalette: !this.sepCursorLimit,
             outputShape: 3,
             arguments: {
@@ -1048,7 +1064,7 @@ import { Mime } from "mime"
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: "bskyGetAuthorFeed",
-            text: "get the author [URI]'s feed with filter [FILTER] cursor [CURSOR] and limit [LIMIT]",
+            text: "get the author [URI]'s feed with [FILTER] cursor [CURSOR] and limit [LIMIT]",
             hideFromPalette: this.sepCursorLimit,
             outputShape: 3,
             arguments: {
@@ -1547,13 +1563,19 @@ import { Mime } from "mime"
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyLexicon",
-            text: "call bluesky lexicon [LEXICON] with parameters [INPUTS]",
+            text: "call bluesky lexicon [LEXICON] with parameters [INPUTS] data [DATA] and options [OPTIONS]",
             arguments: {
               LEXICON: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: "app.bsky.feed"
               },
               INPUTS: {
+                type: null
+              },
+              DATA: {
+                type: null
+              },
+              OPTIONS: {
                 type: null
               }
             },
@@ -1564,13 +1586,19 @@ import { Mime } from "mime"
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: "bskyLexiconReporter",
-            text: "call bluesky lexicon [LEXICON] with parameters [INPUTS] and return value",
+            text: "call bluesky lexicon [LEXICON] with parameters [INPUTS] data [DATA] and options [OPTIONS]",
             arguments: {
               LEXICON: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue: "app.bsky.feed"
               },
               INPUTS: {
+                type: null
+              },
+              DATA: {
+                type: null
+              },
+              OPTIONS: {
                 type: null
               }
             },
@@ -1784,7 +1812,7 @@ import { Mime } from "mime"
         const handle = parseHandle(args.HANDLE)
 
         if (!handle) throw new Error("No Handle Found")
-      
+
         this.session = await this.OAuthClient.signIn(handle, {
           scope: "atproto transition:generic",
           display: "popup",
@@ -1816,7 +1844,7 @@ import { Mime } from "mime"
       document.dispatchEvent(BskyLogoutEvent)
     }
     bskyLoggedIn() {
-      return Cast.toBoolean(this.session)
+      return Cast.toBoolean(agent.did)
     }
 
     async bskyPost(args): Promise<void> {
@@ -1842,6 +1870,9 @@ import { Mime } from "mime"
           await Post(args.POST, this.useCurrentDate, this.date)
         }
       }
+    }
+    async bskyDeletePost(args) {
+      await agent.deletePost(args.POST)
     }
     async bskyReply(args): Promise<void> {
       const replyData = JSON.parse(args.INFO)
@@ -2254,10 +2285,20 @@ import { Mime } from "mime"
     }
 
     async bskyLexicon(args) {
-      await agent.call(args.LEXICON, JSON.parse(args.INPUTS))
+      await agent.call(
+        args.LEXICON,
+        JSON.parse(args.INPUTS),
+        JSON.parse(args.DATA) ?? undefined,
+        JSON.parse(args.OPTIONS) ?? undefined
+      )
     }
     async bskyLexiconReporter(args) {
-      const response = await agent.call(args.LEXICON, JSON.parse(args.INPUTS))
+      const response = await agent.call(
+        args.LEXICON,
+        JSON.parse(args.INPUTS),
+        JSON.parse(args.DATA) ?? undefined,
+        JSON.parse(args.OPTIONS) ?? undefined
+      )
 
       return JSON.stringify(response)
     }
@@ -2266,11 +2307,31 @@ import { Mime } from "mime"
       const prefix = "ARG"
       const params: object = {}
       for (let i = 0; prefix + i in args; i++) {
-        const arg: object = JSON.parse(`{${args[prefix + i]}}`)
-        if (Object.keys(arg).length > 1) {
-          throw new Error("Can't have more than 1 key for each argument")
+        try {
+          const isObjectKey = (str) => {
+            return Cast.toBoolean(/["'].+["']:(.*)?/.test(str))
+          }
+          const arg =
+            isObjectKey(args[prefix + i])
+              ? args[prefix + i]
+              : this.convertToObjectKey(args[prefix + i])
+
+          // Parse the single quotes to be double quotes
+          const str = `{${arg}}`.replace("\'", "\"")
+          console.log(Cast.toString(args[prefix + i]), str)
+
+          const obj: object = JSON.parse(str)
+
+          // Check if the created object has more than 1 argument
+          if (Object.keys(obj).length > 1) {
+            throw new Error("Can't have more than 1 key for each argument")
+          }
+
+          // "Pushes" the object into the params object
+          Object.assign(params, obj)
+        } catch (e) {
+          return `Error Parsing Inputs: ${e}`
         }
-        Object.assign(params, arg)
       }
       return JSON.stringify(params)
     }
@@ -2299,6 +2360,11 @@ import { Mime } from "mime"
         util.target.blocks.getBlock(util.thread.peekStack())?.mutation ||
         runtime.flyoutBlocks.getBlock(util.thread.peekStack())?.mutation
       )
+    }
+    convertToObjectKey(str: string) {
+      const data: string[] = str.split(":")
+
+      return `"${data[0]}":${data[1]}`
     }
   }
 
