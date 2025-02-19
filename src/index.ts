@@ -2308,16 +2308,15 @@ import { Mime } from "mime"
       const params: object = {}
       for (let i = 0; prefix + i in args; i++) {
         try {
-          const isObjectKey = (str) => {
+          const isObjectKey = str => {
             return Cast.toBoolean(/["'].+["']:(.*)?/.test(str))
           }
-          const arg =
-            isObjectKey(args[prefix + i])
-              ? args[prefix + i]
-              : this.convertToObjectKey(args[prefix + i])
+          const arg = isObjectKey(args[prefix + i])
+            ? args[prefix + i]
+            : this.convertToObjectKey(args[prefix + i])
 
           // Parse the single quotes to be double quotes
-          const str = `{${arg}}`.replace("\'", "\"")
+          const str = `{${arg}}`.replace("\'", '"')
           console.log(Cast.toString(args[prefix + i]), str)
 
           const obj: object = JSON.parse(str)
