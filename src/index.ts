@@ -5,11 +5,13 @@ import {
   OAuthClientMetadataInput,
   OAuthSession
 } from "@atproto/oauth-client-browser"
-import { AppBskyGraphDefs, Agent } from "@atproto/api"
+import { AppBskyGraphDefs, Agent, AppBskyFeedPost } from "@atproto/api"
 import { moderatePost } from "@atproto/api"
 import { RichText } from "@atproto/api"
 import { AtUri } from "@atproto/api"
 import { Mime } from "mime"
+import { PostView } from "@atproto/api/dist/client/types/app/bsky/feed/defs"
+import { fileTypeFromBuffer } from "file-type"
 ;(function (Scratch) {
   if (Scratch.extensions.unsandboxed === false) {
     throw new Error("TurboButterfly Extension Must Be Run Unsandboxed.")
@@ -62,7 +64,7 @@ import { Mime } from "mime"
   // "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNS44OTMiIGhlaWdodD0iMTUuODkzIiB2aWV3Qm94PSIwIDAgMTUuODkzIDE1Ljg5MyI+PHBhdGggZD0iTTkuMDIxIDEyLjI5NHYtMi4xMDdsLTYuODM5LS45MDVDMS4zOTggOS4xODQuODQ2IDguNDg2Ljk2MiA3LjcyN2MuMDktLjYxMi42MDMtMS4wOSAxLjIyLTEuMTY0bDYuODM5LS45MDVWMy42YzAtLjU4Ni43MzItLjg2OSAxLjE1Ni0uNDY0bDQuNTc2IDQuMzQ1YS42NDMuNjQzIDAgMCAxIDAgLjkxOGwtNC41NzYgNC4zNmMtLjQyNC40MDQtMS4xNTYuMTEtMS4xNTYtLjQ2NSIgZmlsbD0ibm9uZSIgc3Ryb2tlLW9wYWNpdHk9Ii4xNSIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjEuNzUiLz48cGF0aCBkPSJNOS4wMjEgMTIuMjk0di0yLjEwN2wtNi44MzktLjkwNUMxLjM5OCA5LjE4NC44NDYgOC40ODYuOTYyIDcuNzI3Yy4wOS0uNjEyLjYwMy0xLjA5IDEuMjItMS4xNjRsNi44MzktLjkwNVYzLjZjMC0uNTg2LjczMi0uODY5IDEuMTU2LS40NjRsNC41NzYgNC4zNDVhLjY0My42NDMgMCAwIDEgMCAuOTE4bC00LjU3NiA0LjM2Yy0uNDI0LjQwNC0xLjE1Ni4xMS0xLjE1Ni0uNDY1IiBmaWxsPSIjZmZmIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiLz48cGF0aCBkPSJNMCAxNS44OTJWMGgxNS44OTJ2MTUuODkyeiIgZmlsbD0ibm9uZSIvPjwvc3ZnPg==";
 
   // Objects
-  let agent: Agent = undefined
+  let agent: Agent = new Agent("https://bsky.social")
   const mime = new Mime()
 
   // Types and Interfaces
@@ -1259,7 +1261,17 @@ import { Mime } from "mime"
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: "bskyGetVideo",
-            text: Scratch.translate("get video in post [POST]"),
+            text: Scratch.translate("get video data in post [POST]"),
+            arguments: {
+              POST: {
+                type: Scratch.ArgumentType.STRING
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: "bskyGetBlob",
+            text: Scratch.translate("get blob from DID [DID] and CID [CID]"),
             arguments: {
               POST: {
                 type: Scratch.ArgumentType.STRING
@@ -1268,7 +1280,7 @@ import { Mime } from "mime"
           },
           {
             blockType: Scratch.BlockType.LABEL,
-            text: "Editing Your Profile"
+            text: "Your Profile"
           },
           {
             blockType: Scratch.BlockType.COMMAND,
@@ -1292,6 +1304,12 @@ import { Mime } from "mime"
                 defaultValue: "use upload blob reporter"
               }
             }
+          },
+          "---",
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: "bskyGetPreferences",
+            text: "get my preferences"
           },
           {
             blockType: Scratch.BlockType.LABEL,
@@ -2161,23 +2179,56 @@ import { Mime } from "mime"
 
     async bskyGetVideo(args) {
       // return JSON.stringify(await GetVideo(JSON.parse(args.POST)))
-      const post = JSON.parse(args.POST)
+      const post: PostView = JSON.parse(args.POST)
+      //@ts-expect-error - included in post
+      const record: AppBskyFeedPost.Record = post.record
 
       const video = {
-        mimeType: Cast.toString(post.record.embed.video.mimeType),
-        name: post.record.text.replace(/ /g, "_"),
+        //@ts-expect-error - included in record
+        mimeType: Cast.toString(record.embed.video.mimeType),
+        name: record.text.replace(/ /g, "_"),
         alt: Cast.toString(post.embed.alt)
       }
-      let url = await (await Scratch.fetch(post.embed.playlist)).text()
-      url = post.embed.playlist.replace("playlist.m3u8", url.split("\n")[5])
+
+      let url = await (
+        await Scratch.fetch(Cast.toString(post.embed.playlist))
+      ).text()
+      url = Cast.toString(post.embed.playlist).replace(
+        "playlist.m3u8",
+        url.split("\n")[5]
+      )
 
       return JSON.stringify({
         name: `${video.name}.${mime.getExtension(video.mimeType)}`,
+        did: post.author.did,
         cid: Cast.toString(post.embed.cid),
         thumbnail: Cast.toString(post.embed.thumbnail),
         alt: Cast.toString(post.embed.alt),
         url: url
       })
+    }
+
+    async bskyGetBlob(args) {
+      // Get the Raw Blob Data
+      const { data } = await agent.com.atproto.sync.getBlob(args.DID, args.CID)
+
+      // Convert to Data URI
+      let bin = ""
+      for (let i = 0; i < data.length; i++) {
+        bin += String.fromCharCode(data[i])
+      }
+
+      const base64String = btoa(bin)
+
+      const url = `data:${(await fileTypeFromBuffer(data)).mime};base64,${base64String}`
+
+      try {
+        return await Scratch.fetch(
+          `https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}`
+        )
+      } catch {
+        return Cast.toString(url)
+      }
     }
 
     async bskyEditProfile(args) {

@@ -9,8 +9,8 @@
     "lint:type": "tsc --noEmit -p ./tsconfig.json",
     "fix": "eslint ./src --fix",
     "start": "tsup src/index.ts && http-server ./dist -p 8000 --cors",
-    "start:dev": "tsup src/index.ts --out dist/dev/index.dev.js --watch && http-server ./dist/dev -p 8000 --cors",
-    "dev": "tsup src/index.ts --out dist/dev/index.dev.js",
+    "start:dev": "tsup src/index.ts --out-dir dist/dev && http-server ./dist/dev -p 8000 --cors",
+    "dev": "tsup src/index.ts --out-dir dist/dev",
     "build": "tsup src/index.ts",
     "build:turbowarp": "tsup src/index.ts && (npx prettier --config turbowarp/.prettierrc --parser acorn < dist/extension/index.global.js) > dist/extension/index.global.formatted.js && rimraf dist/extension/index.global.js",
     "format": "prettier ./src -c -w",
@@ -34,6 +34,7 @@
   "dependencies": {
     "@atproto/api": "^0.13.20",
     "@atproto/oauth-client-browser": "^0.3.7",
+    "file-type": "^20.1.0",
     "mime": "^4.0.6"
   }
 }
