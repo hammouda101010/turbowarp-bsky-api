@@ -37,6 +37,15 @@ export default [{
         quotes: "off",
         semi: ["error", "never"],
         "no-extra-semi": "off",
+        "require-await": "error",
         "@typescript-eslint/no-namespace": "off",
+        "@typescript-eslint/no-unused-vars": "warn",
+        "@typescript-eslint/ban-ts-comment": [
+            "error", {
+            "ts-expect-error": "allow-with-description",
+            "ts-ignore": false,
+            "ts-nocheck": false,
+            "ts-check": false,
+        }],
     },
 }];

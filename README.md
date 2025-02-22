@@ -75,6 +75,7 @@ Development server: `npm run start` (Extension: <http://localhost:8000/extension
 Thanks for this scaffolding: [FurryR/scratch-ext](https://github.com/FurryR/scratch-ext/tree/main) \
 Original API: [BlueSky TypeScript API](https://github.com/bluesky-social/atproto/tree/main/packages/api) \
 Extension Images are From [SVG Repo](https://www.svgrepo.com/)
+Special Thanks to: @yuri-kiss
 
 ### Notes
 ---

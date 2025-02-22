@@ -85,6 +85,81 @@ import { fileTypeFromBuffer } from "file-type"
 
   // Special Functions
 
+  /**!
+   * borrowed modal code from
+   * @link https://gist.github.com/yuri-kiss/345ab1e729bd5d0a87506156635d0c83
+   * @license MIT
+   */
+  ScratchBlocks.alert = (msg: string, title: string) => {
+    const content = msg
+    //@ts-ignore
+    // run prompt to get a GUI to modify
+    ScratchBlocks.prompt()
+
+    // get the portal and its header
+    const portal = document.querySelector("div.ReactModalPortal")
+    const header = portal.querySelector(
+      'div[class*="modal_header-item-title_"]'
+    )
+
+    // add our own custom title
+    header.textContent = title
+    // get the portal body
+    const portalBody = portal.querySelector('div[class^="prompt_body_"]')
+    const portalHolder = portalBody.parentElement.parentElement
+
+    // set a custom modal width and height
+    portalHolder.style.width = "50%"
+    portalHolder.style.height = "50%"
+
+    // set the modal HTML
+    /* eslint-disable */
+    portalBody.parentElement.style.height = "100%"
+    portalBody.style.height = "calc(100% - 3.125rem)"
+    portalBody.style.wordBreak = "break-all"
+    portalBody.style.position = "relative"
+    portalBody.style.overflowY = "auto"
+    const contentHTML = `<!-- Wrapper div for the content --><div style="display:inline-block;width:-webkit-fill-available;height:calc(100% - 2.75rem);">${content}</div>`
+    const promptButtonPos = `<!-- Wrapper div for the prompt buttom positioning --><div style="display:inline;box-sizing:content-box;">${portalBody.querySelector("div[class^=prompt_button-row_]").outerHTML}</div>`
+
+    portalBody.innerHTML = `${contentHTML}${promptButtonPos}`
+    /* eslint-enable */
+
+    // creating our OK button
+    const okButton = portalBody.querySelector(
+      `button[class^="prompt_ok-button_"]`
+    )
+    okButton.previousElementSibling.remove()
+    okButton.parentElement.style.display = "block"
+    okButton.parentElement.style.verticalAlign = "bottom"
+
+    okButton.addEventListener("click", () => {
+      portal.querySelector("div[class^=close-button_close-button_]").click()
+    })
+  }
+  /**Opens a Scratch Modal. Will Only Work on The Editor. */
+  function openModal(
+    type: "alert" | "prompt",
+    titleName: string,
+    msg?: string,
+    func: Function = () => {}
+  ): void {
+    if (typeof scaffolding === "undefined") {
+      if (type === "alert") {
+        ScratchBlocks.alert(msg, titleName)
+      } else if (type === "prompt") {
+        //@ts-ignore
+        ScratchBlocks.prompt(
+          titleName,
+          "",
+          value => func(value),
+          Scratch.translate("Prompt"),
+          "broadcast_msg"
+        )
+      }
+    }
+  }
+
   /**
    * Parses the handle to be usable by the API
    * @param {string} handle - The handle to parse
@@ -429,7 +504,7 @@ import { fileTypeFromBuffer } from "file-type"
       return response
     },
     SearchActors: async (searchTerm: string, cursor: string, limit: number) => {
-      const response = agent.searchActors({
+      const response = await agent.searchActors({
         q: searchTerm,
         cursor: cursor,
         limit: limit
@@ -1271,9 +1346,13 @@ import { fileTypeFromBuffer } from "file-type"
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: "bskyGetBlob",
+            blockIconURI: ImageIcon,
             text: Scratch.translate("get blob from DID [DID] and CID [CID]"),
             arguments: {
-              POST: {
+              DID: {
+                type: Scratch.ArgumentType.STRING
+              },
+              CID: {
                 type: Scratch.ArgumentType.STRING
               }
             }
@@ -2015,20 +2094,30 @@ import { fileTypeFromBuffer } from "file-type"
 
     // Viewing Feeds
     async bskyGetTimeline(args) {
-      const { data } = await agent.getTimeline({
-        cursor: args.CURSOR,
-        limit: args.LIMIT
-      })
+      try {
+        const { data } = await agent.getTimeline({
+          cursor: args.CURSOR,
+          limit: args.LIMIT
+        })
 
-      return JSON.stringify(data)
+        return JSON.stringify(data)
+      } catch (e) {
+        openModal("alert", "Atproto Error", `Something Went Wrong: ${e}`)
+        return
+      }
     }
     async bskyGetTimelineSep() {
-      const { data } = await agent.getTimeline({
-        cursor: this.cursor ?? "",
-        limit: this.limit ?? 50
-      })
+      try {
+        const { data } = await agent.getTimeline({
+          cursor: this.cursor ?? "",
+          limit: this.limit ?? 50
+        })
 
-      return JSON.stringify(data)
+        return JSON.stringify(data)
+      } catch (e) {
+        openModal("alert", "Atproto Error", `Something Went Wrong: ${e}`)
+        return
+      }
     }
 
     // Getting a Feed
@@ -2210,7 +2299,10 @@ import { fileTypeFromBuffer } from "file-type"
 
     async bskyGetBlob(args) {
       // Get the Raw Blob Data
-      const { data } = await agent.com.atproto.sync.getBlob(args.DID, args.CID)
+      const { data } = await agent.com.atproto.sync.getBlob({
+        did: args.DID,
+        cid: args.CID
+      })
 
       // Convert to Data URI
       let bin = ""
@@ -2367,7 +2459,7 @@ import { fileTypeFromBuffer } from "file-type"
             : this.convertToObjectKey(args[prefix + i])
 
           // Parse the single quotes to be double quotes
-          const str = `{${arg}}`.replace("\'", '"')
+          const str = `{${arg}}`.replace("'", '"')
           console.log(Cast.toString(args[prefix + i]), str)
 
           const obj: object = JSON.parse(str)
@@ -3174,6 +3266,6 @@ import { fileTypeFromBuffer } from "file-type"
 
   /* eslint-enable */
 
-  // @ts-expect-error
+  // @ts-ignore
   Scratch.extensions.register(new HamBskyAPI(Scratch.runtime))
 })(Scratch)
