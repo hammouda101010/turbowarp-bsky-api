@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "sourceMap": false,
+    "allowSyntheticDefaultImports": true,
     "module": "ESNext",
     "removeComments": false /* Do not emit comments to output. */,
     // "noEmit": true,                        /* Do not emit outputs. */

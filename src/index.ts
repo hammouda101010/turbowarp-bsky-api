@@ -1,17 +1,34 @@
-// This is The New OAuth Rewrite. It may be unstable
 // Required Modules
+
+// General
+import { BrowserOAuthClient } from "@atproto/oauth-client-browser"
+import { Agent } from "@atproto/api"
+import { RichText } from "@atproto/api"
+import { AtUri } from "@atproto/api"
+
+// Types
+import { AppBskyGraphDefs, AppBskyFeedPost } from "@atproto/api"
 import {
-  BrowserOAuthClient,
   OAuthClientMetadataInput,
   OAuthSession
 } from "@atproto/oauth-client-browser"
-import { AppBskyGraphDefs, Agent, AppBskyFeedPost } from "@atproto/api"
-import { moderatePost } from "@atproto/api"
-import { RichText } from "@atproto/api"
-import { AtUri } from "@atproto/api"
+
+// Moderation
+import {
+  moderatePost,
+  moderateUserList,
+  moderateProfile,
+  moderateFeedGenerator,
+  moderateNotification,
+  ModerationDecision
+} from "@atproto/api"
+
+// Misc
 import { Mime } from "mime"
 import { PostView } from "@atproto/api/dist/client/types/app/bsky/feed/defs"
 import { fileTypeFromBuffer } from "file-type"
+import DOMPurify from "dompurify"
+
 ;(function (Scratch) {
   if (Scratch.extensions.unsandboxed === false) {
     throw new Error("TurboButterfly Extension Must Be Run Unsandboxed.")
@@ -90,26 +107,29 @@ import { fileTypeFromBuffer } from "file-type"
    * @link https://gist.github.com/yuri-kiss/345ab1e729bd5d0a87506156635d0c83
    * @license MIT
    */
-  ScratchBlocks.alert = (msg: string, title: string) => {
-    const content = msg
+  const alertModal = (
+    msg: string = "Hello World!",
+    titleName: string = "Alert",
+    centered?: boolean
+  ) => {
+    const content = DOMPurify.sanitize(Cast.toString(msg))
     //@ts-ignore
     // run prompt to get a GUI to modify
     ScratchBlocks.prompt()
 
-    // get the portal and its header
+    // get the portal/modal and its header
     const portal = document.querySelector("div.ReactModalPortal")
     const header = portal.querySelector(
       'div[class*="modal_header-item-title_"]'
     )
 
     // add our own custom title
-    header.textContent = title
-    // get the portal body
+    header.textContent = DOMPurify.sanitize(Cast.toString(titleName))
+    // get the portal/modal body
     const portalBody = portal.querySelector('div[class^="prompt_body_"]')
     const portalHolder = portalBody.parentElement.parentElement
 
-    // set a custom modal width and height
-    portalHolder.style.width = "50%"
+    // set a custom modal height
     portalHolder.style.height = "50%"
 
     // set the modal HTML
@@ -119,7 +139,7 @@ import { fileTypeFromBuffer } from "file-type"
     portalBody.style.wordBreak = "break-all"
     portalBody.style.position = "relative"
     portalBody.style.overflowY = "auto"
-    const contentHTML = `<!-- Wrapper div for the content --><div style="display:inline-block;width:-webkit-fill-available;height:calc(100% - 2.75rem);">${content}</div>`
+    const contentHTML = `<!-- Wrapper div for the content --><div style="display:inline-block;${centered ? "align-content:center;text-align:center;" : ""}width:-webkit-fill-available;height:calc(100% - 2.75rem);">${content}</div>`
     const promptButtonPos = `<!-- Wrapper div for the prompt buttom positioning --><div style="display:inline;box-sizing:content-box;">${portalBody.querySelector("div[class^=prompt_button-row_]").outerHTML}</div>`
 
     portalBody.innerHTML = `${contentHTML}${promptButtonPos}`
@@ -134,19 +154,21 @@ import { fileTypeFromBuffer } from "file-type"
     okButton.parentElement.style.verticalAlign = "bottom"
 
     okButton.addEventListener("click", () => {
-      portal.querySelector("div[class^=close-button_close-button_]").click()
+      //@ts-expect-error - included in modal
+      portal.querySelector("div[class^=close-button_close-button_]").click() // eslint-disable-line
     })
   }
-  /**Opens a Scratch Modal. Will Only Work on The Editor. */
+  /**Opens a Turbowarp-based Modal. Will Only Work on The Editor. */
   function openModal(
     type: "alert" | "prompt",
     titleName: string,
     msg?: string,
     func: Function = () => {}
   ): void {
+    // Check if we are in the editor
     if (typeof scaffolding === "undefined") {
       if (type === "alert") {
-        ScratchBlocks.alert(msg, titleName)
+        alertModal(msg, titleName)
       } else if (type === "prompt") {
         //@ts-ignore
         ScratchBlocks.prompt(
@@ -672,6 +694,7 @@ import { fileTypeFromBuffer } from "file-type"
 
     searchResult: SearchResult
     sortSearch: "top" | "latest"
+    modDecision: ModerationDecision | null
     lastBlockedUserURI: string | null
 
     showExtras: boolean
@@ -685,6 +708,7 @@ import { fileTypeFromBuffer } from "file-type"
       this.cursor = null
       this.limit = null
       this.sepCursorLimit = true
+      this.modDecision = null
       this.clientID =
         "https://hammouda101010.github.io/turbowarp-bsky-api/static/client-metadata.json"
       this.handleResolver = "https://bsky.social/"
@@ -710,6 +734,7 @@ import { fileTypeFromBuffer } from "file-type"
 
       this.searchResult = "no search result yet"
       this.sortSearch = "top"
+      this.modDecision
       this.session = null
       this.lastBlockedUserURI = null
 
@@ -1506,6 +1531,24 @@ import { fileTypeFromBuffer } from "file-type"
           },
           {
             blockType: Scratch.BlockType.LABEL,
+            text: "Post Moderation"
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: "bskyModerate",
+            text: "moderate [SUBJECT_TYPE] [SUBJECT]",
+            arguments: {
+              SUBJECT_TYPE: {
+                type: Scratch.ArgumentType.STRING,
+                menu: "bskyMODERATION_SUBJECT_TYPE"
+              },
+              SUBJECT: {
+                type: Scratch.ArgumentType.STRING
+              }
+            }
+          },
+          {
+            blockType: Scratch.BlockType.LABEL,
             text: "OAuth Configuration"
           },
           {
@@ -1811,6 +1854,17 @@ import { fileTypeFromBuffer } from "file-type"
               { text: "fullsized image", value: "feed_fullsize" }
             ]
           },
+          bskyMODERATION_SUBJECT_TYPE: {
+            acceptReporters: true,
+            items: [
+              { text: Scratch.translate("post"), value: "post" },
+              { text: Scratch.translate("user list"), value: "userlist" },
+              { text: Scratch.translate("post"), value: "post" },
+              { text: Scratch.translate("profile"), value: "profile" },
+              { text: Scratch.translate("feed generator"), value: "feedgen" },
+              { text: Scratch.translate("notification"), value: "notif" }
+            ]
+          },
           bskyCLIENT_METADATA_VALUES: {
             acceptReporters: true,
             items: [
@@ -2093,7 +2147,7 @@ import { fileTypeFromBuffer } from "file-type"
     }
 
     // Viewing Feeds
-    async bskyGetTimeline(args) {
+    async bskyGetTimeline(args): Promise<string | void> {
       try {
         const { data } = await agent.getTimeline({
           cursor: args.CURSOR,
@@ -2102,11 +2156,12 @@ import { fileTypeFromBuffer } from "file-type"
 
         return JSON.stringify(data)
       } catch (e) {
-        openModal("alert", "Atproto Error", `Something Went Wrong: ${e}`)
+        openModal("alert", "Extension Error", `Couldn't get timeline: ${e}`)
+        console.error(e)
         return
       }
     }
-    async bskyGetTimelineSep() {
+    async bskyGetTimelineSep(): Promise<string | void> {
       try {
         const { data } = await agent.getTimeline({
           cursor: this.cursor ?? "",
@@ -2115,7 +2170,8 @@ import { fileTypeFromBuffer } from "file-type"
 
         return JSON.stringify(data)
       } catch (e) {
-        openModal("alert", "Atproto Error", `Something Went Wrong: ${e}`)
+        openModal("alert", "Extension Error", `Couldn't get timeline: ${e}`)
+        console.error(e)
         return
       }
     }
@@ -2380,6 +2436,25 @@ import { fileTypeFromBuffer } from "file-type"
     bskySearchSort(args) {
       this.sortSearch = args.POST_SORT
     }
+    bskyModerate(args) {
+      switch (args.SUBJECT_TYPE) {
+        case "post":
+          this.modDecision = moderatePost(args.SUBJECT, args.OPTIONS)
+          break
+        case "userlist":
+          this.modDecision  = moderateUserList(args.SUBJECT, args.OPTIONS)
+          break
+        case "profile":
+          this.modDecision  = moderateProfile(args.SUBJECT, args.OPTIONS)
+          break
+        case "feedgen":
+          this.modDecision  = moderateFeedGenerator(args.SUBJECT, args.OPTIONS)
+          break
+        case "notif":
+          this.modDecision  = moderateNotification(args.SUBJECT, args.OPTIONS)
+          break
+      }
+    }
 
     async bskySearchSep(args) {
       const response = await BskySearchFuncs.Search(
@@ -2427,23 +2502,34 @@ import { fileTypeFromBuffer } from "file-type"
       return JSON.stringify(await atUriConversions.URLtoBlobRef(args.URL))
     }
 
-    async bskyLexicon(args) {
-      await agent.call(
-        args.LEXICON,
-        JSON.parse(args.INPUTS),
-        JSON.parse(args.DATA) ?? undefined,
-        JSON.parse(args.OPTIONS) ?? undefined
-      )
+    async bskyLexicon(args): Promise<string | void> {
+      try {
+        await agent.call(
+          args.LEXICON,
+          JSON.parse(args.INPUTS),
+          JSON.parse(args.DATA) ?? undefined,
+          JSON.parse(args.OPTIONS) ?? undefined
+        )
+      } catch (e) {
+        openModal("alert", "Extension Error", `Couldn't call lexicon: ${e}`)
+        console.error(e)
+      }
     }
-    async bskyLexiconReporter(args) {
-      const response = await agent.call(
-        args.LEXICON,
-        JSON.parse(args.INPUTS),
-        JSON.parse(args.DATA) ?? undefined,
-        JSON.parse(args.OPTIONS) ?? undefined
-      )
+    async bskyLexiconReporter(args): Promise<string | void> {
+      try {
+        const response = await agent.call(
+          args.LEXICON,
+          JSON.parse(args.INPUTS),
+          JSON.parse(args.DATA) ?? undefined,
+          JSON.parse(args.OPTIONS) ?? undefined
+        )
 
-      return JSON.stringify(response)
+        return JSON.stringify(response)
+      } catch (e) {
+        openModal("alert", "Extension Error", `Couldn't call lexicon: ${e}`)
+        console.error(e)
+        return
+      }
     }
 
     bskyLexiconInputs(args) {
