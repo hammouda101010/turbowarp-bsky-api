@@ -27,9 +27,9 @@ _v1.0-release-candidate: Extension complete. Meets standards of full release wit
 
 ## Active Development
 ### v1.0-beta:
-- Complete the rest of the API (thread gates, user lists, post filters, languages list, etc.)
-- Bug-fixes (if there are any bugs)
-- More error-handling (or maybe not)
+- Complete the rest of the API (thread gates, user lists, moderation, languages, etc.)
+- **Bug-fixes** (if there are any bugs)
+- **More error-handling** (or maybe not)
 - video embeds
 - ~~(if required) future rewrite in favor of Bluesky's OAuth login method~~
 
@@ -37,13 +37,11 @@ _v1.0-release-candidate: Extension complete. Meets standards of full release wit
 
 ## Getting Started
 
-1. Download the Javascript File Here.
-2. Import it to (whatever) Scratch mod (Turbowarp, UnsandBoxed, Penguinmod, etc.)
+1. Download the Javascript File [Here](https://github.com/hammouda101010/turbowarp-bsky-api/blob/main/dist/extension/index.global.js)
+2. Import it to (whatever) Turbowarp-based Scratch mod (Turbowarp, Unsandboxed, Penguinmod, etc.)
    ![Example](https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/import-extension-example.png)
 
-3. Use This Block to Login to The BlueSky API:
- ![Login Block](https://raw.githubusercontent.com/hammouda101010/turbowarp-bsky-api/refs/heads/main/static/images/login-block.png)
-
+3. Read the documentation to get started
 ## 💻🔨🦋🦋 Development 🦋🦋🔨💻
 
 Clone and install this repo on your machine to get started.

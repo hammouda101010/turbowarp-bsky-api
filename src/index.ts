@@ -28,7 +28,6 @@ import { Mime } from "mime"
 import { PostView } from "@atproto/api/dist/client/types/app/bsky/feed/defs"
 import { fileTypeFromBuffer } from "file-type"
 import DOMPurify from "dompurify"
-
 ;(function (Scratch) {
   if (Scratch.extensions.unsandboxed === false) {
     throw new Error("TurboButterfly Extension Must Be Run Unsandboxed.")
@@ -110,7 +109,8 @@ import DOMPurify from "dompurify"
   const alertModal = (
     msg: string = "Hello World!",
     titleName: string = "Alert",
-    centered?: boolean
+    centered?: boolean,
+    util?
   ) => {
     const content = DOMPurify.sanitize(Cast.toString(msg))
     //@ts-ignore
@@ -163,12 +163,12 @@ import DOMPurify from "dompurify"
     type: "alert" | "prompt",
     titleName: string,
     msg?: string,
-    func: Function = () => {}
+    func: Function = () => {},
   ): void {
     // Check if we are in the editor
     if (typeof scaffolding === "undefined") {
       if (type === "alert") {
-        alertModal(msg, titleName)
+        alertModal(msg, titleName, true)
       } else if (type === "prompt") {
         //@ts-ignore
         ScratchBlocks.prompt(
@@ -179,6 +179,7 @@ import DOMPurify from "dompurify"
           "broadcast_msg"
         )
       }
+      runtime.stopAll()
     }
   }
 
@@ -188,6 +189,9 @@ import DOMPurify from "dompurify"
    * @returns - the handle without the @ symbol
    */
   const parseHandle = (handle: string): string => {
+    if (!Cast.toBoolean(/.+\.(.+\.?)+/.test(handle))) {
+      throw new Error("Invalid handle")
+    }
     return handle.replace("@", "")
   }
 
@@ -341,6 +345,9 @@ import DOMPurify from "dompurify"
       return `https://cdn.bsky.app/img/${imgType}/plain/${did}/${data.blob.ref.$link}@${mimeType}`
     },
     URLtoBlobRef: async (link: string) => {
+      if (!link.startsWith("https://cdn.bsky.app/")) {
+        throw new Error("This URL is not a Bluesky image URL.")
+      }
       const url = new URL(link)
 
       const pathnames = url.pathname.split("/")
@@ -1350,7 +1357,7 @@ import DOMPurify from "dompurify"
             arguments: {
               URIS: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: "['did:plc:...', '...']"
+                defaultValue: '["did:plc:...", "..."]'
               }
             }
           },
@@ -1364,7 +1371,8 @@ import DOMPurify from "dompurify"
             text: Scratch.translate("get video data in post [POST]"),
             arguments: {
               POST: {
-                type: Scratch.ArgumentType.STRING
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "post data"
               }
             }
           },
@@ -1375,10 +1383,13 @@ import DOMPurify from "dompurify"
             text: Scratch.translate("get blob from DID [DID] and CID [CID]"),
             arguments: {
               DID: {
-                type: Scratch.ArgumentType.STRING
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "did:plc:foo"
               },
               CID: {
-                type: Scratch.ArgumentType.STRING
+                type: Scratch.ArgumentType.STRING,
+                defaultValue:
+                  "bafkreibabalobzn6cd366ukcsjycp4yymjymgfxcv6xczmlgpemzkz3cfa"
               }
             }
           },
@@ -1536,7 +1547,7 @@ import DOMPurify from "dompurify"
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyModerate",
-            text: "moderate [SUBJECT_TYPE] [SUBJECT]",
+            text: "moderate [SUBJECT_TYPE]",
             arguments: {
               SUBJECT_TYPE: {
                 type: Scratch.ArgumentType.STRING,
@@ -1664,7 +1675,7 @@ import DOMPurify from "dompurify"
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: "bskyBlobReftoURL",
-            text: "convert blob reference [BLOB] to URL with DID [DID] and [IMAGE_TYPE] image type ",
+            text: "convert blob reference [BLOB] to URL with DID [DID] as an [IMAGE_TYPE] image",
             arguments: {
               BLOB: {
                 type: Scratch.ArgumentType.STRING,
@@ -1859,7 +1870,6 @@ import DOMPurify from "dompurify"
             items: [
               { text: Scratch.translate("post"), value: "post" },
               { text: Scratch.translate("user list"), value: "userlist" },
-              { text: Scratch.translate("post"), value: "post" },
               { text: Scratch.translate("profile"), value: "profile" },
               { text: Scratch.translate("feed generator"), value: "feedgen" },
               { text: Scratch.translate("notification"), value: "notif" }
@@ -1959,6 +1969,7 @@ import DOMPurify from "dompurify"
     }
 
     async bskyLogin(args) {
+      try{
       if (!this.session) {
         const handle = parseHandle(args.HANDLE)
 
@@ -1977,6 +1988,9 @@ import DOMPurify from "dompurify"
         agent = new Agent(this.session)
         document.dispatchEvent(BskyLoginEvent)
       }
+    }catch(e){
+      openModal("alert", "Extension Error", `Couldn't login with OAuth: ${e}`)
+    }
     }
     async bskyOAuthCallback(args) {
       const result = await this.OAuthClient.callback(
@@ -2111,17 +2125,21 @@ import DOMPurify from "dompurify"
     }
 
     bskyImgEmbedReporter(args) {
-      // Use this reporter for the embed block above.
-      const { data } = JSON.parse(args.IMAGE)
-      return JSON.stringify({
-        alt: args.TEXT, // the alt text
-        image: data.blob,
-        aspectRatio: {
-          // a hint to clients
-          width: args.WIDTH,
-          height: args.HEIGHT
-        }
-      })
+      try {
+        // Use this reporter for the embed block above.
+        const { data } = JSON.parse(args.IMAGE)
+        return JSON.stringify({
+          alt: args.TEXT, // the alt text
+          image: data.blob,
+          aspectRatio: {
+            // a hint to clients
+            width: args.WIDTH,
+            height: args.HEIGHT
+          }
+        })
+      } catch (e) {
+        return e
+      }
     }
     bskyQuotePost(args) {
       return JSON.stringify({
@@ -2436,24 +2454,54 @@ import DOMPurify from "dompurify"
     bskySearchSort(args) {
       this.sortSearch = args.POST_SORT
     }
-    bskyModerate(args) {
+    async bskyModerate(args) {
+      const prefs = await agent.getPreferences()
+      const labelDefs = await agent.getLabelDefinitions(prefs)
       switch (args.SUBJECT_TYPE) {
         case "post":
-          this.modDecision = moderatePost(args.SUBJECT, args.OPTIONS)
+          this.modDecision = moderatePost(args.SUBJECT, {
+            userDid: agent.assertDid,
+            prefs: prefs.moderationPrefs,
+            labelDefs: labelDefs
+          })
           break
         case "userlist":
-          this.modDecision  = moderateUserList(args.SUBJECT, args.OPTIONS)
+          this.modDecision = moderateUserList(args.SUBJECT, {
+            userDid: agent.assertDid,
+            prefs: prefs.moderationPrefs,
+            labelDefs: labelDefs
+          })
           break
         case "profile":
-          this.modDecision  = moderateProfile(args.SUBJECT, args.OPTIONS)
+          this.modDecision = moderateProfile(args.SUBJECT, {
+            userDid: agent.assertDid,
+            prefs: prefs.moderationPrefs,
+            labelDefs: labelDefs
+          })
           break
         case "feedgen":
-          this.modDecision  = moderateFeedGenerator(args.SUBJECT, args.OPTIONS)
+          this.modDecision = moderateFeedGenerator(args.SUBJECT, {
+            userDid: agent.assertDid,
+            prefs: prefs.moderationPrefs,
+            labelDefs: labelDefs
+          })
           break
         case "notif":
-          this.modDecision  = moderateNotification(args.SUBJECT, args.OPTIONS)
+          this.modDecision = moderateNotification(args.SUBJECT, {
+            userDid: agent.assertDid,
+            prefs: prefs.moderationPrefs,
+            labelDefs: labelDefs
+          })
           break
       }
+      console.info(`Moderation Decision: ${this.modDecision}`)
+    }
+
+    bskySetOAuthMetadata(args) {
+      if (args.KEY === "client_id") {
+        this.clientID = args.VALUE
+      }
+      this.clientMetadata[args.KEY] = args.VALUE
     }
 
     async bskySearchSep(args) {
@@ -2496,7 +2544,15 @@ import DOMPurify from "dompurify"
     }
 
     bskyBlobReftoURL(args) {
-      return atUriConversions.BlobReftoURL(args.DID, args.IMAGE_TYPE, args.BLOB)
+      try {
+        return atUriConversions.BlobReftoURL(
+          args.DID,
+          args.IMAGE_TYPE,
+          args.BLOB
+        )
+      } catch {
+        return "Invalid inputs"
+      }
     }
     async bskyURLtoBlobRef(args) {
       return JSON.stringify(await atUriConversions.URLtoBlobRef(args.URL))
@@ -2558,7 +2614,7 @@ import DOMPurify from "dompurify"
           // "Pushes" the object into the params object
           Object.assign(params, obj)
         } catch (e) {
-          return `Error Parsing Inputs: ${e}`
+          return `One of the inputs are invalid. They must be object key definitions.`
         }
       }
       return JSON.stringify(params)
@@ -3074,8 +3130,17 @@ import DOMPurify from "dompurify"
       check = null, // null or "Boolean" (or the label text for DUMMY_INPUTs)
       shadowType = undefined, // The type of shadow block (or falsy for none)
       shadowField = undefined, // The field to use in the shadow block
-      shadowDefault = undefined // The default shadow block value
-    ) => ({ type, id, check, shadowType, shadowField, shadowDefault })
+      shadowDefault = undefined, // The default shadow block value
+      defaultValue = undefined
+    ) => ({
+      type,
+      id,
+      check,
+      shadowType,
+      shadowField,
+      shadowDefault,
+      defaultValue
+    })
 
     // Configuration extensions
     ScratchBlocks.Extensions.register("cst_extendable_clear", function () {
@@ -3083,7 +3148,15 @@ import DOMPurify from "dompurify"
     })
     ScratchBlocks.Extensions.register("cst_extendable_string", function () {
       this.extendableDefs = [
-        createInput(ScratchBlocks.INPUT_VALUE, "ARG", null, "text", "TEXT", "")
+        createInput(
+          ScratchBlocks.INPUT_VALUE,
+          "ARG",
+          null,
+          "text",
+          "TEXT",
+          "",
+          `a: \"hello world!\"`
+        )
       ]
       const ops = {
         [exId + "_extendLess"]: "<",
