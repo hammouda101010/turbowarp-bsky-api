@@ -63011,6 +63011,52 @@ if (cid) {
     const SearchingLensIcon = "data:image/svg+xml;base64,PCFET0NUWVBFIHN2ZyBQVUJMSUMgIi0vL1czQy8vRFREIFNWRyAxLjEvL0VOIiAiaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkIj4KDTwhLS0gVXBsb2FkZWQgdG86IFNWRyBSZXBvLCB3d3cuc3ZncmVwby5jb20sIFRyYW5zZm9ybWVkIGJ5OiBTVkcgUmVwbyBNaXhlciBUb29scyAtLT4KPHN2ZyBmaWxsPSIjZmZmZmZmIiB2ZXJzaW9uPSIxLjEiIGlkPSJDYXBhXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHdpZHRoPSI2NHB4IiBoZWlnaHQ9IjY0cHgiIHZpZXdCb3g9IjAgMCA0NS45MjMgNDUuOTIzIiB4bWw6c3BhY2U9InByZXNlcnZlIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMC4wMDA0NTkyMzAwMDAwMDAwMDAwMyI+Cg08ZyBpZD0iU1ZHUmVwb19iZ0NhcnJpZXIiIHN0cm9rZS13aWR0aD0iMCIvPgoNPGcgaWQ9IlNWR1JlcG9fdHJhY2VyQ2FycmllciIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cg08ZyBpZD0iU1ZHUmVwb19pY29uQ2FycmllciI+IDxnPiA8cGF0aCBkPSJNNDUuNDk0LDQ0LjQ0M2MtMC4wMDQsMC4zODctMC4wMjUsMC42MTEtMC4wMjUsMC42MTFsLTAuODM4LDAuODM4YzAsMC0wLjIyNSwwLjAyMS0wLjYxMiwwLjAyNSBjLTAuMiwwLjAxLTAuNDMsMC4wMDItMC42OTYtMC4wMWMtMC4yNjYtMC4wMTMtMC41ODQtMC4wMTMtMC44OTgtMC4wNTdjLTAuNjUtMC4wNjQtMS40MzgtMC4xNDYtMi4yNDItMC4zMzggYy0wLjgxNi0wLjE4LTEuNjk5LTAuNDIxLTIuNTgyLTAuNzY0Yy0wLjg5MS0wLjMzNi0xLjgwMi0wLjc1Mi0yLjY4OC0xLjI3MWMtMC44OTEtMC41MTUtMS43NjQtMS4xMjMtMi41MDItMS45MTcgYy0wLjc0OC0wLjc4NC0xLjM0OC0xLjc3LTEuOTI4LTIuNzk3Yy0wLjU4LTEuMDMtMS4xNzctMi4wNjctMS44NjEtMy4wMTljLTAuOTYxLTEuMzI5LTEuODkxLTIuNjY0LTIuNzg3LTMuOTg4IGMyLjI2Ni0xLjM2Miw0LjIyMi0zLjE4NCw1LjcyMS01LjM1MmMxLjI1MiwwLjg1MywyLjUxMiwxLjczMSwzLjc2OCwyLjY0YzAuOTUxLDAuNjg0LDEuOTg4LDEuMjgsMy4wMTksMS44NiBjMS4wMjgsMC41ODIsMi4wMTIsMS4xODEsMi43OTcsMS45MjhjMC43OTQsMC43MzgsMS40MDEsMS42MTEsMS45MTcsMi41MDJjMC41MiwwLjg4NiwwLjkzNiwxLjc5NywxLjI3MSwyLjY4OCBjMC4zNDMsMC44ODMsMC41ODQsMS43NjYsMC43NjQsMi41ODJjMC4xOTEsMC44MDUsMC4yNzMsMS41OTIsMC4zMzgsMi4yNDJjMC4wNDQsMC4zMTQsMC4wNDQsMC42MzMsMC4wNTcsMC44OTggQzQ1LjQ5Niw0NC4wMTMsNDUuNTA0LDQ0LjI0LDQ1LjQ5NCw0NC40NDN6IE0yNC40MjksMjkuNjUyYy0yLjM2OSwxLjM5Ny01LjEyMiwyLjIxMy04LjA3MiwyLjIxMyBjLTguOCwwLTE1LjkzMy03LjEzMy0xNS45MzMtMTUuOTMzQzAuNDI0LDcuMTM0LDcuNTU4LDAsMTYuMzU3LDBzMTUuOTMyLDcuMTM0LDE1LjkzMiwxNS45MzNjMCwzLjM2OS0xLjA1MSw2LjQ5LTIuODM2LDkuMDYzIEMyOC4xMzksMjYuODkxLDI2LjQyMSwyOC40NzgsMjQuNDI5LDI5LjY1MnogTTIwLjU3MSwyMy40MjdjMS4wMzItMC41ODEsMS45MjctMS4zNzEsMi42MzgtMi4zMSBjMS4wOTMtMS40NDIsMS43NDktMy4yMzQsMS43NDktNS4xODNjMC00Ljc1LTMuODUtOC42MDEtOC42LTguNjAxcy04LjYwMSwzLjg1MS04LjYwMSw4LjYwMXMzLjg1MSw4LjYwMiw4LjYwMSw4LjYwMiBDMTcuODg5LDI0LjUzMywxOS4zMjUsMjQuMTI5LDIwLjU3MSwyMy40Mjd6Ii8+IDwvZz4gPC9nPgoNPC9zdmc+";
     let agent = new import_api.Agent("https://bsky.social");
     const mime = new Mime_default();
+    ScratchBlocks.alert = (msg, title) => {
+      const content = msg;
+      ScratchBlocks.prompt();
+      const portal = document.querySelector("div.ReactModalPortal");
+      const header = portal.querySelector(
+        'div[class*="modal_header-item-title_"]'
+      );
+      header.textContent = title;
+      const portalBody = portal.querySelector('div[class^="prompt_body_"]');
+      const portalHolder = portalBody.parentElement.parentElement;
+      portalHolder.style.width = "50%";
+      portalHolder.style.height = "50%";
+      portalBody.parentElement.style.height = "100%";
+      portalBody.style.height = "calc(100% - 3.125rem)";
+      portalBody.style.wordBreak = "break-all";
+      portalBody.style.position = "relative";
+      portalBody.style.overflowY = "auto";
+      const contentHTML = `<!-- Wrapper div for the content --><div style="display:inline-block;width:-webkit-fill-available;height:calc(100% - 2.75rem);">${content}</div>`;
+      const promptButtonPos = `<!-- Wrapper div for the prompt buttom positioning --><div style="display:inline;box-sizing:content-box;">${portalBody.querySelector("div[class^=prompt_button-row_]").outerHTML}</div>`;
+      portalBody.innerHTML = `${contentHTML}${promptButtonPos}`;
+      const okButton = portalBody.querySelector(
+        `button[class^="prompt_ok-button_"]`
+      );
+      okButton.previousElementSibling.remove();
+      okButton.parentElement.style.display = "block";
+      okButton.parentElement.style.verticalAlign = "bottom";
+      okButton.addEventListener("click", () => {
+        portal.querySelector("div[class^=close-button_close-button_]").click();
+      });
+    };
+    function openModal(type, titleName, msg, func = () => {
+    }) {
+      if (typeof scaffolding === "undefined") {
+        if (type === "alert") {
+          ScratchBlocks.alert(msg, titleName);
+        } else if (type === "prompt") {
+          ScratchBlocks.prompt(
+            titleName,
+            "",
+            (value) => func(value),
+            Scratch2.translate("Prompt"),
+            "broadcast_msg"
+          );
+        }
+      }
+    }
     const parseHandle = (handle) => {
       return handle.replace("@", "");
     };
@@ -63257,7 +63303,7 @@ if (cid) {
         return response;
       },
       SearchActors: async (searchTerm, cursor, limit) => {
-        const response = agent.searchActors({
+        const response = await agent.searchActors({
           q: searchTerm,
           cursor,
           limit
@@ -64023,9 +64069,13 @@ if (cid) {
             {
               blockType: Scratch2.BlockType.REPORTER,
               opcode: "bskyGetBlob",
+              blockIconURI: ImageIcon,
               text: Scratch2.translate("get blob from DID [DID] and CID [CID]"),
               arguments: {
-                POST: {
+                DID: {
+                  type: Scratch2.ArgumentType.STRING
+                },
+                CID: {
                   type: Scratch2.ArgumentType.STRING
                 }
               }
@@ -64729,18 +64779,28 @@ if (cid) {
       }
       // Viewing Feeds
       async bskyGetTimeline(args) {
-        const { data } = await agent.getTimeline({
-          cursor: args.CURSOR,
-          limit: args.LIMIT
-        });
-        return JSON.stringify(data);
+        try {
+          const { data } = await agent.getTimeline({
+            cursor: args.CURSOR,
+            limit: args.LIMIT
+          });
+          return JSON.stringify(data);
+        } catch (e) {
+          openModal("alert", "Atproto Error", `Something Went Wrong: ${e}`);
+          return;
+        }
       }
       async bskyGetTimelineSep() {
-        const { data } = await agent.getTimeline({
-          cursor: this.cursor ?? "",
-          limit: this.limit ?? 50
-        });
-        return JSON.stringify(data);
+        try {
+          const { data } = await agent.getTimeline({
+            cursor: this.cursor ?? "",
+            limit: this.limit ?? 50
+          });
+          return JSON.stringify(data);
+        } catch (e) {
+          openModal("alert", "Atproto Error", `Something Went Wrong: ${e}`);
+          return;
+        }
       }
       // Getting a Feed
       async bskyGetFeed(args) {
@@ -64883,7 +64943,10 @@ if (cid) {
         });
       }
       async bskyGetBlob(args) {
-        const { data } = await agent.com.atproto.sync.getBlob(args.DID, args.CID);
+        const { data } = await agent.com.atproto.sync.getBlob({
+          did: args.DID,
+          cid: args.CID
+        });
         let bin = "";
         for (let i = 0; i < data.length; i++) {
           bin += String.fromCharCode(data[i]);
@@ -65066,15 +65129,15 @@ if (cid) {
       return res;
     };
     function patchSB() {
-      const ScratchBlocks = window?.ScratchBlocks;
-      if (!ScratchBlocks) return;
+      const ScratchBlocks2 = window?.ScratchBlocks;
+      if (!ScratchBlocks2) return;
       Scratch2.vm.removeListener("EXTENSION_ADDED", patchSB);
       Scratch2.vm.removeListener("BLOCKSINFO_UPDATE", patchSB);
       const leftArrowIcon = `data:image/svg+xml;base64,PHN2ZyBkYXRhLW5hbWU9IkxheWVyIDEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDEwIDEzIiB0cmFuc2Zvcm09InNjYWxlKC0xLCAxKSI+PHBhdGggZD0iTTMuNjUuMTQ1YTIuNDEgMi40MSAwIDAgMSAxLjcyLjcxbDMuOTIgMy45MmEyLjQ1IDIuNDUgMCAwIDEgMCAzLjQ1bC0zLjkyIDMuOTFhMi40MiAyLjQyIDAgMCAxLTEuNzIuNzIgMi40OCAyLjQ4IDAgMCAxLTEuNzMtLjcxYy0uMjQtLjI5LS43MS0uNzItLjcxLTUuNjUgMC00LjkzLjQ2LTUuMzkuNzEtNS42NGEyLjQ0IDIuNDQgMCAwIDEgMS43My0uNzF6IiBmaWxsPSIjMjMxZjIwIiBvcGFjaXR5PSIuMSIvPjxwYXRoIGQ9Ik04Ljk4NSA2LjUxYTEuNDMgMS40MyAwIDAgMS0uNDIgMWwtMy45MiAzLjk0YTEuNDQgMS40NCAwIDAgMS0yIDBjLS41Ni0uNTYtLjU2LTkuMzEgMC05Ljg3YTEuNDQgMS40NCAwIDAgMSAyIDBsMy45MiAzLjkyYTEuNDMgMS40MyAwIDAgMSAuNDIgMS4wMXoiIGZpbGw9IiNmZmYiLz48L3N2Zz4=`;
       const rightArrowIcon = `data:image/svg+xml;base64,PHN2ZyBkYXRhLW5hbWU9IkxheWVyIDEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmlld0JveD0iMCAwIDEwIDEzIj48cGF0aCBkPSJNMy42NS4xNDVhMi40MSAyLjQxIDAgMCAxIDEuNzIuNzFsMy45MiAzLjkyYTIuNDUgMi40NSAwIDAgMSAwIDMuNDVsLTMuOTIgMy45MWEyLjQyIDIuNDIgMCAwIDEtMS43Mi43MiAyLjQ4IDIuNDggMCAwIDEtMS43My0uNzFjLS4yNC0uMjktLjcxLS43Mi0uNzEtNS42NSAwLTQuOTMuNDYtNS4zOS43MS01LjY0YTIuNDQgMi40NCAwIDAgMSAxLjczLS43MXoiIGZpbGw9IiMyMzFmMjAiIG9wYWNpdHk9Ii4xIi8+PHBhdGggZD0iTTguOTg1IDYuNTFhMS40MyAxLjQzIDAgMCAxLS40MiAxbC0zLjkyIDMuOTRhMS40NCAxLjQ0IDAgMCAxLTIgMGMtLjU2LS41Ni0uNTYtOS4zMSAwLTkuODdhMS40NCAxLjQ0IDAgMCAxIDIgMGwzLjkyIDMuOTJhMS40MyAxLjQzIDAgMCAxIC40MiAxLjAxeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==`;
       const arrowWidth = 16;
       const arrowHeight = 32;
-      class FieldImageButton extends ScratchBlocks.FieldImage {
+      class FieldImageButton extends ScratchBlocks2.FieldImage {
         constructor(src2, width, height, callback, opt_alt, flip_rtl, noPadding) {
           super(src2, width, height, opt_alt, flip_rtl);
           this._callback = callback.bind(this);
@@ -65085,7 +65148,7 @@ if (cid) {
             return;
           }
           super.init();
-          this.mouseDownWrapper_ = ScratchBlocks.bindEventWithChecks_(
+          this.mouseDownWrapper_ = ScratchBlocks2.bindEventWithChecks_(
             this.getSvgRoot(),
             "mousedown",
             this,
@@ -65104,13 +65167,13 @@ if (cid) {
           }
           if (!this.noPadding) return this.size_;
           return new this.size_.constructor(
-            Math.max(1, this.size_.width - ScratchBlocks.BlockSvg.SEP_SPACE_X),
+            Math.max(1, this.size_.width - ScratchBlocks2.BlockSvg.SEP_SPACE_X),
             this.size_.height
           );
         }
         EDITABLE = true;
       }
-      ScratchBlocks.Extensions.registerMutator(
+      ScratchBlocks2.Extensions.registerMutator(
         "cst_extendable",
         {
           domToMutation(xmlElement) {
@@ -65186,7 +65249,7 @@ if (cid) {
           },
           removeAllInputs_() {
             this.inputList = this.inputList.filter((input) => {
-              if (this.isExtendableInput(input) || input.type === ScratchBlocks.DUMMY_INPUT && this.clearLabels) {
+              if (this.isExtendableInput(input) || input.type === ScratchBlocks2.DUMMY_INPUT && this.clearLabels) {
                 input.dispose();
                 return false;
               }
@@ -65196,7 +65259,7 @@ if (cid) {
           // Creates a shadow input for an extendable definition.
           attachShadow_(input, def) {
             if (!def.shadowType) return;
-            ScratchBlocks.Events.disable();
+            ScratchBlocks2.Events.disable();
             let newBlock;
             try {
               newBlock = this.workspace.newBlock(def.shadowType);
@@ -65207,11 +65270,11 @@ if (cid) {
                 newBlock.render(false);
               }
             } finally {
-              ScratchBlocks.Events.enable();
+              ScratchBlocks2.Events.enable();
             }
-            if (ScratchBlocks.Events.isEnabled()) {
-              ScratchBlocks.Events.fire(
-                new ScratchBlocks.Events.BlockCreate(newBlock)
+            if (ScratchBlocks2.Events.isEnabled()) {
+              ScratchBlocks2.Events.fire(
+                new ScratchBlocks2.Events.BlockCreate(newBlock)
               );
             }
             if (newBlock.outputConnection)
@@ -65282,7 +65345,7 @@ if (cid) {
           addInput_(def, i, connectionMap = null) {
             const id = this.getExtendableInput(def.id, i);
             const input = this.appendInput_(def.type, id);
-            if (def.type === ScratchBlocks.DUMMY_INPUT) {
+            if (def.type === ScratchBlocks2.DUMMY_INPUT) {
               input.appendField(def.check);
             } else {
               if (def.check) {
@@ -65293,25 +65356,25 @@ if (cid) {
           },
           // The "user create input" function.
           insertInput() {
-            ScratchBlocks.Events.setGroup(true);
-            const oldMutation = ScratchBlocks.Xml.domToText(this.mutationToDom());
+            ScratchBlocks2.Events.setGroup(true);
+            const oldMutation = ScratchBlocks2.Xml.domToText(this.mutationToDom());
             this.inputCount++;
             this.updateDisplay_();
-            const newMutation = ScratchBlocks.Xml.domToText(this.mutationToDom());
-            const ev = new ScratchBlocks.Events.BlockChange(
+            const newMutation = ScratchBlocks2.Xml.domToText(this.mutationToDom());
+            const ev = new ScratchBlocks2.Events.BlockChange(
               this,
               "mutation",
               null,
               oldMutation,
               newMutation
             );
-            ScratchBlocks.Events.fire(ev);
-            ScratchBlocks.Events.setGroup(false);
+            ScratchBlocks2.Events.fire(ev);
+            ScratchBlocks2.Events.setGroup(false);
           },
           // The "user delete input" function.
           deleteInput() {
-            ScratchBlocks.Events.setGroup(true);
-            const oldMutation = ScratchBlocks.Xml.domToText(this.mutationToDom());
+            ScratchBlocks2.Events.setGroup(true);
+            const oldMutation = ScratchBlocks2.Xml.domToText(this.mutationToDom());
             this.inputCount--;
             const plusInputs = this.extendableDefsStart.length > 0 ? 1 : 0;
             for (const def of this.extendableDefs) {
@@ -65320,16 +65383,16 @@ if (cid) {
               );
             }
             this.updateDisplay_();
-            const newMutation = ScratchBlocks.Xml.domToText(this.mutationToDom());
-            const ev = new ScratchBlocks.Events.BlockChange(
+            const newMutation = ScratchBlocks2.Xml.domToText(this.mutationToDom());
+            const ev = new ScratchBlocks2.Events.BlockChange(
               this,
               "mutation",
               null,
               oldMutation,
               newMutation
             );
-            ScratchBlocks.Events.fire(ev);
-            ScratchBlocks.Events.setGroup(false);
+            ScratchBlocks2.Events.fire(ev);
+            ScratchBlocks2.Events.setGroup(false);
             this.cleanInputs();
           },
           createAllInputs_(connectionMap) {
@@ -65390,7 +65453,7 @@ if (cid) {
               return;
             const wasRendered = this.rendered;
             if (this.isInFlyout) {
-              ScratchBlocks.Events.disable();
+              ScratchBlocks2.Events.disable();
             }
             this.rendered = false;
             this.extendableUpdatedDisplay = true;
@@ -65400,7 +65463,7 @@ if (cid) {
             this.addArrowButtons_();
             for (const def of this.extendableDefsEnd)
               this.addInput_(def, index, connectionMap);
-            ScratchBlocks.ScratchBlocks.ProcedureUtils.deleteShadows_.call(
+            ScratchBlocks2.ScratchBlocks.ProcedureUtils.deleteShadows_.call(
               this,
               connectionMap
             );
@@ -65411,7 +65474,7 @@ if (cid) {
               this.render();
             }
             if (this.isInFlyout) {
-              ScratchBlocks.Events.enable();
+              ScratchBlocks2.Events.enable();
             }
           }
         },
@@ -65427,12 +65490,12 @@ if (cid) {
         }
       );
       const createInput = (type, id, check2 = null, shadowType = void 0, shadowField = void 0, shadowDefault = void 0) => ({ type, id, check: check2, shadowType, shadowField, shadowDefault });
-      ScratchBlocks.Extensions.register("cst_extendable_clear", function() {
+      ScratchBlocks2.Extensions.register("cst_extendable_clear", function() {
         this.clearLabels = true;
       });
-      ScratchBlocks.Extensions.register("cst_extendable_string", function() {
+      ScratchBlocks2.Extensions.register("cst_extendable_string", function() {
         this.extendableDefs = [
-          createInput(ScratchBlocks.INPUT_VALUE, "ARG", null, "text", "TEXT", "")
+          createInput(ScratchBlocks2.INPUT_VALUE, "ARG", null, "text", "TEXT", "")
         ];
         const ops = {
           [exId + "_extendLess"]: "<",
@@ -65443,7 +65506,7 @@ if (cid) {
           const op = ops[this.type];
           this.extendableDefsStart = [
             createInput(
-              ScratchBlocks.INPUT_VALUE,
+              ScratchBlocks2.INPUT_VALUE,
               "ARG",
               null,
               "text",
@@ -65452,19 +65515,19 @@ if (cid) {
             )
           ];
           this.extendableDefs.unshift(
-            createInput(ScratchBlocks.DUMMY_INPUT, "WORD", op)
+            createInput(ScratchBlocks2.DUMMY_INPUT, "WORD", op)
           );
           this.inputCount = 1;
         }
       });
-      ScratchBlocks.Extensions.register("cst_extendable_number", function() {
+      ScratchBlocks2.Extensions.register("cst_extendable_number", function() {
         const defaultValue = [
           exId + "_extendProduct",
           exId + "_extendDivide"
         ].includes(this.type) ? "1" : "0";
         this.extendableDefs = [
           createInput(
-            ScratchBlocks.INPUT_VALUE,
+            ScratchBlocks2.INPUT_VALUE,
             "ARG",
             null,
             "math_number",
@@ -65482,7 +65545,7 @@ if (cid) {
         if (ops[this.type]) {
           this.extendableDefsStart = [
             createInput(
-              ScratchBlocks.INPUT_VALUE,
+              ScratchBlocks2.INPUT_VALUE,
               "ARG",
               null,
               "math_number",
@@ -65491,22 +65554,22 @@ if (cid) {
             )
           ];
           this.extendableDefs.unshift(
-            createInput(ScratchBlocks.DUMMY_INPUT, "WORD", ops[this.type])
+            createInput(ScratchBlocks2.DUMMY_INPUT, "WORD", ops[this.type])
           );
           this.inputCount = 1;
         }
       });
-      ScratchBlocks.Extensions.register("cst_extendable_boolean", function() {
+      ScratchBlocks2.Extensions.register("cst_extendable_boolean", function() {
         this.extendableDefs = [
-          createInput(ScratchBlocks.INPUT_VALUE, "ARG", "Boolean")
+          createInput(ScratchBlocks2.INPUT_VALUE, "ARG", "Boolean")
         ];
         if (this.type === exId + "_extendAnd" || this.type === exId + "_extendOr") {
           this.extendableDefsStart = [
-            createInput(ScratchBlocks.INPUT_VALUE, "ARG", "Boolean")
+            createInput(ScratchBlocks2.INPUT_VALUE, "ARG", "Boolean")
           ];
           this.extendableDefs.unshift(
             createInput(
-              ScratchBlocks.DUMMY_INPUT,
+              ScratchBlocks2.DUMMY_INPUT,
               "WORD",
               this.type === exId + "_extendAnd" ? Scratch2.translate({
                 default: "and",
@@ -65520,55 +65583,55 @@ if (cid) {
           this.inputCount = 1;
         }
       });
-      ScratchBlocks.Extensions.register("cst_extendable_branch", function() {
+      ScratchBlocks2.Extensions.register("cst_extendable_branch", function() {
         this.extendableDefs = [
-          createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null)
+          createInput(ScratchBlocks2.NEXT_STATEMENT, "SUBSTACK", null)
         ];
         this.inputCount = 1;
       });
-      ScratchBlocks.Extensions.register("cst_extendable_if", function() {
+      ScratchBlocks2.Extensions.register("cst_extendable_if", function() {
         this.extendableDefsStart = [
-          createInput(ScratchBlocks.INPUT_VALUE, "CONDITION", "Boolean"),
-          createInput(ScratchBlocks.DUMMY_INPUT, "THEN_WORD", "then"),
-          createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null)
+          createInput(ScratchBlocks2.INPUT_VALUE, "CONDITION", "Boolean"),
+          createInput(ScratchBlocks2.DUMMY_INPUT, "THEN_WORD", "then"),
+          createInput(ScratchBlocks2.NEXT_STATEMENT, "SUBSTACK", null)
         ];
         this.extendableDefs = [
           createInput(
-            ScratchBlocks.DUMMY_INPUT,
+            ScratchBlocks2.DUMMY_INPUT,
             "ELSE_WORD",
             Scratch2.translate({
               default: "else if",
               description: "Text inserted after a C input and before a boolean input on the extendable if blocks."
             })
           ),
-          createInput(ScratchBlocks.INPUT_VALUE, "CONDITION", "Boolean"),
+          createInput(ScratchBlocks2.INPUT_VALUE, "CONDITION", "Boolean"),
           createInput(
-            ScratchBlocks.DUMMY_INPUT,
+            ScratchBlocks2.DUMMY_INPUT,
             "THEN_WORD",
             Scratch2.translate({
               default: "then",
               description: "Text inserted before a C input on the extendable if blocks. Ideally should match vanilla Scratch's strings"
             })
           ),
-          createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null)
+          createInput(ScratchBlocks2.NEXT_STATEMENT, "SUBSTACK", null)
         ];
         this.inputCount = 0;
         this.minInputs = 0;
       });
-      ScratchBlocks.Extensions.register("cst_extendable_if_else", function() {
+      ScratchBlocks2.Extensions.register("cst_extendable_if_else", function() {
         this.extendableDefsStart = [
-          createInput(ScratchBlocks.INPUT_VALUE, "CONDITION", "Boolean"),
+          createInput(ScratchBlocks2.INPUT_VALUE, "CONDITION", "Boolean"),
           createInput(
-            ScratchBlocks.DUMMY_INPUT,
+            ScratchBlocks2.DUMMY_INPUT,
             "THEN_WORD",
             Scratch2.translate({
               default: "then",
               description: "Text inserted before a C input on the extendable if blocks. Ideally should match vanilla Scratch's strings"
             })
           ),
-          createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null),
+          createInput(ScratchBlocks2.NEXT_STATEMENT, "SUBSTACK", null),
           createInput(
-            ScratchBlocks.DUMMY_INPUT,
+            ScratchBlocks2.DUMMY_INPUT,
             "ELSE_WORD",
             Scratch2.translate({
               default: "else",
@@ -65577,19 +65640,19 @@ if (cid) {
           )
         ];
         this.extendableDefs = [
-          createInput(ScratchBlocks.DUMMY_INPUT, "IF_WORD", "if"),
-          createInput(ScratchBlocks.INPUT_VALUE, "CONDITION", "Boolean"),
+          createInput(ScratchBlocks2.DUMMY_INPUT, "IF_WORD", "if"),
+          createInput(ScratchBlocks2.INPUT_VALUE, "CONDITION", "Boolean"),
           createInput(
-            ScratchBlocks.DUMMY_INPUT,
+            ScratchBlocks2.DUMMY_INPUT,
             "THEN_WORD",
             Scratch2.translate({
               default: "then",
               description: "Text inserted before a C input on the extendable if blocks. Ideally should match vanilla Scratch's strings"
             })
           ),
-          createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null),
+          createInput(ScratchBlocks2.NEXT_STATEMENT, "SUBSTACK", null),
           createInput(
-            ScratchBlocks.DUMMY_INPUT,
+            ScratchBlocks2.DUMMY_INPUT,
             "ELSE_WORD",
             Scratch2.translate({
               default: "else",
@@ -65598,15 +65661,15 @@ if (cid) {
           )
         ];
         this.extendableDefsEnd = [
-          createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null)
+          createInput(ScratchBlocks2.NEXT_STATEMENT, "SUBSTACK", null)
         ];
         this.inputCount = 0;
         this.minInputs = 0;
       });
-      ScratchBlocks.Extensions.register("cst_extendable_switch", function() {
+      ScratchBlocks2.Extensions.register("cst_extendable_switch", function() {
         this.extendableDefs = [
           createInput(
-            ScratchBlocks.DUMMY_INPUT,
+            ScratchBlocks2.DUMMY_INPUT,
             "CASE_WORD",
             Scratch2.translate({
               default: "case",
@@ -65614,33 +65677,33 @@ if (cid) {
             })
           ),
           createInput(
-            ScratchBlocks.INPUT_VALUE,
+            ScratchBlocks2.INPUT_VALUE,
             "CASE_VALUE",
             null,
             "text",
             "TEXT",
             ""
           ),
-          createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null)
+          createInput(ScratchBlocks2.NEXT_STATEMENT, "SUBSTACK", null)
         ];
         this.extendableDefsEnd = [
           createInput(
-            ScratchBlocks.DUMMY_INPUT,
+            ScratchBlocks2.DUMMY_INPUT,
             "DEFAULT_WORD",
             Scratch2.translate({
               default: "default",
               description: "Text inserted before the last C input on the extendable switch block"
             })
           ),
-          createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null)
+          createInput(ScratchBlocks2.NEXT_STATEMENT, "SUBSTACK", null)
         ];
         this.inputCount = 1;
         this.minInputs = 0;
       });
-      ScratchBlocks.Extensions.register("cst_extendable_joinwith", function() {
+      ScratchBlocks2.Extensions.register("cst_extendable_joinwith", function() {
         this.extendableDefs = [
           createInput(
-            ScratchBlocks.INPUT_VALUE,
+            ScratchBlocks2.INPUT_VALUE,
             "ARG",
             null,
             "text",
@@ -65650,20 +65713,20 @@ if (cid) {
         ];
         this.extendableDefsEnd = [
           createInput(
-            ScratchBlocks.DUMMY_INPUT,
+            ScratchBlocks2.DUMMY_INPUT,
             "WORD_WORD",
             Scratch2.translate({
               default: "with",
               description: "Text inserted before the last input on the 'join (...) with []' block"
             })
           ),
-          createInput(ScratchBlocks.INPUT_VALUE, "ARG", null, "text", "TEXT", "_")
+          createInput(ScratchBlocks2.INPUT_VALUE, "ARG", null, "text", "TEXT", "_")
         ];
         this.inputCount = 2;
         this.minInputs = 0;
       });
-      const ogInitSvg = ScratchBlocks.BlockSvg.prototype.initSvg;
-      ScratchBlocks.BlockSvg.prototype.initSvg = function() {
+      const ogInitSvg = ScratchBlocks2.BlockSvg.prototype.initSvg;
+      ScratchBlocks2.BlockSvg.prototype.initSvg = function() {
         if (this.getExtendableInput && !this.extendableUpdatedDisplay) {
           this.updateDisplay_();
         }
@@ -65677,6 +65740,11 @@ if (cid) {
     Scratch2.extensions.register(new HamBskyAPI(Scratch2.runtime));
   })(Scratch);
 })();
+/**!
+ * borrowed modal code from
+ * @link https://gist.github.com/yuri-kiss/345ab1e729bd5d0a87506156635d0c83
+ * @license MIT
+ */
 /*! Bundled license information:
 
 ieee754/index.js:
