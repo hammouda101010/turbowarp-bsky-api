@@ -109,8 +109,7 @@ import DOMPurify from "dompurify"
   const alertModal = (
     msg: string = "Hello World!",
     titleName: string = "Alert",
-    centered?: boolean,
-    util?
+    centered?: boolean
   ) => {
     const content = DOMPurify.sanitize(Cast.toString(msg))
     //@ts-ignore
@@ -133,17 +132,19 @@ import DOMPurify from "dompurify"
     portalHolder.style.height = "50%"
 
     // set the modal HTML
-    /* eslint-disable */
     portalBody.parentElement.style.height = "100%"
+    //@ts-ignore
     portalBody.style.height = "calc(100% - 3.125rem)"
+    //@ts-ignore
     portalBody.style.wordBreak = "break-all"
+    //@ts-ignore
     portalBody.style.position = "relative"
+    //@ts-ignore
     portalBody.style.overflowY = "auto"
     const contentHTML = `<!-- Wrapper div for the content --><div style="display:inline-block;${centered ? "align-content:center;text-align:center;" : ""}width:-webkit-fill-available;height:calc(100% - 2.75rem);">${content}</div>`
     const promptButtonPos = `<!-- Wrapper div for the prompt buttom positioning --><div style="display:inline;box-sizing:content-box;">${portalBody.querySelector("div[class^=prompt_button-row_]").outerHTML}</div>`
 
     portalBody.innerHTML = `${contentHTML}${promptButtonPos}`
-    /* eslint-enable */
 
     // creating our OK button
     const okButton = portalBody.querySelector(
@@ -155,7 +156,7 @@ import DOMPurify from "dompurify"
 
     okButton.addEventListener("click", () => {
       //@ts-expect-error - included in modal
-      portal.querySelector("div[class^=close-button_close-button_]").click() // eslint-disable-line
+      portal.querySelector("div[class^=close-button_close-button_]").click()
     })
   }
   /**Opens a Turbowarp-based Modal. Will Only Work on The Editor. */
@@ -163,7 +164,7 @@ import DOMPurify from "dompurify"
     type: "alert" | "prompt",
     titleName: string,
     msg?: string,
-    func: Function = () => {},
+    func: () => unknown | void = () => {}
   ): void {
     // Check if we are in the editor
     if (typeof scaffolding === "undefined") {
@@ -741,7 +742,7 @@ import DOMPurify from "dompurify"
 
       this.searchResult = "no search result yet"
       this.sortSearch = "top"
-      this.modDecision
+      this.modDecision = undefined
       this.session = null
       this.lastBlockedUserURI = null
 
@@ -1969,28 +1970,28 @@ import DOMPurify from "dompurify"
     }
 
     async bskyLogin(args) {
-      try{
-      if (!this.session) {
-        const handle = parseHandle(args.HANDLE)
+      try {
+        if (!this.session) {
+          const handle = parseHandle(args.HANDLE)
 
-        if (!handle) throw new Error("No Handle Found")
+          if (!handle) throw new Error("No Handle Found")
 
-        this.session = await this.OAuthClient.signIn(handle, {
-          scope: "atproto transition:generic",
-          display: "popup",
-          ui_locales: "fr-CA fr en",
-          signal: new AbortController().signal
-        })
+          this.session = await this.OAuthClient.signIn(handle, {
+            scope: "atproto transition:generic",
+            display: "popup",
+            ui_locales: "fr-CA fr en",
+            signal: new AbortController().signal
+          })
 
-        agent = new Agent(this.session)
-        document.dispatchEvent(BskyLoginEvent)
-      } else {
-        agent = new Agent(this.session)
-        document.dispatchEvent(BskyLoginEvent)
+          agent = new Agent(this.session)
+          document.dispatchEvent(BskyLoginEvent)
+        } else {
+          agent = new Agent(this.session)
+          document.dispatchEvent(BskyLoginEvent)
+        }
+      } catch (e) {
+        openModal("alert", "Extension Error", `Couldn't login with OAuth: ${e}`)
       }
-    }catch(e){
-      openModal("alert", "Extension Error", `Couldn't login with OAuth: ${e}`)
-    }
     }
     async bskyOAuthCallback(args) {
       const result = await this.OAuthClient.callback(
@@ -2613,7 +2614,7 @@ import DOMPurify from "dompurify"
 
           // "Pushes" the object into the params object
           Object.assign(params, obj)
-        } catch (e) {
+        } catch {
           return `One of the inputs are invalid. They must be object key definitions.`
         }
       }
