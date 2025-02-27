@@ -29,21 +29,22 @@ import { PostView } from "@atproto/api/dist/client/types/app/bsky/feed/defs"
 import { fileTypeFromBuffer } from "file-type"
 import DOMPurify from "dompurify"
 ;(function (Scratch) {
-  if (Scratch.extensions.unsandboxed === false) {
+  if (!Scratch.extensions.unsandboxed) {
     throw new Error("TurboButterfly Extension Must Be Run Unsandboxed.")
   }
+
   // The extension's code
   // Scratch's Stuff
   const vm = Scratch.vm
   const runtime = vm.runtime
   const Cast = Scratch.Cast
-
+  
   const exId = "HamBskyAPI"
 
   // Allows Square Blocks for TW (Credits to SharkPool)
-  //@ts-expect-error included in runtime
+  //@ts-expect-error - included in runtime
   const ogConverter = runtime._convertBlockForScratchBlocks.bind(runtime)
-  //@ts-expect-error included in runtime
+  //@ts-expect-error - included in runtime
   runtime._convertBlockForScratchBlocks = function (blockInfo, categoryInfo) {
     const res = ogConverter(blockInfo, categoryInfo)
     if (blockInfo.outputShape) res.json.outputShape = blockInfo.outputShape
@@ -111,7 +112,7 @@ import DOMPurify from "dompurify"
     titleName: string = "Alert",
     centered?: boolean
   ) => {
-    const content = DOMPurify.sanitize(Cast.toString(msg))
+    const content = DOMPurify.sanitize(Cast.toString(msg)) // Sanitize content
     //@ts-ignore
     // run prompt to get a GUI to modify
     ScratchBlocks.prompt()
@@ -164,7 +165,7 @@ import DOMPurify from "dompurify"
     type: "alert" | "prompt",
     titleName: string,
     msg?: string,
-    func: () => unknown | void = () => {}
+    func: (...args: unknown[]) => unknown | void = () => {}
   ): void {
     // Check if we are in the editor
     if (typeof scaffolding === "undefined") {
@@ -190,7 +191,10 @@ import DOMPurify from "dompurify"
    * @returns - the handle without the @ symbol
    */
   const parseHandle = (handle: string): string => {
-    if (!Cast.toBoolean(/.+\.(.+\.?)+/.test(handle))) {
+    if (
+      !Cast.toBoolean(/.+\.(.+\.?)+/.test(handle)) ||
+      Cast.toBoolean(/(did:plc:[a-z0-9]+)/.test(handle))
+    ) {
       throw new Error("Invalid handle")
     }
     return handle.replace("@", "")
@@ -234,7 +238,7 @@ import DOMPurify from "dompurify"
     const response = await fetch(url)
     const blob = await response.blob()
     if (blob.size > 100000000) {
-      throw new Error("Error: File size is too big. It must be less than 1MB.")
+      throw new Error("File size is too big. It must be less than 100 MB.")
     }
     console.log(`File size: ${blob.size} bytes`)
     return blob.size
@@ -259,11 +263,9 @@ import DOMPurify from "dompurify"
         const handle = pathSegments[2]
         const postId = pathSegments[4]
 
-        // Initialize the Bluesky agent
-
         // Resolve the handle to get the DID
-        const handleResolution = await agent.resolveHandle({ handle: handle })
-        const did = handleResolution.data.did
+        const {data} = await agent.resolveHandle({ handle: handle })
+        const did = data.did
 
         // Construct the AT URI
         const atUri = `at://${did}/app.bsky.feed.post/${postId}`
@@ -385,7 +387,7 @@ import DOMPurify from "dompurify"
     embed = {}
   ) {
     try {
-      let responseObj
+      let responseObj: any // eslint-disable-line
 
       if (Object.keys(embed).length > 0) {
         responseObj = {
@@ -406,10 +408,14 @@ import DOMPurify from "dompurify"
 
       const response = await agent.post(responseObj)
 
-      console.info(`Posted:${JSON.stringify(response)}`) // Logs the post info
-      if (this.richText) {
+      console.info(`Posted: ${JSON.stringify(response)}`) // Logs the post info
+      const rt = new RichText({ text: post })
+
+      rt.detectFacetsWithoutResolution()
+
+      if (Cast.toBoolean(rt.facets)) {
         console.info(
-          `Markdown Version of This Reply: ${ConvertRichTextToMarkdown(new RichText({ text: post }))}` // Logs the Markdown version of the post's text if rich text is enabled.
+          `Markdown Version of This Post: ${ConvertRichTextToMarkdown(rt)}` // Logs the Markdown version of the post's text if rich text is enabled.
         )
       }
     } catch (error) {
@@ -472,13 +478,19 @@ import DOMPurify from "dompurify"
 
       const response = await agent.post(responseObj)
       console.info(`Posted Reply: ${JSON.stringify(response)}`)
-      if (this.richText) {
+
+      console.info(`Posted:${JSON.stringify(response)}`) // Logs the post info
+      const rt = new RichText({ text: post })
+
+      rt.detectFacetsWithoutResolution()
+
+      if (Cast.toBoolean(rt.facets)) {
         console.info(
-          `Markdown Version of This Reply: ${ConvertRichTextToMarkdown(new RichText({ text: post }))}`
+          `Markdown Version of This Reply: ${ConvertRichTextToMarkdown(rt)}` // Logs the Markdown version of the reply's text if rich text is enabled.
         )
       }
     } catch (error) {
-      console.error(`Error Posting Reply: ${error}`)
+      console.error(`Error Posting Reply: ${error.message}`)
     }
   }
 
@@ -626,10 +638,11 @@ import DOMPurify from "dompurify"
   }
 
   /**
-   * Convetrs BlueSky's rich text to Markdown
+   * Convetrs rich text to Markdown
    *
    */
-  function ConvertRichTextToMarkdown(rt: RichText) {
+  async function ConvertRichTextToMarkdown(rt: RichText) {
+    await rt.detectFacets(agent)
     // Converts rich text to Markdown
     let markdown = ""
     for (const segment of rt.segments()) {
@@ -646,7 +659,7 @@ import DOMPurify from "dompurify"
 
   /**Gets a List and It's Members.
    *
-   * @param {boolean} pagination - If enabled, goes trough the entire list by using pagination.
+   * @param {boolean} pagination - If enabled, goes trough the entire list by using a cursor.
    */
   async function GetBskyList(
     uri: string,
@@ -707,12 +720,24 @@ import DOMPurify from "dompurify"
 
     showExtras: boolean
 
+    options: {
+      useCurrentDate: boolean
+      sepCursorLimit: boolean
+      richText: boolean
+      injectMetadata: boolean
+    }
+
     constructor(runtime: VM.Runtime) {
       this.runtime = runtime
 
-      this.useCurrentDate = true
+      this.options = {
+        useCurrentDate: true,
+        richText: true,
+        sepCursorLimit: true,
+        injectMetadata: true
+      }
+
       this.date = new Date().toISOString()
-      this.richText = true
       this.cursor = null
       this.limit = null
       this.sepCursorLimit = true
@@ -721,6 +746,7 @@ import DOMPurify from "dompurify"
         "https://hammouda101010.github.io/turbowarp-bsky-api/static/client-metadata.json"
       this.handleResolver = "https://bsky.social/"
       this.injectMetadata = true
+
       this.clientMetadata = {
         client_id: this.clientID,
         client_name: "TurboWarp/Penguinmod",
@@ -865,7 +891,7 @@ import DOMPurify from "dompurify"
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyReply",
-            text: "reply [POST_ICON][REPLY] to post with info:[INFO] embed: [EMBED]",
+            text: "reply [POST_ICON][REPLY] to post with record: [INFO] embed: [EMBED]",
             arguments: {
               POST_ICON: {
                 type: Scratch.ArgumentType.IMAGE,
@@ -916,7 +942,7 @@ import DOMPurify from "dompurify"
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyRepost",
-            text: "repost post with uri [URI] and cid [CID]",
+            text: "repost post from uri [URI] and cid [CID]",
             arguments: {
               URI: {
                 type: Scratch.ArgumentType.STRING,
@@ -933,7 +959,7 @@ import DOMPurify from "dompurify"
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyUnRepost",
-            text: "remove post repost with uri [URI]",
+            text: "remove post repost from uri [URI]",
             arguments: {
               URI: {
                 type: Scratch.ArgumentType.STRING,
@@ -947,7 +973,7 @@ import DOMPurify from "dompurify"
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskySetCurrentDate",
             text: "set date to [DATE]",
-            hideFromPalette: this.useCurrentDate,
+            hideFromPalette: this.options.useCurrentDate,
             arguments: {
               DATE: {
                 type: Scratch.ArgumentType.STRING,
@@ -959,7 +985,7 @@ import DOMPurify from "dompurify"
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: "bskyUploadBlob",
-            text: "upload image/video blob [DATAURI] with content-type [ENCODING]",
+            text: "upload image/video blob [DATAURI] as an [ENCODING]",
             blockIconURI: ImageIcon,
             outputShape: 3,
             arguments: {
@@ -984,7 +1010,7 @@ import DOMPurify from "dompurify"
               IMAGES: {
                 type: Scratch.ArgumentType.STRING,
                 defaultValue:
-                  '["array", "use image embed reporter and/or an JSON extension"]'
+                  '["array", "use the \\"image embed\\" reporter and a JSON extension"]'
               }
             }
           },
@@ -996,7 +1022,7 @@ import DOMPurify from "dompurify"
             arguments: {
               IMAGE: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: "use upload blob reporter"
+                defaultValue: "image blob"
               },
               TEXT: {
                 type: Scratch.ArgumentType.STRING,
@@ -1039,7 +1065,7 @@ import DOMPurify from "dompurify"
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: "bskyQuotePost",
-            text: "new quote post embed with uri [URI] and cid [CID] record",
+            text: "new quote post embed record from uri [URI] and cid [CID]",
             arguments: {
               URI: {
                 type: Scratch.ArgumentType.STRING,
@@ -1280,7 +1306,7 @@ import DOMPurify from "dompurify"
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyLike",
-            text: "[ICON] like post at [URI] and cid [CID]",
+            text: "[ICON] like post at [URI] with cid [CID]",
             arguments: {
               ICON: {
                 type: Scratch.ArgumentType.IMAGE,
@@ -1315,7 +1341,7 @@ import DOMPurify from "dompurify"
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyFollow",
-            text: "follow user with DID/handle: [DID]",
+            text: "follow [DID]",
             arguments: {
               DID: {
                 type: Scratch.ArgumentType.STRING,
@@ -1326,7 +1352,7 @@ import DOMPurify from "dompurify"
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyUnFollow",
-            text: "unfollow user with follow at:// uri record: [URI]",
+            text: "unfollow user with follow record uri: [URI]",
             arguments: {
               URI: {
                 type: Scratch.ArgumentType.STRING,
@@ -1381,7 +1407,7 @@ import DOMPurify from "dompurify"
             blockType: Scratch.BlockType.REPORTER,
             opcode: "bskyGetBlob",
             blockIconURI: ImageIcon,
-            text: Scratch.translate("get blob from DID [DID] and CID [CID]"),
+            text: Scratch.translate("get blob from did [DID] and cid [CID]"),
             arguments: {
               DID: {
                 type: Scratch.ArgumentType.STRING,
@@ -1401,7 +1427,7 @@ import DOMPurify from "dompurify"
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyEditProfile",
-            text: "edit profile with new display name [DISPLAY_NAME] description [DESCRIPTION] and (optional) new [PROFILE_IMAGE_TYPE] image [IMAGE]",
+            text: "edit profile display name [DISPLAY_NAME] description [DESCRIPTION] and (optional) new [PROFILE_IMAGE_TYPE] image [IMAGE]",
             arguments: {
               DISPLAY_NAME: {
                 type: Scratch.ArgumentType.STRING,
@@ -1425,7 +1451,8 @@ import DOMPurify from "dompurify"
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: "bskyGetPreferences",
-            text: "get my preferences"
+            text: "get my preferences",
+            disableMonitor: true
           },
           {
             blockType: Scratch.BlockType.LABEL,
@@ -1434,7 +1461,7 @@ import DOMPurify from "dompurify"
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyBlockUser",
-            text: "block user with DID [DID]",
+            text: "block [DID]",
             arguments: {
               DID: {
                 type: Scratch.ArgumentType.STRING,
@@ -1446,18 +1473,18 @@ import DOMPurify from "dompurify"
           {
             blockType: Scratch.BlockType.REPORTER,
             opcode: "bskyLastBlockedUser",
-            text: "last blocked user DID",
+            text: "last blocked user record",
             outputShape: 3
           },
           "---",
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyUnblockUser",
-            text: "unblock user with block at:// uri record [URI]",
+            text: "unblock user from at:// uri record [URI]",
             arguments: {
               URI: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: ""
+                defaultValue: "at://..."
               }
             }
           },
@@ -1465,22 +1492,22 @@ import DOMPurify from "dompurify"
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyMuteUser",
-            text: "mute user with DID [DID]",
+            text: "mute [DID]",
             arguments: {
               DID: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: ""
+                defaultValue: "supperyapper.bsky.social"
               }
             }
           },
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyUnmuteUser",
-            text: "unmute user with DID [DID]",
+            text: "unmute [DID]",
             arguments: {
               DID: {
                 type: Scratch.ArgumentType.STRING,
-                defaultValue: ""
+                defaultValue: "supperyapper.bsky.social"
               }
             }
           },
@@ -1764,8 +1791,8 @@ import DOMPurify from "dompurify"
             hideFromPalette: !this.showExtras,
             disableMonitor: true,
 
-            mutator: "cst_extendable",
-            extensions: ["cst_extendable_string"],
+            mutator: "ham_lexicon",
+            extensions: ["ham_lexicon_extendableInputs"],
 
             outputShape: 3
           },
@@ -1825,7 +1852,9 @@ import DOMPurify from "dompurify"
               { text: "webp", value: "image/webp" },
               { text: "svg", value: "image/svg+xml" },
               { text: "tiff", value: "image/tiff" },
-              { text: "bmp", value: "image/bmp" }
+              { text: "bmp", value: "image/bmp" },
+              { text: "mp4", value: "video/mp4" },
+              { text: "webm", value: "video/webm" }
             ]
           },
           bskyAUTHOR_FEED_FILTERS: {
@@ -2014,7 +2043,7 @@ import DOMPurify from "dompurify"
     }
 
     async bskyPost(args): Promise<void> {
-      if (!this.richText) {
+      if (!this.options.richText) {
         const rt = new RichText({ text: args.POST })
 
         await rt.detectFacets(agent)
@@ -2024,16 +2053,16 @@ import DOMPurify from "dompurify"
         }
         if (args.EMBED) {
           const embed = JSON.parse(args.EMBED)
-          await Post(args.POST, this.useCurrentDate, this.date, embed)
+          await Post(args.POST, this.options.useCurrentDate, this.date, embed)
         } else {
-          await Post(args.POST, this.useCurrentDate, this.date)
+          await Post(args.POST, this.options.useCurrentDate, this.date)
         }
       } else {
         if (args.EMBED) {
           const embed = JSON.parse(args.EMBED)
-          await Post(args.POST, this.useCurrentDate, this.date, embed)
+          await Post(args.POST, this.options.useCurrentDate, this.date, embed)
         } else {
-          await Post(args.POST, this.useCurrentDate, this.date)
+          await Post(args.POST, this.options.useCurrentDate, this.date)
         }
       }
     }
@@ -2042,7 +2071,7 @@ import DOMPurify from "dompurify"
     }
     async bskyReply(args): Promise<void> {
       const replyData = JSON.parse(args.INFO)
-      if (!this.richText) {
+      if (!this.options.richText) {
         const rt = new RichText({ text: args.REPLY })
 
         await rt.detectFacets(agent)
@@ -2054,7 +2083,7 @@ import DOMPurify from "dompurify"
           const embed = JSON.parse(args.EMBED)
           await Reply(
             args.REPLY,
-            this.useCurrentDate,
+            this.options.useCurrentDate,
             this.date,
             replyData.threadRootPost,
             replyData.postReplyingto,
@@ -2063,7 +2092,7 @@ import DOMPurify from "dompurify"
         } else {
           await Reply(
             args.REPLY,
-            this.useCurrentDate,
+            this.options.useCurrentDate,
             this.date,
             replyData.threadRootPost,
             replyData.postReplyingto
@@ -2074,7 +2103,7 @@ import DOMPurify from "dompurify"
           const embed = JSON.parse(args.EMBED)
           await Reply(
             args.REPLY,
-            this.useCurrentDate,
+            this.options.useCurrentDate,
             this.date,
             replyData.threadRootPost,
             replyData.postReplyingto,
@@ -2083,7 +2112,7 @@ import DOMPurify from "dompurify"
         } else {
           await Reply(
             args.REPLY,
-            this.useCurrentDate,
+            this.options.useCurrentDate,
             this.date,
             replyData.threadRootPost,
             replyData.postReplyingto
@@ -2138,8 +2167,8 @@ import DOMPurify from "dompurify"
             height: args.HEIGHT
           }
         })
-      } catch (e) {
-        return e
+      } catch {
+        return "Invalid Inputs"
       }
     }
     bskyQuotePost(args) {
@@ -2407,10 +2436,14 @@ import DOMPurify from "dompurify"
       )
     }
 
+    async bskyGetPreferences() {
+      return JSON.stringify(await agent.getPreferences())
+    }
+
     async bskyBlockUser(args) {
       const { uri } = await BlockUser(
         parseHandle(args.DID),
-        this.useCurrentDate,
+        this.options.useCurrentDate,
         this.date
       )
       this.lastBlockedUserURI = Cast.toString(uri)
@@ -2601,12 +2634,15 @@ import DOMPurify from "dompurify"
             ? args[prefix + i]
             : this.convertToObjectKey(args[prefix + i])
 
-          // Parse the single quotes to be double quotes
-          const str = `{${arg}}`.replace("'", '"')
-          console.log(Cast.toString(args[prefix + i]), str)
-
-          const obj: object = JSON.parse(str)
-
+          // Parse the argument into an object
+          let obj: object
+          try {
+            obj = JSON.parse(`{${arg}}`.replace("'", '"'))
+          } catch {
+            throw new Error(
+              'One of the inputs are invalid. They must be like this: "a: "b""'
+            )
+          }
           // Check if the created object has more than 1 argument
           if (Object.keys(obj).length > 1) {
             throw new Error("Can't have more than 1 key for each argument")
@@ -2614,8 +2650,8 @@ import DOMPurify from "dompurify"
 
           // "Pushes" the object into the params object
           Object.assign(params, obj)
-        } catch {
-          return `One of the inputs are invalid. They must be object key definitions.`
+        } catch (e) {
+          return e.message
         }
       }
       return JSON.stringify(params)
@@ -2624,10 +2660,10 @@ import DOMPurify from "dompurify"
     bskyOptions(args) {
       switch (args.OPTION) {
         case "richText":
-          this.richText = Cast.toBoolean(args.ONOFF)
+          this.options.richText = Cast.toBoolean(args.ONOFF)
           break
         case "useCurrentDate":
-          this.useCurrentDate = Cast.toBoolean(args.ONOFF)
+          this.options.useCurrentDate = Cast.toBoolean(args.ONOFF)
           vm.extensionManager.refreshBlocks()
           break
         case "sepCursorLimit":
@@ -2729,7 +2765,7 @@ import DOMPurify from "dompurify"
     // heavily based on scratch-blocks' procedures code
     // https://github.com/TurboWarp/scratch-blocks
     ScratchBlocks.Extensions.registerMutator(
-      "cst_extendable",
+      "ham_lexicon",
       {
         domToMutation(xmlElement) {
           this.inputCount = Math.floor(
@@ -3131,58 +3167,58 @@ import DOMPurify from "dompurify"
       check = null, // null or "Boolean" (or the label text for DUMMY_INPUTs)
       shadowType = undefined, // The type of shadow block (or falsy for none)
       shadowField = undefined, // The field to use in the shadow block
-      shadowDefault = undefined, // The default shadow block value
-      defaultValue = undefined
+      shadowDefault = undefined // The default shadow block value
     ) => ({
       type,
       id,
       check,
       shadowType,
       shadowField,
-      shadowDefault,
-      defaultValue
+      shadowDefault
     })
 
     // Configuration extensions
-    ScratchBlocks.Extensions.register("cst_extendable_clear", function () {
+    ScratchBlocks.Extensions.register("ham_lexicon_clear", function () {
       this.clearLabels = true
     })
-    ScratchBlocks.Extensions.register("cst_extendable_string", function () {
-      this.extendableDefs = [
-        createInput(
-          ScratchBlocks.INPUT_VALUE,
-          "ARG",
-          null,
-          "text",
-          "TEXT",
-          "",
-          `a: \"hello world!\"`
-        )
-      ]
-      const ops = {
-        [exId + "_extendLess"]: "<",
-        [exId + "_extendEqual"]: "=",
-        [exId + "_extendGreater"]: ">"
-      }
-      if (this.type in ops) {
-        const op = ops[this.type]
-        this.extendableDefsStart = [
+    ScratchBlocks.Extensions.register(
+      "ham_lexicon_extendableInputs",
+      function () {
+        this.extendableDefs = [
           createInput(
             ScratchBlocks.INPUT_VALUE,
             "ARG",
             null,
             "text",
             "TEXT",
-            ""
+            `a: \"hello world!\"`
           )
         ]
-        this.extendableDefs.unshift(
-          createInput(ScratchBlocks.DUMMY_INPUT, "WORD", op)
-        )
-        this.inputCount = 1
+        const ops = {
+          [exId + "_extendLess"]: "<",
+          [exId + "_extendEqual"]: "=",
+          [exId + "_extendGreater"]: ">"
+        }
+        if (this.type in ops) {
+          const op = ops[this.type]
+          this.extendableDefsStart = [
+            createInput(
+              ScratchBlocks.INPUT_VALUE,
+              "ARG",
+              null,
+              "text",
+              "TEXT",
+              ""
+            )
+          ]
+          this.extendableDefs.unshift(
+            createInput(ScratchBlocks.DUMMY_INPUT, "WORD", op)
+          )
+          this.inputCount = 1
+        }
       }
-    })
-    ScratchBlocks.Extensions.register("cst_extendable_number", function () {
+    )
+    ScratchBlocks.Extensions.register("ham_lexicon_number", function () {
       const defaultValue = [
         exId + "_extendProduct",
         exId + "_extendDivide"
@@ -3225,7 +3261,7 @@ import DOMPurify from "dompurify"
         this.inputCount = 1
       }
     })
-    ScratchBlocks.Extensions.register("cst_extendable_boolean", function () {
+    ScratchBlocks.Extensions.register("ham_lexicon_boolean", function () {
       this.extendableDefs = [
         createInput(ScratchBlocks.INPUT_VALUE, "ARG", "Boolean")
       ]
@@ -3255,157 +3291,6 @@ import DOMPurify from "dompurify"
         )
         this.inputCount = 1
       }
-    })
-    ScratchBlocks.Extensions.register("cst_extendable_branch", function () {
-      this.extendableDefs = [
-        createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null)
-      ]
-      this.inputCount = 1
-    })
-    ScratchBlocks.Extensions.register("cst_extendable_if", function () {
-      this.extendableDefsStart = [
-        createInput(ScratchBlocks.INPUT_VALUE, "CONDITION", "Boolean"),
-        createInput(ScratchBlocks.DUMMY_INPUT, "THEN_WORD", "then"),
-        createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null)
-      ]
-      this.extendableDefs = [
-        createInput(
-          ScratchBlocks.DUMMY_INPUT,
-          "ELSE_WORD",
-          Scratch.translate({
-            default: "else if",
-            description:
-              "Text inserted after a C input and before a boolean input on the extendable if blocks."
-          })
-        ),
-        createInput(ScratchBlocks.INPUT_VALUE, "CONDITION", "Boolean"),
-        createInput(
-          ScratchBlocks.DUMMY_INPUT,
-          "THEN_WORD",
-          Scratch.translate({
-            default: "then",
-            description:
-              "Text inserted before a C input on the extendable if blocks. Ideally should match vanilla Scratch's strings"
-          })
-        ),
-        createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null)
-      ]
-      this.inputCount = 0
-      this.minInputs = 0
-    })
-    ScratchBlocks.Extensions.register("cst_extendable_if_else", function () {
-      this.extendableDefsStart = [
-        createInput(ScratchBlocks.INPUT_VALUE, "CONDITION", "Boolean"),
-        createInput(
-          ScratchBlocks.DUMMY_INPUT,
-          "THEN_WORD",
-          Scratch.translate({
-            default: "then",
-            description:
-              "Text inserted before a C input on the extendable if blocks. Ideally should match vanilla Scratch's strings"
-          })
-        ),
-        createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null),
-        createInput(
-          ScratchBlocks.DUMMY_INPUT,
-          "ELSE_WORD",
-          Scratch.translate({
-            default: "else",
-            description:
-              "Text inserted before the last C input on the extendable if-else block. Ideally should match vanilla Scratch's strings"
-          })
-        )
-      ]
-      this.extendableDefs = [
-        createInput(ScratchBlocks.DUMMY_INPUT, "IF_WORD", "if"),
-        createInput(ScratchBlocks.INPUT_VALUE, "CONDITION", "Boolean"),
-        createInput(
-          ScratchBlocks.DUMMY_INPUT,
-          "THEN_WORD",
-          Scratch.translate({
-            default: "then",
-            description:
-              "Text inserted before a C input on the extendable if blocks. Ideally should match vanilla Scratch's strings"
-          })
-        ),
-        createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null),
-        createInput(
-          ScratchBlocks.DUMMY_INPUT,
-          "ELSE_WORD",
-          Scratch.translate({
-            default: "else",
-            description:
-              "Text inserted before the last C input on the extendable if-else block. Ideally should match vanilla Scratch's strings"
-          })
-        )
-      ]
-      this.extendableDefsEnd = [
-        createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null)
-      ]
-      this.inputCount = 0
-      this.minInputs = 0
-    })
-    ScratchBlocks.Extensions.register("cst_extendable_switch", function () {
-      this.extendableDefs = [
-        createInput(
-          ScratchBlocks.DUMMY_INPUT,
-          "CASE_WORD",
-          Scratch.translate({
-            default: "case",
-            description:
-              "Text inserted between C and text inputs on the extendable switch block"
-          })
-        ),
-        createInput(
-          ScratchBlocks.INPUT_VALUE,
-          "CASE_VALUE",
-          null,
-          "text",
-          "TEXT",
-          ""
-        ),
-        createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null)
-      ]
-      this.extendableDefsEnd = [
-        createInput(
-          ScratchBlocks.DUMMY_INPUT,
-          "DEFAULT_WORD",
-          Scratch.translate({
-            default: "default",
-            description:
-              "Text inserted before the last C input on the extendable switch block"
-          })
-        ),
-        createInput(ScratchBlocks.NEXT_STATEMENT, "SUBSTACK", null)
-      ]
-      this.inputCount = 1
-      this.minInputs = 0
-    })
-    ScratchBlocks.Extensions.register("cst_extendable_joinwith", function () {
-      this.extendableDefs = [
-        createInput(
-          ScratchBlocks.INPUT_VALUE,
-          "ARG",
-          null,
-          "text",
-          "TEXT",
-          "word"
-        )
-      ]
-      this.extendableDefsEnd = [
-        createInput(
-          ScratchBlocks.DUMMY_INPUT,
-          "WORD_WORD",
-          Scratch.translate({
-            default: "with",
-            description:
-              "Text inserted before the last input on the 'join (...) with []' block"
-          })
-        ),
-        createInput(ScratchBlocks.INPUT_VALUE, "ARG", null, "text", "TEXT", "_")
-      ]
-      this.inputCount = 2
-      this.minInputs = 0
     })
 
     // HACK: fixes the flyout, also with dynamic enable/disable addons
