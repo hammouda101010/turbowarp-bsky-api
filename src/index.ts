@@ -1513,7 +1513,41 @@ import DOMPurify from "dompurify"
           },
           {
             blockType: Scratch.BlockType.LABEL,
-            text: "Searching Posts and Profiles"
+            text: "Notifications"
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: "bskyListNotifications",
+            text: "list notifications",
+            disableMonitor: true
+          },
+          {
+            blockType: Scratch.BlockType.REPORTER,
+            opcode: "bskyCountUnreadNotifications",
+            text: "count unread notifications",
+            disableMonitor: true
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: "bskyUpdateSeenNotifications",
+            text: "update seen notifications",
+          },
+          {
+            blockType: Scratch.BlockType.LABEL,
+            text: "Searching Tools"
+          },
+          {
+            blockType: Scratch.BlockType.COMMAND,
+            opcode: "bskySearchSep",
+            text: "search posts/profiles with search term [TERM]",
+            hideFromPalette: !this.sepCursorLimit,
+            blockIconURI: SearchingLensIcon,
+            arguments: {
+              TERM: {
+                type: Scratch.ArgumentType.STRING,
+                defaultValue: "i love pizza"
+              }
+            }
           },
           {
             blockType: Scratch.BlockType.COMMAND,
@@ -1570,12 +1604,12 @@ import DOMPurify from "dompurify"
           },
           {
             blockType: Scratch.BlockType.LABEL,
-            text: "Post Moderation"
+            text: "Moderation Tools"
           },
           {
             blockType: Scratch.BlockType.COMMAND,
             opcode: "bskyModerate",
-            text: "moderate [SUBJECT_TYPE]",
+            text: "moderate [SUBJECT_TYPE] subject [SUBJECT]",
             arguments: {
               SUBJECT_TYPE: {
                 type: Scratch.ArgumentType.STRING,
@@ -2472,6 +2506,25 @@ import DOMPurify from "dompurify"
       console.log(response)
     }
 
+    async bskyListNotifications() {
+      const { data } = await agent.listNotifications({
+        cursor: this.cursor ?? "",
+        limit: this.limit ?? 40
+      })
+
+      return JSON.stringify(data)
+    }
+
+    async bskyCountUnreadNotifications() {
+      const { data } = await agent.countUnreadNotifications()
+
+      return JSON.stringify(data)
+    }
+
+    async bskyUpdateSeenNotifications() {
+      await agent.updateSeenNotifications()
+    }
+    
     async bskySearch(args) {
       const response = await BskySearchFuncs.Search(
         args.TERM,
