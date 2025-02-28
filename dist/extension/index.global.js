@@ -58549,49 +58549,63 @@ if (cid) {
           createDebug.namespaces = namespaces;
           createDebug.names = [];
           createDebug.skips = [];
-          let i;
-          const split = (typeof namespaces === "string" ? namespaces : "").split(/[\s,]+/);
-          const len = split.length;
-          for (i = 0; i < len; i++) {
-            if (!split[i]) {
-              continue;
-            }
-            namespaces = split[i].replace(/\*/g, ".*?");
-            if (namespaces[0] === "-") {
-              createDebug.skips.push(new RegExp("^" + namespaces.slice(1) + "$"));
+          const split = (typeof namespaces === "string" ? namespaces : "").trim().replace(" ", ",").split(",").filter(Boolean);
+          for (const ns of split) {
+            if (ns[0] === "-") {
+              createDebug.skips.push(ns.slice(1));
             } else {
-              createDebug.names.push(new RegExp("^" + namespaces + "$"));
+              createDebug.names.push(ns);
             }
           }
         }
+        function matchesTemplate(search, template) {
+          let searchIndex = 0;
+          let templateIndex = 0;
+          let starIndex = -1;
+          let matchIndex = 0;
+          while (searchIndex < search.length) {
+            if (templateIndex < template.length && (template[templateIndex] === search[searchIndex] || template[templateIndex] === "*")) {
+              if (template[templateIndex] === "*") {
+                starIndex = templateIndex;
+                matchIndex = searchIndex;
+                templateIndex++;
+              } else {
+                searchIndex++;
+                templateIndex++;
+              }
+            } else if (starIndex !== -1) {
+              templateIndex = starIndex + 1;
+              matchIndex++;
+              searchIndex = matchIndex;
+            } else {
+              return false;
+            }
+          }
+          while (templateIndex < template.length && template[templateIndex] === "*") {
+            templateIndex++;
+          }
+          return templateIndex === template.length;
+        }
         function disable() {
           const namespaces = [
-            ...createDebug.names.map(toNamespace),
-            ...createDebug.skips.map(toNamespace).map((namespace) => "-" + namespace)
+            ...createDebug.names,
+            ...createDebug.skips.map((namespace) => "-" + namespace)
           ].join(",");
           createDebug.enable("");
           return namespaces;
         }
         function enabled(name2) {
-          if (name2[name2.length - 1] === "*") {
-            return true;
-          }
-          let i;
-          let len;
-          for (i = 0, len = createDebug.skips.length; i < len; i++) {
-            if (createDebug.skips[i].test(name2)) {
+          for (const skip of createDebug.skips) {
+            if (matchesTemplate(name2, skip)) {
               return false;
             }
           }
-          for (i = 0, len = createDebug.names.length; i < len; i++) {
-            if (createDebug.names[i].test(name2)) {
+          for (const ns of createDebug.names) {
+            if (matchesTemplate(name2, ns)) {
               return true;
             }
           }
           return false;
-        }
-        function toNamespace(regexp) {
-          return regexp.toString().substring(2, regexp.toString().length - 2).replace(/\.\*\?$/, "*");
         }
         function coerce2(val) {
           if (val instanceof Error) {
@@ -63957,7 +63971,7 @@ if (cid) {
 
   // src/index.ts
   (function(Scratch2) {
-    if (Scratch2.extensions.unsandboxed === false) {
+    if (!Scratch2.extensions.unsandboxed) {
       throw new Error("TurboButterfly Extension Must Be Run Unsandboxed.");
     }
     const vm = Scratch2.vm;
@@ -64031,7 +64045,7 @@ if (cid) {
       }
     }
     const parseHandle = (handle) => {
-      if (!Cast.toBoolean(/.+\.(.+\.?)+/.test(handle))) {
+      if (!Cast.toBoolean(/.+\.(.+\.?)+/.test(handle)) || Cast.toBoolean(/(did:plc:[a-z0-9]+)/.test(handle))) {
         throw new Error("Invalid handle");
       }
       return handle.replace("@", "");
@@ -64063,7 +64077,7 @@ if (cid) {
       const response = await fetch(url);
       const blob = await response.blob();
       if (blob.size > 1e8) {
-        throw new Error("Error: File size is too big. It must be less than 1MB.");
+        throw new Error("File size is too big. It must be less than 100 MB.");
       }
       console.log(`File size: ${blob.size} bytes`);
       return blob.size;
@@ -64079,8 +64093,8 @@ if (cid) {
           }
           const handle = pathSegments[2];
           const postId = pathSegments[4];
-          const handleResolution = await agent.resolveHandle({ handle });
-          const did = handleResolution.data.did;
+          const { data } = await agent.resolveHandle({ handle });
+          const did = data.did;
           const atUri = `at://${did}/app.bsky.feed.post/${postId}`;
           return atUri;
         } catch (e) {
@@ -64182,10 +64196,12 @@ if (cid) {
           };
         }
         const response = await agent.post(responseObj);
-        console.info(`Posted:${JSON.stringify(response)}`);
-        if (this.richText) {
+        console.info(`Posted: ${JSON.stringify(response)}`);
+        const rt = new import_api2.RichText({ text: post });
+        rt.detectFacetsWithoutResolution();
+        if (Cast.toBoolean(rt.facets)) {
           console.info(
-            `Markdown Version of This Reply: ${ConvertRichTextToMarkdown(new import_api2.RichText({ text: post }))}`
+            `Markdown Version of This Post: ${ConvertRichTextToMarkdown(rt)}`
             // Logs the Markdown version of the post's text if rich text is enabled.
           );
         }
@@ -64240,13 +64256,17 @@ if (cid) {
         }
         const response = await agent.post(responseObj);
         console.info(`Posted Reply: ${JSON.stringify(response)}`);
-        if (this.richText) {
+        console.info(`Posted:${JSON.stringify(response)}`);
+        const rt = new import_api2.RichText({ text: post });
+        rt.detectFacetsWithoutResolution();
+        if (Cast.toBoolean(rt.facets)) {
           console.info(
-            `Markdown Version of This Reply: ${ConvertRichTextToMarkdown(new import_api2.RichText({ text: post }))}`
+            `Markdown Version of This Reply: ${ConvertRichTextToMarkdown(rt)}`
+            // Logs the Markdown version of the reply's text if rich text is enabled.
           );
         }
       } catch (error) {
-        console.error(`Error Posting Reply: ${error}`);
+        console.error(`Error Posting Reply: ${error.message}`);
       }
     }
     async function Upload(datauri, encoding = "image/png") {
@@ -64343,7 +64363,8 @@ if (cid) {
         return existing;
       });
     }
-    function ConvertRichTextToMarkdown(rt) {
+    async function ConvertRichTextToMarkdown(rt) {
+      await rt.detectFacets(agent);
       let markdown = "";
       for (const segment of rt.segments()) {
         if (segment.isLink()) {
@@ -64399,11 +64420,16 @@ if (cid) {
       modDecision;
       lastBlockedUserURI;
       showExtras;
+      options;
       constructor(runtime2) {
         this.runtime = runtime2;
-        this.useCurrentDate = true;
+        this.options = {
+          useCurrentDate: true,
+          richText: true,
+          sepCursorLimit: true,
+          injectMetadata: true
+        };
         this.date = (/* @__PURE__ */ new Date()).toISOString();
-        this.richText = true;
         this.cursor = null;
         this.limit = null;
         this.sepCursorLimit = true;
@@ -64553,7 +64579,7 @@ if (cid) {
             {
               blockType: Scratch2.BlockType.COMMAND,
               opcode: "bskyReply",
-              text: "reply [POST_ICON][REPLY] to post with info:[INFO] embed: [EMBED]",
+              text: "reply [POST_ICON][REPLY] to post with record: [INFO] embed: [EMBED]",
               arguments: {
                 POST_ICON: {
                   type: Scratch2.ArgumentType.IMAGE,
@@ -64600,7 +64626,7 @@ if (cid) {
             {
               blockType: Scratch2.BlockType.COMMAND,
               opcode: "bskyRepost",
-              text: "repost post with uri [URI] and cid [CID]",
+              text: "repost post from uri [URI] and cid [CID]",
               arguments: {
                 URI: {
                   type: Scratch2.ArgumentType.STRING,
@@ -64615,7 +64641,7 @@ if (cid) {
             {
               blockType: Scratch2.BlockType.COMMAND,
               opcode: "bskyUnRepost",
-              text: "remove post repost with uri [URI]",
+              text: "remove post repost from uri [URI]",
               arguments: {
                 URI: {
                   type: Scratch2.ArgumentType.STRING,
@@ -64628,7 +64654,7 @@ if (cid) {
               blockType: Scratch2.BlockType.COMMAND,
               opcode: "bskySetCurrentDate",
               text: "set date to [DATE]",
-              hideFromPalette: this.useCurrentDate,
+              hideFromPalette: this.options.useCurrentDate,
               arguments: {
                 DATE: {
                   type: Scratch2.ArgumentType.STRING,
@@ -64640,7 +64666,7 @@ if (cid) {
             {
               blockType: Scratch2.BlockType.REPORTER,
               opcode: "bskyUploadBlob",
-              text: "upload image/video blob [DATAURI] with content-type [ENCODING]",
+              text: "upload image/video blob [DATAURI] as an [ENCODING]",
               blockIconURI: ImageIcon,
               outputShape: 3,
               arguments: {
@@ -64662,7 +64688,7 @@ if (cid) {
               arguments: {
                 IMAGES: {
                   type: Scratch2.ArgumentType.STRING,
-                  defaultValue: '["array", "use image embed reporter and/or an JSON extension"]'
+                  defaultValue: '["array", "use the \\"image embed\\" reporter and a JSON extension"]'
                 }
               }
             },
@@ -64674,7 +64700,7 @@ if (cid) {
               arguments: {
                 IMAGE: {
                   type: Scratch2.ArgumentType.STRING,
-                  defaultValue: "use upload blob reporter"
+                  defaultValue: "image blob"
                 },
                 TEXT: {
                   type: Scratch2.ArgumentType.STRING,
@@ -64717,7 +64743,7 @@ if (cid) {
             {
               blockType: Scratch2.BlockType.REPORTER,
               opcode: "bskyQuotePost",
-              text: "new quote post embed with uri [URI] and cid [CID] record",
+              text: "new quote post embed record from uri [URI] and cid [CID]",
               arguments: {
                 URI: {
                   type: Scratch2.ArgumentType.STRING,
@@ -64953,7 +64979,7 @@ if (cid) {
             {
               blockType: Scratch2.BlockType.COMMAND,
               opcode: "bskyLike",
-              text: "[ICON] like post at [URI] and cid [CID]",
+              text: "[ICON] like post at [URI] with cid [CID]",
               arguments: {
                 ICON: {
                   type: Scratch2.ArgumentType.IMAGE,
@@ -64987,7 +65013,7 @@ if (cid) {
             {
               blockType: Scratch2.BlockType.COMMAND,
               opcode: "bskyFollow",
-              text: "follow user with DID/handle: [DID]",
+              text: "follow [DID]",
               arguments: {
                 DID: {
                   type: Scratch2.ArgumentType.STRING,
@@ -64998,7 +65024,7 @@ if (cid) {
             {
               blockType: Scratch2.BlockType.COMMAND,
               opcode: "bskyUnFollow",
-              text: "unfollow user with follow at:// uri record: [URI]",
+              text: "unfollow user with follow record uri: [URI]",
               arguments: {
                 URI: {
                   type: Scratch2.ArgumentType.STRING,
@@ -65053,7 +65079,7 @@ if (cid) {
               blockType: Scratch2.BlockType.REPORTER,
               opcode: "bskyGetBlob",
               blockIconURI: ImageIcon,
-              text: Scratch2.translate("get blob from DID [DID] and CID [CID]"),
+              text: Scratch2.translate("get blob from did [DID] and cid [CID]"),
               arguments: {
                 DID: {
                   type: Scratch2.ArgumentType.STRING,
@@ -65072,7 +65098,7 @@ if (cid) {
             {
               blockType: Scratch2.BlockType.COMMAND,
               opcode: "bskyEditProfile",
-              text: "edit profile with new display name [DISPLAY_NAME] description [DESCRIPTION] and (optional) new [PROFILE_IMAGE_TYPE] image [IMAGE]",
+              text: "edit profile display name [DISPLAY_NAME] description [DESCRIPTION] and (optional) new [PROFILE_IMAGE_TYPE] image [IMAGE]",
               arguments: {
                 DISPLAY_NAME: {
                   type: Scratch2.ArgumentType.STRING,
@@ -65096,7 +65122,8 @@ if (cid) {
             {
               blockType: Scratch2.BlockType.REPORTER,
               opcode: "bskyGetPreferences",
-              text: "get my preferences"
+              text: "get my preferences",
+              disableMonitor: true
             },
             {
               blockType: Scratch2.BlockType.LABEL,
@@ -65105,7 +65132,7 @@ if (cid) {
             {
               blockType: Scratch2.BlockType.COMMAND,
               opcode: "bskyBlockUser",
-              text: "block user with DID [DID]",
+              text: "block [DID]",
               arguments: {
                 DID: {
                   type: Scratch2.ArgumentType.STRING,
@@ -65117,18 +65144,18 @@ if (cid) {
             {
               blockType: Scratch2.BlockType.REPORTER,
               opcode: "bskyLastBlockedUser",
-              text: "last blocked user DID",
+              text: "last blocked user record",
               outputShape: 3
             },
             "---",
             {
               blockType: Scratch2.BlockType.COMMAND,
               opcode: "bskyUnblockUser",
-              text: "unblock user with block at:// uri record [URI]",
+              text: "unblock user from at:// uri record [URI]",
               arguments: {
                 URI: {
                   type: Scratch2.ArgumentType.STRING,
-                  defaultValue: ""
+                  defaultValue: "at://..."
                 }
               }
             },
@@ -65136,28 +65163,62 @@ if (cid) {
             {
               blockType: Scratch2.BlockType.COMMAND,
               opcode: "bskyMuteUser",
-              text: "mute user with DID [DID]",
+              text: "mute [DID]",
               arguments: {
                 DID: {
                   type: Scratch2.ArgumentType.STRING,
-                  defaultValue: ""
+                  defaultValue: "supperyapper.bsky.social"
                 }
               }
             },
             {
               blockType: Scratch2.BlockType.COMMAND,
               opcode: "bskyUnmuteUser",
-              text: "unmute user with DID [DID]",
+              text: "unmute [DID]",
               arguments: {
                 DID: {
                   type: Scratch2.ArgumentType.STRING,
-                  defaultValue: ""
+                  defaultValue: "supperyapper.bsky.social"
                 }
               }
             },
             {
               blockType: Scratch2.BlockType.LABEL,
-              text: "Searching Posts and Profiles"
+              text: "Notifications"
+            },
+            {
+              blockType: Scratch2.BlockType.REPORTER,
+              opcode: "bskyListNotifications",
+              text: "list notifications",
+              disableMonitor: true
+            },
+            {
+              blockType: Scratch2.BlockType.REPORTER,
+              opcode: "bskyCountUnreadNotifications",
+              text: "count unread notifications",
+              disableMonitor: true
+            },
+            {
+              blockType: Scratch2.BlockType.COMMAND,
+              opcode: "bskyUpdateSeenNotifications",
+              text: "update seen notifications"
+            },
+            {
+              blockType: Scratch2.BlockType.LABEL,
+              text: "Searching Tools"
+            },
+            {
+              blockType: Scratch2.BlockType.COMMAND,
+              opcode: "bskySearchSep",
+              text: "search posts/profiles with search term [TERM]",
+              hideFromPalette: !this.sepCursorLimit,
+              blockIconURI: SearchingLensIcon,
+              arguments: {
+                TERM: {
+                  type: Scratch2.ArgumentType.STRING,
+                  defaultValue: "i love pizza"
+                }
+              }
             },
             {
               blockType: Scratch2.BlockType.COMMAND,
@@ -65214,12 +65275,12 @@ if (cid) {
             },
             {
               blockType: Scratch2.BlockType.LABEL,
-              text: "Post Moderation"
+              text: "Moderation Tools"
             },
             {
               blockType: Scratch2.BlockType.COMMAND,
               opcode: "bskyModerate",
-              text: "moderate [SUBJECT_TYPE]",
+              text: "moderate [SUBJECT_TYPE] subject [SUBJECT]",
               arguments: {
                 SUBJECT_TYPE: {
                   type: Scratch2.ArgumentType.STRING,
@@ -65430,8 +65491,8 @@ if (cid) {
               arguments: {},
               hideFromPalette: !this.showExtras,
               disableMonitor: true,
-              mutator: "cst_extendable",
-              extensions: ["cst_extendable_string"],
+              mutator: "ham_lexicon",
+              extensions: ["ham_lexicon_extendableInputs"],
               outputShape: 3
             },
             "---",
@@ -65490,7 +65551,9 @@ if (cid) {
                 { text: "webp", value: "image/webp" },
                 { text: "svg", value: "image/svg+xml" },
                 { text: "tiff", value: "image/tiff" },
-                { text: "bmp", value: "image/bmp" }
+                { text: "bmp", value: "image/bmp" },
+                { text: "mp4", value: "video/mp4" },
+                { text: "webm", value: "video/webm" }
               ]
             },
             bskyAUTHOR_FEED_FILTERS: {
@@ -65657,7 +65720,7 @@ if (cid) {
         return Cast.toBoolean(agent.did);
       }
       async bskyPost(args) {
-        if (!this.richText) {
+        if (!this.options.richText) {
           const rt = new import_api2.RichText({ text: args.POST });
           await rt.detectFacets(agent);
           if (rt.facets && rt.facets.length > 0) {
@@ -65665,16 +65728,16 @@ if (cid) {
           }
           if (args.EMBED) {
             const embed = JSON.parse(args.EMBED);
-            await Post(args.POST, this.useCurrentDate, this.date, embed);
+            await Post(args.POST, this.options.useCurrentDate, this.date, embed);
           } else {
-            await Post(args.POST, this.useCurrentDate, this.date);
+            await Post(args.POST, this.options.useCurrentDate, this.date);
           }
         } else {
           if (args.EMBED) {
             const embed = JSON.parse(args.EMBED);
-            await Post(args.POST, this.useCurrentDate, this.date, embed);
+            await Post(args.POST, this.options.useCurrentDate, this.date, embed);
           } else {
-            await Post(args.POST, this.useCurrentDate, this.date);
+            await Post(args.POST, this.options.useCurrentDate, this.date);
           }
         }
       }
@@ -65683,7 +65746,7 @@ if (cid) {
       }
       async bskyReply(args) {
         const replyData = JSON.parse(args.INFO);
-        if (!this.richText) {
+        if (!this.options.richText) {
           const rt = new import_api2.RichText({ text: args.REPLY });
           await rt.detectFacets(agent);
           if (rt.facets && rt.facets.length > 0) {
@@ -65693,7 +65756,7 @@ if (cid) {
             const embed = JSON.parse(args.EMBED);
             await Reply(
               args.REPLY,
-              this.useCurrentDate,
+              this.options.useCurrentDate,
               this.date,
               replyData.threadRootPost,
               replyData.postReplyingto,
@@ -65702,7 +65765,7 @@ if (cid) {
           } else {
             await Reply(
               args.REPLY,
-              this.useCurrentDate,
+              this.options.useCurrentDate,
               this.date,
               replyData.threadRootPost,
               replyData.postReplyingto
@@ -65713,7 +65776,7 @@ if (cid) {
             const embed = JSON.parse(args.EMBED);
             await Reply(
               args.REPLY,
-              this.useCurrentDate,
+              this.options.useCurrentDate,
               this.date,
               replyData.threadRootPost,
               replyData.postReplyingto,
@@ -65722,7 +65785,7 @@ if (cid) {
           } else {
             await Reply(
               args.REPLY,
-              this.useCurrentDate,
+              this.options.useCurrentDate,
               this.date,
               replyData.threadRootPost,
               replyData.postReplyingto
@@ -65773,8 +65836,8 @@ if (cid) {
               height: args.HEIGHT
             }
           });
-        } catch (e) {
-          return e;
+        } catch {
+          return "Invalid Inputs";
         }
       }
       bskyQuotePost(args) {
@@ -65992,10 +66055,13 @@ if (cid) {
           args.IMAGE
         );
       }
+      async bskyGetPreferences() {
+        return JSON.stringify(await agent.getPreferences());
+      }
       async bskyBlockUser(args) {
         const { uri } = await BlockUser(
           parseHandle(args.DID),
-          this.useCurrentDate,
+          this.options.useCurrentDate,
           this.date
         );
         this.lastBlockedUserURI = Cast.toString(uri);
@@ -66019,6 +66085,20 @@ if (cid) {
           `Unmuted User: ${await atUriConversions.atUritoProfileLink(`at://${args.DID}`)}`
         );
         console.log(response);
+      }
+      async bskyListNotifications() {
+        const { data } = await agent.listNotifications({
+          cursor: this.cursor ?? "",
+          limit: this.limit ?? 40
+        });
+        return JSON.stringify(data);
+      }
+      async bskyCountUnreadNotifications() {
+        const { data } = await agent.countUnreadNotifications();
+        return JSON.stringify(data);
+      }
+      async bskyUpdateSeenNotifications() {
+        await agent.updateSeenNotifications();
       }
       async bskySearch(args) {
         const response = await BskySearchFuncs.Search(
@@ -66161,19 +66241,24 @@ if (cid) {
         const params = {};
         for (let i = 0; prefix + i in args; i++) {
           try {
-            const isObjectKey = (str2) => {
-              return Cast.toBoolean(/["'].+["']:(.*)?/.test(str2));
+            const isObjectKey = (str) => {
+              return Cast.toBoolean(/["'].+["']:(.*)?/.test(str));
             };
             const arg = isObjectKey(args[prefix + i]) ? args[prefix + i] : this.convertToObjectKey(args[prefix + i]);
-            const str = `{${arg}}`.replace("'", '"');
-            console.log(Cast.toString(args[prefix + i]), str);
-            const obj = JSON.parse(str);
+            let obj;
+            try {
+              obj = JSON.parse(`{${arg}}`.replace("'", '"'));
+            } catch {
+              throw new Error(
+                'One of the inputs are invalid. They must be like this: "a: "b""'
+              );
+            }
             if (Object.keys(obj).length > 1) {
               throw new Error("Can't have more than 1 key for each argument");
             }
             Object.assign(params, obj);
-          } catch {
-            return `One of the inputs are invalid. They must be object key definitions.`;
+          } catch (e) {
+            return e.message;
           }
         }
         return JSON.stringify(params);
@@ -66181,10 +66266,10 @@ if (cid) {
       bskyOptions(args) {
         switch (args.OPTION) {
           case "richText":
-            this.richText = Cast.toBoolean(args.ONOFF);
+            this.options.richText = Cast.toBoolean(args.ONOFF);
             break;
           case "useCurrentDate":
-            this.useCurrentDate = Cast.toBoolean(args.ONOFF);
+            this.options.useCurrentDate = Cast.toBoolean(args.ONOFF);
             vm.extensionManager.refreshBlocks();
             break;
           case "sepCursorLimit":
@@ -66264,7 +66349,7 @@ if (cid) {
         EDITABLE = true;
       }
       ScratchBlocks2.Extensions.registerMutator(
-        "cst_extendable",
+        "ham_lexicon",
         {
           domToMutation(xmlElement) {
             this.inputCount = Math.floor(
@@ -66579,54 +66664,55 @@ if (cid) {
           this.prevInputCount = this.inputCount;
         }
       );
-      const createInput = (type, id, check2 = null, shadowType = void 0, shadowField = void 0, shadowDefault = void 0, defaultValue = void 0) => ({
+      const createInput = (type, id, check2 = null, shadowType = void 0, shadowField = void 0, shadowDefault = void 0) => ({
         type,
         id,
         check: check2,
         shadowType,
         shadowField,
-        shadowDefault,
-        defaultValue
+        shadowDefault
       });
-      ScratchBlocks2.Extensions.register("cst_extendable_clear", function() {
+      ScratchBlocks2.Extensions.register("ham_lexicon_clear", function() {
         this.clearLabels = true;
       });
-      ScratchBlocks2.Extensions.register("cst_extendable_string", function() {
-        this.extendableDefs = [
-          createInput(
-            ScratchBlocks2.INPUT_VALUE,
-            "ARG",
-            null,
-            "text",
-            "TEXT",
-            "",
-            `a: "hello world!"`
-          )
-        ];
-        const ops = {
-          [exId + "_extendLess"]: "<",
-          [exId + "_extendEqual"]: "=",
-          [exId + "_extendGreater"]: ">"
-        };
-        if (this.type in ops) {
-          const op = ops[this.type];
-          this.extendableDefsStart = [
+      ScratchBlocks2.Extensions.register(
+        "ham_lexicon_extendableInputs",
+        function() {
+          this.extendableDefs = [
             createInput(
               ScratchBlocks2.INPUT_VALUE,
               "ARG",
               null,
               "text",
               "TEXT",
-              ""
+              `a: "hello world!"`
             )
           ];
-          this.extendableDefs.unshift(
-            createInput(ScratchBlocks2.DUMMY_INPUT, "WORD", op)
-          );
-          this.inputCount = 1;
+          const ops = {
+            [exId + "_extendLess"]: "<",
+            [exId + "_extendEqual"]: "=",
+            [exId + "_extendGreater"]: ">"
+          };
+          if (this.type in ops) {
+            const op = ops[this.type];
+            this.extendableDefsStart = [
+              createInput(
+                ScratchBlocks2.INPUT_VALUE,
+                "ARG",
+                null,
+                "text",
+                "TEXT",
+                ""
+              )
+            ];
+            this.extendableDefs.unshift(
+              createInput(ScratchBlocks2.DUMMY_INPUT, "WORD", op)
+            );
+            this.inputCount = 1;
+          }
         }
-      });
-      ScratchBlocks2.Extensions.register("cst_extendable_number", function() {
+      );
+      ScratchBlocks2.Extensions.register("ham_lexicon_number", function() {
         const defaultValue = [
           exId + "_extendProduct",
           exId + "_extendDivide"
@@ -66665,7 +66751,7 @@ if (cid) {
           this.inputCount = 1;
         }
       });
-      ScratchBlocks2.Extensions.register("cst_extendable_boolean", function() {
+      ScratchBlocks2.Extensions.register("ham_lexicon_boolean", function() {
         this.extendableDefs = [
           createInput(ScratchBlocks2.INPUT_VALUE, "ARG", "Boolean")
         ];
@@ -66688,148 +66774,6 @@ if (cid) {
           );
           this.inputCount = 1;
         }
-      });
-      ScratchBlocks2.Extensions.register("cst_extendable_branch", function() {
-        this.extendableDefs = [
-          createInput(ScratchBlocks2.NEXT_STATEMENT, "SUBSTACK", null)
-        ];
-        this.inputCount = 1;
-      });
-      ScratchBlocks2.Extensions.register("cst_extendable_if", function() {
-        this.extendableDefsStart = [
-          createInput(ScratchBlocks2.INPUT_VALUE, "CONDITION", "Boolean"),
-          createInput(ScratchBlocks2.DUMMY_INPUT, "THEN_WORD", "then"),
-          createInput(ScratchBlocks2.NEXT_STATEMENT, "SUBSTACK", null)
-        ];
-        this.extendableDefs = [
-          createInput(
-            ScratchBlocks2.DUMMY_INPUT,
-            "ELSE_WORD",
-            Scratch2.translate({
-              default: "else if",
-              description: "Text inserted after a C input and before a boolean input on the extendable if blocks."
-            })
-          ),
-          createInput(ScratchBlocks2.INPUT_VALUE, "CONDITION", "Boolean"),
-          createInput(
-            ScratchBlocks2.DUMMY_INPUT,
-            "THEN_WORD",
-            Scratch2.translate({
-              default: "then",
-              description: "Text inserted before a C input on the extendable if blocks. Ideally should match vanilla Scratch's strings"
-            })
-          ),
-          createInput(ScratchBlocks2.NEXT_STATEMENT, "SUBSTACK", null)
-        ];
-        this.inputCount = 0;
-        this.minInputs = 0;
-      });
-      ScratchBlocks2.Extensions.register("cst_extendable_if_else", function() {
-        this.extendableDefsStart = [
-          createInput(ScratchBlocks2.INPUT_VALUE, "CONDITION", "Boolean"),
-          createInput(
-            ScratchBlocks2.DUMMY_INPUT,
-            "THEN_WORD",
-            Scratch2.translate({
-              default: "then",
-              description: "Text inserted before a C input on the extendable if blocks. Ideally should match vanilla Scratch's strings"
-            })
-          ),
-          createInput(ScratchBlocks2.NEXT_STATEMENT, "SUBSTACK", null),
-          createInput(
-            ScratchBlocks2.DUMMY_INPUT,
-            "ELSE_WORD",
-            Scratch2.translate({
-              default: "else",
-              description: "Text inserted before the last C input on the extendable if-else block. Ideally should match vanilla Scratch's strings"
-            })
-          )
-        ];
-        this.extendableDefs = [
-          createInput(ScratchBlocks2.DUMMY_INPUT, "IF_WORD", "if"),
-          createInput(ScratchBlocks2.INPUT_VALUE, "CONDITION", "Boolean"),
-          createInput(
-            ScratchBlocks2.DUMMY_INPUT,
-            "THEN_WORD",
-            Scratch2.translate({
-              default: "then",
-              description: "Text inserted before a C input on the extendable if blocks. Ideally should match vanilla Scratch's strings"
-            })
-          ),
-          createInput(ScratchBlocks2.NEXT_STATEMENT, "SUBSTACK", null),
-          createInput(
-            ScratchBlocks2.DUMMY_INPUT,
-            "ELSE_WORD",
-            Scratch2.translate({
-              default: "else",
-              description: "Text inserted before the last C input on the extendable if-else block. Ideally should match vanilla Scratch's strings"
-            })
-          )
-        ];
-        this.extendableDefsEnd = [
-          createInput(ScratchBlocks2.NEXT_STATEMENT, "SUBSTACK", null)
-        ];
-        this.inputCount = 0;
-        this.minInputs = 0;
-      });
-      ScratchBlocks2.Extensions.register("cst_extendable_switch", function() {
-        this.extendableDefs = [
-          createInput(
-            ScratchBlocks2.DUMMY_INPUT,
-            "CASE_WORD",
-            Scratch2.translate({
-              default: "case",
-              description: "Text inserted between C and text inputs on the extendable switch block"
-            })
-          ),
-          createInput(
-            ScratchBlocks2.INPUT_VALUE,
-            "CASE_VALUE",
-            null,
-            "text",
-            "TEXT",
-            ""
-          ),
-          createInput(ScratchBlocks2.NEXT_STATEMENT, "SUBSTACK", null)
-        ];
-        this.extendableDefsEnd = [
-          createInput(
-            ScratchBlocks2.DUMMY_INPUT,
-            "DEFAULT_WORD",
-            Scratch2.translate({
-              default: "default",
-              description: "Text inserted before the last C input on the extendable switch block"
-            })
-          ),
-          createInput(ScratchBlocks2.NEXT_STATEMENT, "SUBSTACK", null)
-        ];
-        this.inputCount = 1;
-        this.minInputs = 0;
-      });
-      ScratchBlocks2.Extensions.register("cst_extendable_joinwith", function() {
-        this.extendableDefs = [
-          createInput(
-            ScratchBlocks2.INPUT_VALUE,
-            "ARG",
-            null,
-            "text",
-            "TEXT",
-            "word"
-          )
-        ];
-        this.extendableDefsEnd = [
-          createInput(
-            ScratchBlocks2.DUMMY_INPUT,
-            "WORD_WORD",
-            Scratch2.translate({
-              default: "with",
-              description: "Text inserted before the last input on the 'join (...) with []' block"
-            })
-          ),
-          createInput(ScratchBlocks2.INPUT_VALUE, "ARG", null, "text", "TEXT", "_")
-        ];
-        this.inputCount = 2;
-        this.minInputs = 0;
       });
       const ogInitSvg = ScratchBlocks2.BlockSvg.prototype.initSvg;
       ScratchBlocks2.BlockSvg.prototype.initSvg = function() {
