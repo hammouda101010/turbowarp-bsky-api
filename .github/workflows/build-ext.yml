@@ -31,7 +31,7 @@ jobs:
       - name: Commit and push changes
         run: |
           git add .
-          git commit -m "Auto-update \"index.global.js\" on $(date)"
+          git commit -m "Auto-update \"index.global.js\" on $(date)" || echo "No changes to commit"
           git push https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git HEAD:main
         
         
